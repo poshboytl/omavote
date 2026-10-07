@@ -13,7 +13,7 @@ echo "== WASM core"
 cargo build -p omavote-wasm --target wasm32-unknown-unknown --release --locked
 
 echo "== JSON Schema against the vectors"
-(cd schemas && npm ci --silent && npm test)
+(cd schemas && npm ci --silent && npm test -- ../evidence/devnet-2026-10-08/bundle.json)
 
 if [ -f verifier-ts/package.json ]; then
   echo "== Independent TypeScript verifier"
