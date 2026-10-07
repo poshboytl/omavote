@@ -1002,18 +1002,34 @@ impl BlockInput {
     }
 }
 
+/// A live Nervos DAO deposit at the bootstrap height.
+#[derive(Clone, Debug)]
+pub struct BootstrapCell {
+    pub out_point: OutPoint,
+    pub lock: Script,
+    pub capacity: u64,
+    pub created: Position,
+}
+
 impl Engine {
-    /// Start from a known chain position with a pre-computed DAO deposit set
-    /// (accelerated mode: DAO history from the operator's own node index).
-    pub fn bootstrap(&mut self, tip_number: u64, tip_hash: Hash32, tip_clock_ms: u64, cells: Vec<(OutPoint, Script, u64)>) {
-        for (op, lock, capacity) in cells {
-            let owner_id = lock.hash();
-            self.owner_locks.entry(owner_id).or_insert(lock);
-            self.dao_cells.insert(op, DaoCell { owner_id, capacity, created: Position { height: 0, tx_index: 0, output_index: op.index, envelope_index: 0 } });
-            self.owner_cells.entry(owner_id).or_default().insert(op);
+    /// Start from a verified chain position with a pre-computed DAO deposit set
+    /// (accelerated mode, docs/03 §9). Only valid when no protocol object exists at or
+    /// below `tip_number`.
+    pub fn bootstrap(&mut self, tip_number: u64, tip_hash: Hash32, tip_clock_ms: u64, cells: Vec<BootstrapCell>) {
+        for c in cells {
+            let owner_id = c.lock.hash();
+            self.owner_locks.entry(owner_id).or_insert(c.lock);
+            self.dao_cells.insert(c.out_point, DaoCell { owner_id, capacity: c.capacity, created: c.created });
+            self.owner_cells.entry(owner_id).or_default().insert(c.out_point);
         }
         self.blocks.insert(tip_hash, BlockMeta { number: tip_number, clock_ms: tip_clock_ms });
         self.tip = Some((tip_number, tip_hash, tip_clock_ms));
+    }
+
+    /// Register a canonical block below the bootstrap height so that signed objects
+    /// anchored there can still be checked.
+    pub fn add_known_block(&mut self, hash: Hash32, number: u64, clock_ms: u64) {
+        self.blocks.insert(hash, BlockMeta { number, clock_ms });
     }
 
     /// True when the outpoint is a live DAO deposit (used to filter block inputs).

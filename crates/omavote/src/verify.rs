@@ -49,6 +49,17 @@ pub struct VerifyArgs {
     /// Write the reduced block data (replay-vector format) for differential testing.
     #[arg(long)]
     pub dump_blocks: Option<PathBuf>,
+    /// Accelerated mode: start at this height with the DAO deposit set derived from the
+    /// node's indexer (valid only if no protocol object exists at or below it).
+    #[arg(long)]
+    pub from_height: Option<u64>,
+    /// Blocks below `--from-height` kept as possible anchors.
+    #[arg(long, default_value_t = 20_000)]
+    pub anchor_blocks: u64,
+    /// With `--from-height`: also replay from genesis and require identical deposit
+    /// sets at the start height and identical result hashes.
+    #[arg(long)]
+    pub compare: bool,
 }
 
 pub fn load_overrides(path: &Option<PathBuf>) -> Result<NetworkOverrides> {
@@ -72,6 +83,8 @@ pub struct ReplayOptions {
     pub process_delay_ms: u64,
     pub to: Option<u64>,
     pub check_clock: bool,
+    /// Accelerated start `(height, anchor_blocks)`.
+    pub from: Option<(u64, u64)>,
 }
 
 pub struct Replay {
@@ -79,6 +92,7 @@ pub struct Replay {
     pub store: Arc<Store>,
     pub net: omavote_core::network::NetworkParams,
     pub to: u64,
+    pub bootstrap: Option<crate::bootstrap::Bootstrap>,
 }
 
 /// Full replay from genesis using only the node (and an in-memory block cache).
@@ -96,10 +110,77 @@ pub async fn replay(o: &ReplayOptions) -> Result<Replay> {
     cfg.check_clock = o.check_clock;
     cfg.stop_at = Some(to);
     cfg.snapshot_every = 0;
+    if let Some((h0, anchors)) = o.from {
+        if h0 > to {
+            bail!("--from-height {h0} is above the replay end {to}");
+        }
+        cfg.bootstrap = Some(crate::bootstrap::build(&rpc, &net, h0, anchors).await?);
+    }
+    let bootstrap = cfg.bootstrap.clone();
     let store = Arc::new(Store::in_memory()?);
     let syncer = Syncer::new(rpc, Some(store.clone()), cfg);
     syncer.catch_up().await.context("replay")?;
-    Ok(Replay { syncer, store, net, to })
+    Ok(Replay { syncer, store, net, to, bootstrap })
+}
+
+/// Deposit set of an engine as comparable tuples.
+fn deposit_set(engine: &omavote_core::engine::Engine) -> std::collections::BTreeSet<(String, u32, String, u64)> {
+    engine
+        .dao_cells
+        .iter()
+        .map(|(op, c)| (to_hex(&op.tx_hash), op.index, to_hex(&c.owner_id), c.capacity))
+        .collect()
+}
+
+/// Accelerated mode must reproduce the full replay: same deposits at the start height
+/// and the same result hash for every poll.
+async fn compare_modes(opts: &ReplayOptions, fast: &Replay) -> Result<Value> {
+    let b = fast.bootstrap.as_ref().ok_or_else(|| anyhow!("--compare needs --from-height"))?;
+    let at_start = replay(&ReplayOptions { to: Some(b.height), from: None, check_clock: false, ..opts.clone_basic() }).await?;
+    let full_set = deposit_set(&read(&at_start.syncer.state).engine);
+    let mut boot = omavote_core::engine::Engine::new(omavote_core::engine::EngineConfig::new(fast.net.clone()));
+    boot.bootstrap(b.height, b.hash, b.clock_ms, b.cells.clone());
+    let boot_set = deposit_set(&boot);
+    let deposits_equal = full_set == boot_set;
+    let full = replay(&ReplayOptions { to: Some(fast.to), from: None, check_clock: false, ..opts.clone_basic() }).await?;
+    let full_report = poll_report(&read(&full.syncer.state).engine, None);
+    let fast_report = poll_report(&read(&fast.syncer.state).engine, None);
+    // Only polls registered above the start height can be compared: objects at or
+    // below it are, by the mode's precondition, not supposed to exist.
+    let after_start = |p: &&Value| p["registered_height"].as_str().and_then(|h| h.parse::<u64>().ok()).map(|h| h > b.height).unwrap_or(false);
+    let hashes = |r: &Vec<Value>| -> std::collections::BTreeMap<String, Value> {
+        r.iter().filter(after_start).map(|p| (p["poll_id"].as_str().unwrap_or("").to_string(), p["result_hash"].clone())).collect()
+    };
+    let (fh, ah) = (hashes(&full_report), hashes(&fast_report));
+    let results_equal = fh == ah;
+    if !deposits_equal || !results_equal {
+        bail!(
+            "accelerated replay differs from the full replay: deposits equal {deposits_equal}, results equal {results_equal} ({} vs {} deposits)",
+            boot_set.len(),
+            full_set.len()
+        );
+    }
+    Ok(json!({
+        "start_height": b.height.to_string(),
+        "deposits_at_start": boot_set.len().to_string(),
+        "deposits_equal": true,
+        "polls_compared": fh.len().to_string(),
+        "results_equal": true,
+    }))
+}
+
+impl ReplayOptions {
+    fn clone_basic(&self) -> ReplayOptions {
+        ReplayOptions {
+            rpc: self.rpc.clone(),
+            overrides: self.overrides.clone(),
+            initial_roles_hash: self.initial_roles_hash,
+            process_delay_ms: self.process_delay_ms,
+            to: self.to,
+            check_clock: self.check_clock,
+            from: self.from,
+        }
+    }
 }
 
 /// Per-poll verification report.
@@ -118,6 +199,7 @@ pub fn poll_report(engine: &omavote_core::engine::Engine, wanted: Option<Hash32>
         let rc_ok = rc.ok().flatten();
         polls.push(json!({
             "poll_id": to_hex(id),
+            "registered_height": poll.registered.height.to_string(),
             "title": poll.manifest.title,
             "status": views::poll_status(engine, poll, rc_ok.as_ref()),
             "admission": views::admission_json(&tally::admission(engine, poll)),
@@ -164,14 +246,18 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
         process_delay_ms: args.process_delay_ms,
         to: args.to,
         check_clock: args.check_clock,
+        from: args.from_height.map(|h| (h, args.anchor_blocks)),
     };
     let started = std::time::Instant::now();
     let r = replay(&opts).await?;
+    let comparison = if args.compare { Some(compare_modes(&opts, &r).await?) } else { None };
     let st = read(&r.syncer.state);
     let engine = &st.engine;
+    let first = r.bootstrap.as_ref().map(|b| b.height + 1).unwrap_or(0);
     eprintln!(
-        "replayed {} blocks (0..={}) in {:.1}s{}",
-        r.to + 1,
+        "replayed {} blocks ({}..={}) in {:.1}s{}",
+        r.to + 1 - first,
+        first,
         r.to,
         started.elapsed().as_secs_f64(),
         if args.check_clock { ", clock checked against the node" } else { "" }
@@ -188,8 +274,19 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
             eprintln!("evidence bundle written to {}", out.display());
         }
     }
+    let mode = match &r.bootstrap {
+        Some(b) => format!("accelerated-from-height-{}", b.height),
+        None => "full-replay-from-genesis".to_string(),
+    };
     let report = json!({
-        "verifier": {"name": "omavote verify", "version": env!("CARGO_PKG_VERSION"), "mode": "full-replay-from-genesis", "clock_checked": args.check_clock},
+        "verifier": {"name": "omavote verify", "version": env!("CARGO_PKG_VERSION"), "mode": mode, "clock_checked": args.check_clock},
+        "bootstrap": r.bootstrap.as_ref().map(|b| json!({
+            "height": b.height.to_string(),
+            "hash": to_hex(&b.hash),
+            "deposits": b.cells.len().to_string(),
+            "derived_at_indexer_tip": [b.derived_at.0.to_string(), to_hex(&b.derived_at.1)],
+        })),
+        "comparison_with_full_replay": comparison,
         "network": to_serde(&r.net.to_json()),
         "tip": views::at(engine),
         "initial_roles_hash": args.initial_roles_hash,

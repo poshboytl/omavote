@@ -1,0 +1,88 @@
+{
+  "no_shannon": "0",
+  "ok": true,
+  "outcome": "PASS",
+  "poll_id": "0x439524cf1c427405d61dcbcadc0b2e09aabd33c95d2224f7fa105122b58e56a0",
+  "reorg": {
+    "at_ms": "1791412230172",
+    "depth": "2",
+    "fork_height": "2858",
+    "old_tip": "2860"
+  },
+  "result_hash": "0xc8de02b51bd7a3f78e275d73fc37be6f0b630eb12de6a534e0e3f6b544dae4d3",
+  "steps": [
+    {
+      "step": "devnet 0x91a924450384dabf192eb92b0838acd36429e7ec9041c2c164677670d3a0da5a ; faucet ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwgx292hnvmn68xf779vmzrshpmm6epn4c0cgwga",
+      "t_s": "0.0"
+    },
+    {
+      "step": "run 0xfd35103f: fresh test owners and delegate keys",
+      "t_s": "0.0"
+    },
+    {
+      "step": "Nervos DAO deposits for five owners: tx 0x3bf4098d884a2fc2637f86fd8bb9edccdacd67122a34dcd3017fbca87d3dcd11 in block 2784",
+      "t_s": "4.6"
+    },
+    {
+      "step": "authorization policy and process roles: relayed (2 item(s))",
+      "t_s": "4.6"
+    },
+    {
+      "step": "proposal #439524cf1c427405 submitted; voting 150s from chain clock 1791412192719",
+      "t_s": "4.6"
+    },
+    {
+      "step": "manifest: relayed (1 item(s))",
+      "t_s": "9.1"
+    },
+    {
+      "step": "admission record and delegate grants: relayed (3 item(s))",
+      "t_s": "14.2"
+    },
+    {
+      "step": "poll is OPEN and ADMITTED",
+      "t_s": "65.0"
+    },
+    {
+      "step": "first ballots (direct and delegated): relayed (5 item(s))",
+      "t_s": "73.1"
+    },
+    {
+      "step": "Dave's phase-1 withdrawal: tx 0xd2708eae3ef15f59b44210dab9d1b2a19753833b23e636deba1c68b4172ad956 in block 2856",
+      "t_s": "76.7"
+    },
+    {
+      "step": "revote, owner override and REVOKE STOP+CANCEL-OPEN: relayed (3 item(s))",
+      "t_s": "81.3"
+    },
+    {
+      "step": "truncated the chain to block 2858 (removing block 2860 with the second round; attempt 1)",
+      "t_s": "82.8"
+    },
+    {
+      "step": "server rolled back: {\"at_ms\":\"1791412230172\",\"depth\":\"2\",\"fork_height\":\"2858\",\"old_tip\":\"2860\"}",
+      "t_s": "82.8"
+    },
+    {
+      "step": "relay re-included the second round in block 0xd7dfdb4192aa9fae9b23b7968ff1c093df25e37f529b5f2c03024932a9c8d67a",
+      "t_s": "84.3"
+    },
+    {
+      "step": "second-round ballots are back after the reorg",
+      "t_s": "84.3"
+    },
+    {
+      "step": "closed: outcome \"PASS\" result_hash 0xc8de02b51bd7a3f78e275d73fc37be6f0b630eb12de6a534e0e3f6b544dae4d3",
+      "t_s": "219.2"
+    },
+    {
+      "step": "committee RESULT_ATTESTATION (2 of 3): relayed (1 item(s))",
+      "t_s": "223.7"
+    },
+    {
+      "step": "independent replay (clock checked) reproduces 0xc8de02b51bd7a3f78e275d73fc37be6f0b630eb12de6a534e0e3f6b544dae4d3",
+      "t_s": "225.0"
+    }
+  ],
+  "yes_shannon": "29000000000000"
+}

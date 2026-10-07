@@ -58,6 +58,33 @@ impl Rpc {
         Ok(v.as_str().map(str::to_string))
     }
 
+    pub async fn header_by_number(&self, n: u64) -> Result<Option<Value>> {
+        let v = self.call("get_header_by_number", json!([to_hex_u64(n)])).await?;
+        Ok(if v.is_null() { None } else { Some(v) })
+    }
+
+    pub async fn transaction(&self, tx_hash: &str) -> Result<Value> {
+        self.call("get_transaction", json!([tx_hash])).await
+    }
+
+    /// `(number, hash)` the node's built-in indexer has processed.
+    pub async fn indexer_tip(&self) -> Result<(u64, String)> {
+        let v = self.call("get_indexer_tip", json!([])).await?;
+        Ok((hex_u64(&v["block_number"])?, v["block_hash"].as_str().unwrap_or_default().to_string()))
+    }
+
+    /// One page of an indexer search (`get_cells` or `get_transactions`).
+    pub async fn search(&self, method: &str, key: &Value, limit: u32, after: Option<String>) -> Result<(Vec<Value>, Option<String>)> {
+        let mut params = vec![key.clone(), json!("asc"), json!(to_hex_u64(limit as u64))];
+        if let Some(a) = after {
+            params.push(json!(a));
+        }
+        let v = self.call(method, Value::Array(params)).await?;
+        let objects = v["objects"].as_array().cloned().unwrap_or_default();
+        let cursor = v["last_cursor"].as_str().map(str::to_string);
+        Ok((objects, cursor))
+    }
+
     pub async fn median_time(&self, block_hash: &str) -> Result<u64> {
         hex_u64(&self.call("get_block_median_time", json!([block_hash])).await?)
     }

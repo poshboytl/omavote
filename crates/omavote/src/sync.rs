@@ -59,6 +59,8 @@ pub struct SyncConfig {
     pub check_clock: bool,
     /// Stop after this height (verify runs up to a fixed tip).
     pub stop_at: Option<u64>,
+    /// Accelerated start: replay from this verified state instead of genesis.
+    pub bootstrap: Option<crate::bootstrap::Bootstrap>,
 }
 
 impl SyncConfig {
@@ -71,6 +73,7 @@ impl SyncConfig {
             poll_interval: Duration::from_millis(1000),
             check_clock: false,
             stop_at: None,
+            bootstrap: None,
         }
     }
 }
@@ -107,11 +110,12 @@ pub struct ChainState {
 const HASHES_KEPT: u64 = 20_000;
 
 impl ChainState {
-    pub fn new(cfg: &EngineConfig) -> Self {
+    pub fn new(cfg: &SyncConfig) -> Self {
+        let (engine, window, hashes) = fresh(cfg);
         ChainState {
-            engine: Engine::new(cfg.clone()),
-            window: MedianWindow::new(),
-            hashes: BTreeMap::new(),
+            engine,
+            window,
+            hashes,
             snapshots: Vec::new(),
             node_tip: None,
             synced: false,
@@ -190,6 +194,24 @@ impl ChainState {
     }
 }
 
+/// Engine, clock window and known hashes before the first replayed block: empty for
+/// a replay from genesis, the verified bootstrap state otherwise.
+fn fresh(cfg: &SyncConfig) -> (Engine, MedianWindow, BTreeMap<u64, Hash32>) {
+    let mut engine = Engine::new(cfg.engine.clone());
+    let mut hashes = BTreeMap::new();
+    let mut window = MedianWindow::new();
+    if let Some(b) = &cfg.bootstrap {
+        for (h, n, c) in &b.anchors {
+            engine.add_known_block(*h, *n, *c);
+            hashes.insert(*n, *h);
+        }
+        engine.bootstrap(b.height, b.hash, b.clock_ms, b.cells.clone());
+        hashes.insert(b.height, b.hash);
+        window = MedianWindow::from_slice(&b.timestamps);
+    }
+    (engine, window, hashes)
+}
+
 fn dao_events(b: &BlockInput, net: &omavote_core::network::NetworkParams) -> Vec<DaoEvent> {
     let mut v = Vec::new();
     for tx in &b.transactions {
@@ -229,7 +251,7 @@ pub struct Syncer<S: Source> {
 
 impl<S: Source> Syncer<S> {
     pub fn new(src: S, store: Option<Arc<Store>>, cfg: SyncConfig) -> Self {
-        let state = Arc::new(RwLock::new(ChainState::new(&cfg.engine)));
+        let state = Arc::new(RwLock::new(ChainState::new(&cfg)));
         Syncer { src, store, state, cfg }
     }
 
@@ -240,7 +262,7 @@ impl<S: Source> Syncer<S> {
             None => return Ok(0),
         };
         let mut st = write(&self.state);
-        *st = ChainState::new(&self.cfg.engine);
+        *st = ChainState::new(&self.cfg);
         let mut n = 0u64;
         store.for_each_block(0, u64::MAX, |row| {
             st.apply_row(&row, &self.cfg)?;
@@ -267,6 +289,7 @@ impl<S: Source> Syncer<S> {
             }
         }
         let next = ours.map(|t| t.0 + 1).unwrap_or(0);
+        debug_assert!(self.cfg.bootstrap.is_none() || ours.is_some());
         if next > node_tip {
             let mut st = write(&self.state);
             st.synced = true;
@@ -320,6 +343,7 @@ impl<S: Source> Syncer<S> {
             None => bail!("the canonical chain changed during replay; run again"),
         };
         let our_tip = read(&self.state).tip().map(|t| t.0).unwrap_or(0);
+        let floor = self.cfg.bootstrap.as_ref().map(|b| b.height).unwrap_or(0);
         let mut n = our_tip.min(node_tip);
         let fork: Option<u64> = loop {
             let ours = match read(&self.state).hashes.get(&n).copied() {
@@ -330,12 +354,18 @@ impl<S: Source> Syncer<S> {
             if ours.is_some() && ours == theirs {
                 break Some(n);
             }
-            if n == 0 {
+            if n <= floor {
                 break None;
             }
             n -= 1;
         };
-        let fork_height = fork.ok_or_else(|| anyhow!("no common ancestor with the node (different genesis?)"))?;
+        let fork_height = fork.ok_or_else(|| {
+            if floor > 0 {
+                anyhow!("the chain reorganized below the bootstrap height {floor}; rebuild the database")
+            } else {
+                anyhow!("no common ancestor with the node (different genesis?)")
+            }
+        })?;
         store.truncate_above(fork_height)?;
         let mut st = write(&self.state);
         let snap = st.snapshots.iter().rev().find(|s| s.height <= fork_height).cloned();
@@ -346,13 +376,21 @@ impl<S: Source> Syncer<S> {
                 s.height + 1
             }
             None => {
-                st.engine = Engine::new(self.cfg.engine.clone());
-                st.window = MedianWindow::new();
-                0
+                let (engine, window, hashes) = fresh(&self.cfg);
+                st.engine = engine;
+                st.window = window;
+                st.hashes = hashes;
+                floor + if self.cfg.bootstrap.is_some() { 1 } else { 0 }
             }
         };
         st.snapshots.retain(|s| s.height <= fork_height);
         st.hashes.retain(|h, _| *h < from);
+        if let Some(b) = &self.cfg.bootstrap {
+            for (h, n, _) in &b.anchors {
+                st.hashes.insert(*n, *h);
+            }
+            st.hashes.insert(b.height, b.hash);
+        }
         let cfg = &self.cfg;
         store.for_each_block(from, fork_height, |row| st.apply_row(&row, cfg))?;
         st.reorgs.push(ReorgEvent { at_ms: now_ms(), old_tip: our_tip, fork_height, depth: our_tip - fork_height });

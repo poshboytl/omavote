@@ -679,7 +679,7 @@ fn verify_receipt(receipt: &Value) -> Result<String> {
     fn intake_with(chain: &TestChain) -> Intake {
         let mut cfg = crate::sync::SyncConfig::new(chain.engine.cfg.clone());
         cfg.snapshot_every = 0;
-        let state = crate::sync::ChainState::new(&cfg.engine);
+        let state = crate::sync::ChainState::new(&cfg);
         let shared: Shared = Arc::new(std::sync::RwLock::new(state));
         crate::sync::write(&shared).engine = chain.engine.clone();
         Intake {

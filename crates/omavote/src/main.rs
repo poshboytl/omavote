@@ -2,6 +2,7 @@
 //! independent `verify` command (docs/13).
 
 mod api;
+mod bootstrap;
 mod chain;
 mod config;
 mod demo;
@@ -154,18 +155,35 @@ async fn serve(cfg: config::Config) -> Result<()> {
     ecfg.process_publication_delay_ms = cfg.protocol.process_publication_delay_ms;
     // Chain-derived tables are rebuilt whenever the replay settings change.
     let fingerprint = format!(
-        "{}|{:?}|{}",
+        "{}|{:?}|{}|{}",
         omavote_core::json::to_jcs(&net.to_json()),
         ecfg.initial_roles_hash.map(|h| omavote_core::util::to_hex(&h)),
-        ecfg.process_publication_delay_ms
+        ecfg.process_publication_delay_ms,
+        cfg.sync.start_height
     );
     if store.meta_get("replay_settings")?.as_deref() != Some(fingerprint.as_str()) {
         tracing::info!("replay settings changed or new database: rebuilding the chain cache");
         store.reset_chain()?;
+        store.meta_set("bootstrap", "")?;
         store.meta_set("replay_settings", &fingerprint)?;
     }
     let mut scfg = sync::SyncConfig::new(ecfg);
     scfg.poll_interval = Duration::from_millis(cfg.node.poll_interval_ms);
+    if cfg.sync.start_height > 0 {
+        // The bootstrap state is derived once and kept, so restarts replay the same start.
+        let saved = store.meta_get("bootstrap")?.filter(|s| !s.is_empty());
+        let b = match saved {
+            Some(text) => bootstrap::Bootstrap::from_json(&serde_json::from_str(&text)?)?,
+            None => {
+                tracing::info!(height = cfg.sync.start_height, "deriving the Nervos DAO deposit set from the node's indexer");
+                let b = bootstrap::build(&rpc, &net, cfg.sync.start_height, cfg.sync.anchor_blocks).await?;
+                store.meta_set("bootstrap", &b.to_json().to_string())?;
+                b
+            }
+        };
+        tracing::info!(height = b.height, deposits = b.cells.len(), "accelerated start");
+        scfg.bootstrap = Some(b);
+    }
     let syncer = Arc::new(sync::Syncer::new(rpc.clone(), Some(store.clone()), scfg));
     let loaded = syncer.load_from_store()?;
     tracing::info!(network = %net.name, blocks = loaded, "chain cache loaded");

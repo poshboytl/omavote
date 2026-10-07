@@ -698,6 +698,7 @@ pub async fn run(args: DemoArgs) -> Result<()> {
         process_delay_ms: process_delay,
         to: None,
         check_clock: true,
+        from: None,
     })
     .await?;
     let report = {

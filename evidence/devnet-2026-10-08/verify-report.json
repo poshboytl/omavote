@@ -1,0 +1,101 @@
+[
+  {
+    "admission": {
+      "record_id": "0xd4968a2bf91772475f29b595f1f086d24def867c8e5ce9237c0741ca6973d260",
+      "state": "ADMITTED"
+    },
+    "attestation": {
+      "record_id": "0x139b1c2b67ae6543ba3d1e214a949b64b3dd47e7bf39b3faf9f134ee9d7d080d",
+      "state": "CONFIRMED"
+    },
+    "governance": {
+      "state": "NONE"
+    },
+    "note": null,
+    "poll_id": "0x439524cf1c427405d61dcbcadc0b2e09aabd33c95d2224f7fa105122b58e56a0",
+    "result_core": {
+      "approval_denominator": "100",
+      "approval_numerator": "51",
+      "auth_policy_hash": "0x9fe268dfa955b490fdb8074d4c58750488097bb329cf8757c52248d509bdace0",
+      "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143",
+      "close_block_hash": "0x7f5f3e3ae4142431809b4f7f1ddd5f573c1e798a4fab5c38e3a59057c1ca2add",
+      "close_block_number": "2996",
+      "counted_cells": [
+        {
+          "capacity_shannon": "15000000000000",
+          "index": "0",
+          "owner_id": "0x4350773b2c87ef54bbbd3933595e65a9a48faa9e2070cf5c090f591cfc15fb2a",
+          "tx_hash": "0x3bf4098d884a2fc2637f86fd8bb9edccdacd67122a34dcd3017fbca87d3dcd11"
+        },
+        {
+          "capacity_shannon": "6000000000000",
+          "index": "1",
+          "owner_id": "0xe919566057fbf2e321cdb4d50b42a388f8608bd93ea13374372043c5781c0a6e",
+          "tx_hash": "0x3bf4098d884a2fc2637f86fd8bb9edccdacd67122a34dcd3017fbca87d3dcd11"
+        },
+        {
+          "capacity_shannon": "8000000000000",
+          "index": "4",
+          "owner_id": "0xd923e340a2c55175c2f5ca366913cc7b16b696da3f5df45f77eaa9dbefcf51ef",
+          "tx_hash": "0x3bf4098d884a2fc2637f86fd8bb9edccdacd67122a34dcd3017fbca87d3dcd11"
+        }
+      ],
+      "network_genesis_hash": "0x91a924450384dabf192eb92b0838acd36429e7ec9041c2c164677670d3a0da5a",
+      "no_shannon": "0",
+      "outcome": "PASS",
+      "owners": [
+        {
+          "authorization_id": null,
+          "ballot_id": null,
+          "counted_weight_shannon": "0",
+          "eligible_principal_shannon": "2000000000000",
+          "final_status": "CANCELLED_BY_CONTROL",
+          "owner_id": "0x1ab9cd473280e6f9dbd3667fb4aa85fe14ae63dcd8847fec5dc4b064eeb5016e"
+        },
+        {
+          "authorization_id": null,
+          "ballot_id": "0x27a597528cf975ea1e453655c4f290567a4012dfcd70316c2be7704c0190d3f9",
+          "counted_weight_shannon": "15000000000000",
+          "eligible_principal_shannon": "15000000000000",
+          "final_status": "YES",
+          "owner_id": "0x4350773b2c87ef54bbbd3933595e65a9a48faa9e2070cf5c090f591cfc15fb2a"
+        },
+        {
+          "authorization_id": null,
+          "ballot_id": "0xa186ee0016ba18db8d32c8494099bb7205416c758f4186395dafa1f1b7bf2e4a",
+          "counted_weight_shannon": "0",
+          "eligible_principal_shannon": "0",
+          "final_status": "YES",
+          "owner_id": "0x8a7113a1c7bff3ed27617208c7a52315dad193677401b64243b02469e10a5dcb"
+        },
+        {
+          "authorization_id": null,
+          "ballot_id": "0x14186b982dc8e01c401e0b8041eba4fe5a167ac512a88495070b1cf013d4fdc1",
+          "counted_weight_shannon": "8000000000000",
+          "eligible_principal_shannon": "8000000000000",
+          "final_status": "YES",
+          "owner_id": "0xd923e340a2c55175c2f5ca366913cc7b16b696da3f5df45f77eaa9dbefcf51ef"
+        },
+        {
+          "authorization_id": null,
+          "ballot_id": "0xd3054a6ad47e41bae92172c6c3f337e3f8569245fdfb2c8052390b54fbbda1df",
+          "counted_weight_shannon": "6000000000000",
+          "eligible_principal_shannon": "6000000000000",
+          "final_status": "YES",
+          "owner_id": "0xe919566057fbf2e321cdb4d50b42a388f8608bd93ea13374372043c5781c0a6e"
+        }
+      ],
+      "participation_shannon": "29000000000000",
+      "poll_id": "0x439524cf1c427405d61dcbcadc0b2e09aabd33c95d2224f7fa105122b58e56a0",
+      "protocol_version": "2",
+      "quorum_required_shannon": "300000000000",
+      "rules_hash": "0x6ad3431c0453ea3dd5db0f76d2e55cba2a67cbfd7a8a818ae5414a3b6953aec2",
+      "start_boundary_block_hash": "0xd991c30c30b228e78bb9786a0aad59ff12f950ea60faed53a025750d0ea7970b",
+      "threshold_comparison": "inclusive",
+      "yes_shannon": "29000000000000"
+    },
+    "result_hash": "0xc8de02b51bd7a3f78e275d73fc37be6f0b630eb12de6a534e0e3f6b544dae4d3",
+    "status": "AUDITABLE",
+    "title": "Demo: fund an independent CKB block explorer"
+  }
+]

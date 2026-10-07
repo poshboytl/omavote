@@ -23,9 +23,33 @@ pub struct Config {
     pub server: ServerConfig,
     #[serde(default)]
     pub relay: RelayConfig,
+    #[serde(default)]
+    pub sync: SyncSection,
     /// Directory the relative paths in this file are resolved against.
     #[serde(skip)]
     pub base: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SyncSection {
+    /// 0 = replay from genesis. Otherwise the deployment height: no protocol object may
+    /// exist at or below it; the DAO deposit set there is derived from the node's indexer.
+    #[serde(default)]
+    pub start_height: u64,
+    /// Blocks below `start_height` kept as possible signing anchors.
+    #[serde(default = "default_anchor_blocks")]
+    pub anchor_blocks: u64,
+}
+
+fn default_anchor_blocks() -> u64 {
+    20_000
+}
+
+impl Default for SyncSection {
+    fn default() -> Self {
+        SyncSection { start_height: 0, anchor_blocks: default_anchor_blocks() }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -202,6 +226,13 @@ web_root = "web/dist"
 receipt_key_file = "receipt.key"   # omavote keygen receipt.key
 anchor_depth = 4
 cors_origins = []
+
+[sync]
+# 0 replays from genesis. On mainnet set the deployment height (no protocol object
+# at or below it); the Nervos DAO deposit set there comes from your node's indexer.
+# Check it once with: omavote verify --from-height <H> --compare
+start_height = 0
+anchor_blocks = 20000
 
 [relay]
 embedded = true          # false: run `omavote relay --config ...` as its own process

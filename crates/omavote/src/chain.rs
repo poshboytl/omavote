@@ -207,6 +207,14 @@ impl MedianWindow {
         }
     }
 
+    pub fn from_slice(timestamps: &[u64]) -> Self {
+        let mut w = MedianWindow::new();
+        for t in timestamps {
+            w.push(*t);
+        }
+        w
+    }
+
     /// `clock(b)` for the next block. Genesis has no parent; its clock is taken as
     /// its own timestamp (it carries no protocol objects).
     pub fn clock_for_next(&self, own_timestamp: u64) -> u64 {
