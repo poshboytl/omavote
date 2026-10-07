@@ -61,6 +61,17 @@ enum Cmd {
     ExampleConfig,
     /// Development chains: end-to-end run with real deposits, relay, votes and replay.
     Demo(demo::DemoArgs),
+    /// Sign a text with a key file, as Neuron (`ckb`) or MetaMask personal_sign (`evm`) would.
+    /// For operators who keep a role key in a file; wallets remain the normal path.
+    Sign {
+        #[arg(long)]
+        key: PathBuf,
+        #[arg(long, value_parser = ["ckb", "evm"])]
+        format: String,
+        /// File with the exact text (UTF-8); `-` reads stdin.
+        #[arg(long)]
+        text_file: PathBuf,
+    },
     /// Development chains: print the deterministic demo process roles (initial_roles_file).
     DemoRoles {
         #[arg(long, default_value = "http://127.0.0.1:18114")]
@@ -104,6 +115,24 @@ async fn main() -> Result<()> {
             Ok(())
         }
         Cmd::Demo(args) => demo::run(args).await,
+        Cmd::Sign { key, format, text_file } => {
+            let text = if text_file.as_os_str() == "-" {
+                let mut t = String::new();
+                std::io::Read::read_to_string(&mut std::io::stdin(), &mut t)?;
+                t
+            } else {
+                std::fs::read_to_string(&text_file)?
+            };
+            let secret_text = std::fs::read_to_string(&key)?;
+            let secret = omavote_core::util::parse_hex_fixed::<32>(secret_text.trim(), "secret key").map_err(|e| anyhow!("{e}"))?;
+            let sig = match format.as_str() {
+                "ckb" => omavote_core::adapter::ckb_sign_message(&secret, &text),
+                _ => omavote_core::adapter::evm_sign_message(&secret, &text),
+            }
+            .map_err(|e| anyhow!("{e}"))?;
+            println!("{}", omavote_core::util::to_hex(&sig));
+            Ok(())
+        }
         Cmd::DemoRoles { rpc } => {
             let (net, _) = discover(&rpc::Rpc::new(&rpc), &Default::default()).await?;
             if omavote_core::network::NetworkParams::known(&net.genesis_hash).is_some() {

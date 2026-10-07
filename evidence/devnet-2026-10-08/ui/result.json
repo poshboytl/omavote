@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "poll_id": "0x968a073c3c9ad3a938051fd27eb6ffca4235ea9d5382c8b0ab2d0835d2d63034",
+  "owner_id": "0x106b208d7308065d5cf32ff2a02ce20ecb90934faf868b2acf280a59b6533af4",
+  "steps": [
+    "neuron tab",
+    "address typed",
+    "address used",
+    "prepare: Prepare 1 ballot(s): YES",
+    "summary: OMAVOTE VOTE YES #968a073c3c9ad3a9 1000CKB",
+    "signed 961 bytes",
+    "signature pasted",
+    "submitted: Verify and submit",
+    "SELECTED in tx 0xd481774ceac4394e0ee349762c9c8b091454d8fe7c6029d6fb5adf9c674c65dd"
+  ],
+  "console_errors": [],
+  "ballot_id": "0xd2799c3fbe65e923ebac4c041ecd6f34855abde4695ad679ff61e5480a0851ea",
+  "tx_hash": "0xd481774ceac4394e0ee349762c9c8b091454d8fe7c6029d6fb5adf9c674c65dd",
+  "page_tracker": "✓\nRelay receipt received\n✓\nReceipt signature recovers to the server's published receipt key\n✓\nReceipt names this object and kind\n✓\nReceipt is for this network\n✓\nReceipt commits to exactly the envelope bytes you sent\nReceived 2026-10-07 23:30:53 UTC · relay promises to publish before 2026-10-07 23:45:22 UTC (chain time)\nRelay\nIncluded\nReceipt page\n✓\nReceived\n✓\nBroadcast\n✓\nIncluded\n…\nConfirmed\nTransaction \n0xd481774c…4c65dd\nCopy\n in block 6472\nBallot status\nSelected (counts)\nposition 6472/1/0/0 · as of block 6474\nYour vote counts\nThe ballot is on chain and is the owner's current selection. The final weight is the deposit at the poll's close; changes after this (a newer ballot, a revocation, a reorg) are reported here.\nCheck now"
+}

@@ -53,6 +53,10 @@ pub struct DemoArgs {
     /// Directory for the evidence bundle, verify report and block dump.
     #[arg(long, default_value = "devnet/demo-out")]
     pub out_dir: PathBuf,
+    /// Stop once the poll is open and write `open.json` (poll id plus one funded
+    /// development owner) for interactive or browser testing.
+    #[arg(long)]
+    pub open_only: bool,
 }
 
 /// Deterministic demo process roles (committee 2-of-3, coordinator 1-of-2).
@@ -537,6 +541,22 @@ pub async fn run(args: DemoArgs) -> Result<()> {
     let v = d.poll_view(&poll_id).await?;
     expect(v["admission"]["state"] == "ADMITTED", "admission record counted before the opening boundary")?;
     d.say("poll is OPEN and ADMITTED");
+    if args.open_only {
+        // Development keys only: derived from public labels, never for real funds.
+        let open = json!({
+            "poll_id": to_hex(&poll_id),
+            "end_ms": manifest.end_ms.to_string(),
+            "owner": {
+                "label": label("alice"),
+                "address": net.address(&alice.lock).unwrap_or_default(),
+                "owner_id": to_hex(&alice.id()),
+                "dev_secret": to_hex(&alice.secret),
+            },
+        });
+        std::fs::write(args.out_dir.join("open.json"), serde_json::to_string_pretty(&open)? + "\n")?;
+        println!("{}", serde_json::to_string_pretty(&open)?);
+        return Ok(());
+    }
 
     // --- First round of ballots --------------------------------------------------
     let a1 = d.anchor().await?;
