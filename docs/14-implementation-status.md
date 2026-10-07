@@ -4,9 +4,9 @@
 
 ## 1. 结论
 
-- **M0–M4 完成**：协议核心、WASM 绑定、链同步与复算、`omavote verify`、中继与 API 均已实现并通过测试。开发链端到端演示跑通了提案登记、准入、授权、直接与代理投票、改票、撤回屏障、提款、链重组恢复、委员会结果确认和独立复算，所有检查都通过（§4）。
+- **M0–M4 完成**：协议核心、WASM 绑定、链同步与复算（含主网所需的加速起点）、`omavote verify`、中继与 API 均已实现并通过测试。开发链端到端演示跑通了提案登记、准入、授权、直接与代理投票、改票、撤回屏障、提款、链重组恢复、委员会结果确认和独立复算，所有检查都通过（§4）。
 - **M6 独立验证器**：完成，两套实现在全部向量和开发链 8 个提案上结果一致（§6）。
-- **M5 前端**：状态见 §5。
+- **M5 前端**：完成。在开发链上用浏览器端到端投票成功（§5）。
 - **M2 钱包实测、M6 人工审计、M7 影子运行**：都需要真人、真设备或治理参与。代码与工具已就绪，所需工作见 §8。
 
 ## 2. 里程碑
@@ -18,7 +18,7 @@
 | M2 钱包 PoC | 工具就绪，待真机 | 签名格式已与 Neuron/lumos、eth-sig-util 的输出逐字节比对（`vectors/external.json`）；前端「钱包检查」页用于真机记录 |
 | M3 链同步与复算 | 完成 | `crates/omavote`：`sync`、`store`、`chain`、`verify` |
 | M4 中继与 API | 完成 | `relay`、`txbuilder`、`api`、`deploy/`、`omavote demo` |
-| M5 前端 | 见 §5 | `web/` |
+| M5 前端 | 完成（真机待测） | `web/`、`web/scripts/e2e-neuron-vote.mjs` |
 | M6 独立验证器 | 完成（人工审计另需安排） | `verifier-ts/`、`scripts/diff-verifiers.sh` |
 | M7 影子运行与切换 | 未开始 | 需要治理与运营方 |
 
@@ -26,17 +26,19 @@
 
 | 部分 | 结果 |
 |---|---|
-| 核心单元测试 | 21 通过 |
+| 核心单元测试 | 22 通过 |
 | 11 §8 的 31 个场景与 12 个反例（`tests/scenarios.rs`） | 43 通过 |
 | 性质测试：读取顺序无关、重复幂等、本金守恒（`tests/properties.rs`） | 3 通过 |
-| 跨语言向量（`tests/vectors.rs`） | 6 通过 |
+| 跨语言向量（`tests/vectors.rs`，含边界情形回放向量） | 7 通过 |
 | 外部向量（`tests/external.rs`） | 5 通过：Neuron 签名与 lumos 逐字节相同；EIP-191 与 eth-sig-util 相同；高 s 签名等价；WitnessArgs 与 CCC 相同 |
 | WASM 绑定 | 1 通过；`wasm32-unknown-unknown` release 构建成功 |
 | 服务端（同步、重组回滚、重启恢复、交易布局、中继准入与回执） | 5 通过 |
-| JSON Schema（`schemas/`，ajv） | 向量中 13 个对象全部有效 |
+| JSON Schema（`schemas/`，ajv） | 向量与开发链证据包中的 27 个对象全部有效 |
+| 独立 TypeScript 验证器（`verifier-ts/`） | 117 项测试通过；8 个向量文件的 125 项检查通过 |
+| 前端（`web/`） | 48 项测试通过；构建通过 |
 | 时钟交叉核对 | `omavote verify --check-clock` 对开发链每个区块比对 `get_block_median_time(parent)`，全部一致 |
 
-运行方法：`cargo test --workspace`；`cd schemas && npm install && npm test`。
+Rust 测试合计 86 项。一键运行全部（不需要节点）：`scripts/ci.sh`。
 
 ### V2 冻结条件对照（[05 §8](05-delivery.md)）
 
@@ -97,7 +99,40 @@
 
 ## 5. 前端（M5）
 
-前端由一个子 agent 在 `web/` 中编写（React + Vite + TypeScript，签名文本、ID 与验签全部调用核心的 WASM）。本节在它完成并经验证后更新；若此处仍是这段话，表示前端尚未完成验收，代码未提交。
+前端由一个子 agent 在 `web/` 中编写：React 18、Vite、TypeScript 严格模式、HashRouter，运行时只依赖 react、react-dom、react-router。签名文本、各类 ID 与本地验签全部调用核心的 WASM，网页不另写规则。由 `omavote serve` 托管，也可部署到任意静态主机。
+
+- **页面**：
+
+  | 页面 | 内容 |
+  |---|---|
+  | 提案列表与详情 | 官方状态、提案事实、链时间日程、计数，开放期间标为“当前计数，不是结果” |
+  | 投票 | MetaMask 所有者与授权密钥两种身份；Neuron 复制粘贴 |
+  | 我的地址 | 本金、各提案选票；授权流的 GRANT、GRANT+CANCEL、REVOKE |
+  | 其他 | 回执、创建提案、流程记录签署、状态、验证、钱包检查（供 M2 真机记录）、设置 |
+
+  中英双语。
+- **签名流程按规范执行**：
+  - 签名前检查节点同步。
+  - 展示全文与首行摘要，并可查看待签的确切字节。
+  - 锚点取最新块，且须高于该 owner 已知的选票、控制消息与中继队列中的项。
+  - 提交前先在本地验签。
+  - 核对回执签名，并核对回执承诺的正是所发送的信封。
+  - 跟踪状态到 INCLUDED/CONFIRMED，再确认选票为 SELECTED。
+  - 锚点成为孤块或中继失败时提示重签。
+- **测试**：48 项全部通过（vitest，在 Node 中加载真实 WASM），覆盖：
+  - 模拟 EIP-1193 钱包与 Neuron 签名器；
+  - 投票、授权与多成员流程记录；
+  - 等待新块的锚点规则；
+  - 回执签名校验；
+  - 中英文案键一致性。
+- **构建**：`npm run build` 通过，产物约 0.8 MB（JS 435 KB、WASM 348 KB，gzip 后合计约 260 KB），满足服务端的严格 CSP。
+- **浏览器验证**：
+  - 无头 Chromium 在真实 CSP 下加载全部路由，没有控制台错误或 CSP 违规，手机宽度下没有布局溢出。
+  - **真实端到端投票**：对开发链服务端，经 Neuron 路径准备选票。读出页面所示的确切字节，用 `omavote sign` 按 Neuron 格式签名（与 lumos 输出逐字节相同的签名方式）后粘贴提交。页面验证了中继回执，交易在区块 6472 收录，页面显示“已选中（计入）”，全程无控制台错误。脚本为 `web/scripts/e2e-neuron-vote.mjs`，截图与结果在 `evidence/devnet-2026-10-08/ui/`。
+- **未做或需要真人**（详见 `web/NOTES.md`）：
+  - **真机**：MetaMask 桌面与手机的全文显示和账户切换；Neuron（含 Ledger）的菜单文案、换行是否保留、签名格式。用「钱包检查」页记录。
+  - **论坛导入**：严格 CSP 下需要服务端接口。
+  - **其余未做**：与独立来源比对链 tip、用 Neuron 持有的授权密钥投票、passkey 与 EIP-712、WalletConnect、选票列表分页。
 
 ## 6. 独立 TypeScript 验证器（M6）
 
@@ -110,7 +145,7 @@
   1. **result_core 的字段与边界块**：只在向量里定义。13 §4 第 14 条现已写明字段，边界块的选择仍需并入 03。
   2. **Omnilock 0x12**：已按 13 §4 第 19 条接受。
   3. **rules_profile 的取值**：取值字符串只在向量中出现，冻结时须写入 03。
-  4. **影响计数的解析上限未写死**：JSON 深度、超过 8 KiB 的信封只拒自身还是整批、32 KiB 的计量方式、整数位宽，冻结前必须统一。
+  4. **影响计数的解析上限**：JSON 深度、超过 8 KiB 的信封只拒自身还是整批、32 KiB 的计量方式、整数位宽、空批次。现已写入 13 §4 第 21 条，两套实现已对齐。
   5. **诊断码与检查顺序**：大多由实现自定，不影响 result_core，但影响证据包。
 - **补充向量**：根据验证器的建议新增 `vectors/replay-edge.json`，覆盖选中的 CANCEL、同锚点 CONFLICT、CANCELLED_BY_CONTROL、0x12 Omnilock 所有者兼提案人，以及提款后的 YES（ZERO_FINAL_WEIGHT）。
 
@@ -128,7 +163,12 @@
 - 开发链网络参数；
 - 中继交易布局；
 - 回执签名；
+- Omnilock auth flag 0x12 的 EVM 所有者；
+- ZERO_FINAL_WEIGHT 附加诊断；
+- 影响计数的解析上限；
 - MetaMask 的十六进制编码。
+
+其中 Omnilock 0x12 与解析上限是本轮根据钱包源码研究和第二实现的反馈作出的决定，冻结前请重点评审。
 
 ## 8. 需要人来完成的事
 
@@ -136,7 +176,7 @@
    - Neuron 软件钱包；
    - Neuron + Ledger：核对首行摘要的显示；
    - MetaMask 桌面版；
-   - MetaMask 手机版（含 WalletConnect）。
+   - MetaMask 手机版（App 内浏览器；前端未接 WalletConnect，见 §5）。
 
    完成后冻结 V2 线格式。
 2. **治理参数**：
@@ -158,7 +198,7 @@
 - API 只服务已索引 tip 的视图。授权的历史视图需要客户端用 `history` 中的位置自行回溯。按区块哈希查询本金（`/api/owners/{id}/power?block_hash=`）可用。
 - 开发链没有 Omnilock 与 PW Lock 二进制。演示用声明的 Omnilock 身份创建 EVM 所有者的存款，这类存款无法在开发链上提取。
 - `webauthn-es256-v2` 仍为保留 adapter，未实现。
-- 开发链 `truncate` 有两个特性：可能与在途区块竞争而不生效；矿工可能把同一个区块原样重新提交。演示因此会重试，并截断到收录块之下两块。
+- 开发链 `truncate` 只回退 tip，被删区块仍在节点里，外部矿工可能把同一区块重新接上。演示因此在截断后立即用 `generate_block` 挖出更重的新分支，并确认收录块的哈希确实改变。
 
 ## 10. 文件地图
 
@@ -166,9 +206,11 @@
 |---|---|
 | `crates/omavote-core/` | 协议核心：JSON/JCS、哈希、Molecule、地址、消息与文本、adapter、载体、回放引擎、计票、测试工具 |
 | `crates/omavote-wasm/` | 浏览器绑定：JSON 进出的 `call(method, params)` |
-| `crates/omavote/` | 服务端二进制：`serve`、`relay`、`verify`、`network`、`keygen`、`demo`、`demo-roles` |
+| `crates/omavote/` | 服务端二进制：`serve`、`relay`、`verify`、`network`、`keygen`、`sign`、`demo`、`demo-roles` |
 | `web/` | 前端（React + Vite + WASM） |
 | `verifier-ts/` | 独立 TypeScript 验证器（CCC） |
 | `vectors/` | 跨语言测试向量；`external.json` 为外部钱包和 SDK 的输出 |
 | `schemas/` | JSON Schema 与校验脚本 |
 | `deploy/` | systemd、Caddyfile、配置样例、开发链脚本 |
+| `scripts/` | `ci.sh`（不需要节点的全部检查）、`diff-verifiers.sh`（两套实现差分） |
+| `evidence/` | 开发链演示、复算与浏览器端到端投票的证据 |
