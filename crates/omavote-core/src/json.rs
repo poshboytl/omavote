@@ -136,13 +136,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// `depth` counts the enclosing containers. The top-level container is at depth 1
+    /// and at most `MAX_DEPTH` nested objects/arrays are accepted; scalars add no depth.
     fn value(&mut self, depth: usize) -> Result<Value> {
-        if depth > MAX_DEPTH {
-            return Err(Error::format("JSON nesting too deep"));
-        }
         match self.peek() {
-            Some(b'{') => self.object(depth),
-            Some(b'[') => self.array(depth),
+            Some(b'{') | Some(b'[') if depth + 1 > MAX_DEPTH => Err(Error::format("JSON nesting too deep")),
+            Some(b'{') => self.object(depth + 1),
+            Some(b'[') => self.array(depth + 1),
             Some(b'"') => Ok(Value::String(self.string()?)),
             Some(b'n') => self.expect_lit("null").map(|_| Value::Null),
             Some(b't') => self.expect_lit("true").map(|_| Value::Bool(true)),
@@ -178,7 +178,7 @@ impl<'a> Parser<'a> {
             }
             self.i += 1;
             self.ws();
-            let v = self.value(depth + 1)?;
+            let v = self.value(depth)?;
             obj.0.push((key, v));
             self.ws();
             match self.peek() {
@@ -202,7 +202,7 @@ impl<'a> Parser<'a> {
         }
         loop {
             self.ws();
-            items.push(self.value(depth + 1)?);
+            items.push(self.value(depth)?);
             self.ws();
             match self.peek() {
                 Some(b',') => self.i += 1,
@@ -431,6 +431,16 @@ impl<'a> Fields<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nesting_limit_counts_containers_only() {
+        let nest = |n: usize, inner: &str| format!("{}{}{}", "[".repeat(n), inner, "]".repeat(n));
+        assert!(parse(nest(32, "\"x\"").as_bytes()).is_ok());
+        assert!(parse(nest(32, "").as_bytes()).is_ok());
+        assert!(parse(nest(33, "").as_bytes()).is_err());
+        assert!(parse(format!("{{\"a\":{}}}", nest(31, "\"x\"")).as_bytes()).is_ok());
+        assert!(parse(format!("{{\"a\":{}}}", nest(32, "")).as_bytes()).is_err());
+    }
 
     #[test]
     fn rejects_numbers_duplicates_and_bad_unicode() {

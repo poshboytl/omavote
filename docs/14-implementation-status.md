@@ -96,11 +96,23 @@ FRONTEND_RESULTS
 
 ## 6. 独立 TypeScript 验证器（M6）
 
-VERIFIER_RESULTS
+`verifier-ts/` 由一个独立 agent 只依据 `docs/` 与 `vectors/` 编写（TypeScript + CCC + noble），没有读过 Rust 代码。它与 Rust 实现的唯一交流，是协调方转告的钱包源码研究结论：高 s 签名规则、Neuron 与 EIP-191 摘要格式、新向量。
+
+- **测试**：`npm test` 107 项全部通过；`check-vectors` 对 7 个向量文件的 119 项检查全部通过，回放向量的 `result_hash` 逐字节一致；3 万区块的合成数据回放约 0.3 秒。
+- **开发链差分**：见 §4，6 个提案全部一致。
+- **规范问题清单**：`verifier-ts/SPEC-NOTES.md` 逐条列出文档沉默、歧义或矛盾、需要查向量才能决定的地方，供人工审计。主要几条及处理：
+  1. **result_core 的字段与边界块**：只在向量里定义。13 §4 第 14 条现已写明字段，边界块的选择仍需并入 03。
+  2. **Omnilock 0x12**：已按 13 §4 第 19 条接受。
+  3. **rules_profile 的取值**：取值字符串只在向量中出现，冻结时须写入 03。
+  4. **影响计数的解析上限未写死**：JSON 深度、超过 8 KiB 的信封只拒自身还是整批、32 KiB 的计量方式、整数位宽，冻结前必须统一。
+  5. **诊断码与检查顺序**：大多由实现自定，不影响 result_core，但影响证据包。
+- **补充向量**：根据验证器的建议新增 `vectors/replay-edge.json`，覆盖选中的 CANCEL、同锚点 CONFLICT、CANCELLED_BY_CONTROL、0x12 Omnilock 所有者兼提案人，以及提款后的 YES（ZERO_FINAL_WEIGHT）。
+
+独立性有限：两套实现出自同一个模型。规范要求的“另一个人编写”仍需人工完成（§8）。
 
 ## 7. 实现中补定的规则
 
-已写入 [13 §4](13-technical-plan.md) 第 9–21 条，V2 冻结时须并入 03。主要内容：
+已写入 [13 §4](13-technical-plan.md) 第 9–22 条，V2 冻结时须并入 03。主要内容：
 
 - `clock(genesis)` 取创世块自身时间戳；
 - 发布顺序、锚点与期限的精确检查；

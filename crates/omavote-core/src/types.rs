@@ -4,7 +4,7 @@ use crate::error::{Error, Result};
 use crate::hash::{domain, domain_hash};
 use crate::json::{jcs_bytes, Fields, Object, Value};
 use crate::molecule::Script;
-use crate::util::{dec, parse_dec_u128, parse_dec_u64, parse_hash, to_hex, Hash32};
+use crate::util::{dec, parse_dec_u64, parse_hash, to_hex, Hash32};
 
 pub const PROTOCOL_VERSION: &str = "2";
 pub const DAO_NAMESPACE: &str = "ckb-community-fund-dao";
@@ -54,8 +54,8 @@ impl Ratio {
     }
     fn from_json(v: &Value) -> Result<Self> {
         let mut f = Fields::new(v, "ratio")?;
-        let numerator = parse_dec_u128(f.str("numerator")?, "numerator")?;
-        let denominator = parse_dec_u128(f.str("denominator")?, "denominator")?;
+        let numerator = parse_dec_u64(f.str("numerator")?, "numerator")? as u128;
+        let denominator = parse_dec_u64(f.str("denominator")?, "denominator")? as u128;
         f.finish()?;
         if denominator == 0 || numerator > denominator {
             return Err(Error::format("ratio must satisfy 0 <= numerator <= denominator, denominator > 0"));
@@ -153,8 +153,8 @@ impl RulesProfile {
         if names != ["YES", "NO", "CANCEL"] {
             return Err(Error::unsupported("rules_profile.choices"));
         }
-        let quorum_grant_multiplier = parse_dec_u128(f.str("quorum_grant_multiplier")?, "quorum_grant_multiplier")?;
-        let quorum_meta_rule_shannon = parse_dec_u128(f.str("quorum_meta_rule_shannon")?, "quorum_meta_rule_shannon")?;
+        let quorum_grant_multiplier = parse_dec_u64(f.str("quorum_grant_multiplier")?, "quorum_grant_multiplier")? as u128;
+        let quorum_meta_rule_shannon = parse_dec_u64(f.str("quorum_meta_rule_shannon")?, "quorum_meta_rule_shannon")? as u128;
         let approval_grant = Ratio::from_json(f.value("approval_grant")?)?;
         let approval_meta_rule = Ratio::from_json(f.value("approval_meta_rule")?)?;
         let threshold_inclusive = match f.str("threshold_comparison")? {
@@ -166,7 +166,7 @@ impl RulesProfile {
         let delegate_cutoff_ms = parse_dec_u64(f.str("delegate_cutoff_ms")?, "delegate_cutoff_ms")?;
         let voting_period_ms = parse_dec_u64(f.str("voting_period_ms")?, "voting_period_ms")?;
         let proposer_min_deposit_shannon =
-            parse_dec_u128(f.str("proposer_min_deposit_shannon")?, "proposer_min_deposit_shannon")?;
+            parse_dec_u64(f.str("proposer_min_deposit_shannon")?, "proposer_min_deposit_shannon")? as u128;
         f.finish()?;
         if voting_period_ms == 0 || delegate_cutoff_ms > voting_period_ms {
             return Err(Error::format("rules_profile: invalid voting period or delegate cutoff"));
@@ -506,8 +506,8 @@ impl Manifest {
         let forum_revision = f.str("forum_revision")?.to_string();
         parse_dec_u64(&forum_revision, "forum_revision")?;
         let discussion_evidence_hash = opt_hash_field(&mut f, "discussion_evidence_hash")?;
-        let budget_ckb_shannon = parse_dec_u128(f.str("budget_ckb_shannon")?, "budget_ckb_shannon")?;
-        let quorum_base_shannon = parse_dec_u128(f.str("quorum_base_shannon")?, "quorum_base_shannon")?;
+        let budget_ckb_shannon = parse_dec_u64(f.str("budget_ckb_shannon")?, "budget_ckb_shannon")? as u128;
+        let quorum_base_shannon = parse_dec_u64(f.str("quorum_base_shannon")?, "quorum_base_shannon")? as u128;
         let payment_terms_hash = opt_hash_field(&mut f, "payment_terms_hash")?;
         let recipient_lock_script = match f.value("recipient_lock_script")? {
             Value::Null => None,
