@@ -169,6 +169,32 @@ pub fn poll_ballots(engine: &Engine, poll: &PollState) -> Vec<Value> {
     poll.ballots.iter().map(|b| ballot_json(b, ballot_status(engine, poll, b, sels.get(&b.owner_id)))).collect()
 }
 
+/// Tally-time diagnostics (docs/13 §4 item 20): owners whose selected YES/NO carries
+/// zero principal at the close, reported at the close height in owner_id order.
+pub fn tally_diagnostics(engine: &Engine, poll_id: &Hash32) -> Vec<Value> {
+    let close = match engine.polls.get(poll_id).and_then(|p| p.close.as_ref()) {
+        Some(c) => c.number,
+        None => return Vec::new(),
+    };
+    match tally::result_core(engine, poll_id) {
+        Ok(Some(rc)) => tally::zero_final_weight_owners(&rc)
+            .iter()
+            .map(|o| {
+                json!({
+                    "height": dec(close),
+                    "kind": "owner",
+                    "id": to_hex(o),
+                    "poll_id": to_hex(poll_id),
+                    "owner_id": to_hex(o),
+                    "code": "ZERO_FINAL_WEIGHT",
+                    "detail": "the selected YES/NO ballot is kept but the owner has no principal at the close",
+                })
+            })
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
 pub fn rejected_for_poll(engine: &Engine, poll_id: &Hash32) -> Vec<Value> {
     engine.diagnostics.iter().filter(|d| d.poll_id.as_ref() == Some(poll_id)).map(diag).collect()
 }
@@ -388,6 +414,7 @@ pub fn bundle(engine: &Engine, poll_id: &Hash32, meta: &BundleMeta) -> Result<Va
         .iter()
         .filter(|d| d.poll_id.as_ref() == Some(poll_id) || d.owner_id.map(|o| owner_ids.contains(&o)).unwrap_or(false))
         .map(diag)
+        .chain(tally_diagnostics(engine, poll_id))
         .collect();
     let result_records: Vec<Value> = engine
         .result_records

@@ -35,7 +35,6 @@ pub struct ServerInfo {
     pub rpc: Rpc,
     pub network: NetworkParams,
     pub genesis: GenesisCells,
-    pub anchor_depth: u64,
     pub relay_lock: Option<Script>,
 }
 
@@ -211,10 +210,11 @@ async fn network(State(s): State<AppState>) -> Response {
     ))
 }
 
-fn anchor_info(st: &ChainState, depth: u64) -> Option<Value> {
-    let (tip, _, _) = st.tip()?;
-    let n = tip.saturating_sub(depth);
-    let h = *st.hashes.get(&n)?;
+/// Signing anchor: always the newest verified block (docs/11 §2, §5; docs/03 §6).
+/// Never a block below the tip: a later signature anchored lower could lose to a
+/// withheld earlier one. Clients re-sign if the anchor is orphaned.
+fn anchor_info(st: &ChainState) -> Option<Value> {
+    let (n, h, _) = st.tip()?;
     let (_, clock) = st.engine.block_clock(&h)?;
     Some(json!({
         "number": dec(n),
@@ -227,7 +227,7 @@ fn anchor_info(st: &ChainState, depth: u64) -> Option<Value> {
 
 async fn anchor(State(s): State<AppState>) -> Response {
     let st = read(&s.chain);
-    match anchor_info(&st, s.info.anchor_depth) {
+    match anchor_info(&st) {
         Some(a) => ok(with_at(&st.engine, json!({"anchor": a}))),
         None => err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "no indexed blocks yet"),
     }

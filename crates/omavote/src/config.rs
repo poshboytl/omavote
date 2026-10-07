@@ -96,9 +96,6 @@ pub struct ServerConfig {
     pub web_root: Option<PathBuf>,
     /// Key that signs relay receipts (service evidence; holds no funds).
     pub receipt_key_file: Option<PathBuf>,
-    /// Blocks below the tip suggested as signing anchors.
-    #[serde(default = "default_anchor_depth")]
-    pub anchor_depth: u64,
     /// Allowed browser origins for the API (CORS); empty = same origin only.
     #[serde(default)]
     pub cors_origins: Vec<String>,
@@ -110,9 +107,6 @@ fn default_listen() -> String {
 fn default_db() -> PathBuf {
     "omavote.sqlite".into()
 }
-fn default_anchor_depth() -> u64 {
-    4
-}
 
 impl Default for ServerConfig {
     fn default() -> Self {
@@ -121,7 +115,6 @@ impl Default for ServerConfig {
             database: default_db(),
             web_root: None,
             receipt_key_file: None,
-            anchor_depth: default_anchor_depth(),
             cors_origins: Vec::new(),
         }
     }
@@ -224,7 +217,6 @@ listen = "127.0.0.1:8080"
 database = "omavote.sqlite"
 web_root = "web/dist"
 receipt_key_file = "receipt.key"   # omavote keygen receipt.key
-anchor_depth = 4
 cors_origins = []
 
 [sync]

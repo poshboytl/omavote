@@ -108,18 +108,32 @@ pub fn recover_evm(text: &[u8], sig: &[u8; 65]) -> Result<[u8; 20]> {
 /// Owner scripts an EVM address may control under `evm-personal-message-v1`:
 /// Omnilock in plain Ethereum auth mode (args = 0x01 || address || 0x00) and PW Lock (args = address).
 pub fn evm_owner_scripts(network: &NetworkParams, addr: &[u8; 20]) -> Vec<Script> {
-    let mut v = Vec::new();
-    if let Some(omni) = network.omnilock {
-        let mut args = vec![0x01];
+    let omni_args = |auth_flag: u8| {
+        let mut args = vec![auth_flag];
         args.extend_from_slice(addr);
         args.push(0x00);
-        v.push(omni.with_args(args));
+        args
+    };
+    let mut v = Vec::new();
+    if let Some(omni) = network.omnilock {
+        v.push(omni.with_args(omni_args(OMNILOCK_AUTH_ETHEREUM)));
     }
     if let Some(pw) = network.pw_lock {
         v.push(pw.with_args(addr.to_vec()));
     }
+    if let Some(omni) = network.omnilock {
+        v.push(omni.with_args(omni_args(OMNILOCK_AUTH_ETHEREUM_DISPLAYING)));
+    }
     v
 }
+
+/// Omnilock auth flag 0x01: Ethereum key, transaction signature over raw bytes.
+pub const OMNILOCK_AUTH_ETHEREUM: u8 = 0x01;
+/// Omnilock auth flag 0x12: the same Ethereum key with a displayable transaction
+/// message. CCC's EVM signer uses it for new addresses, so EVM owners commonly hold
+/// deposits under this form. Only the Omnilock flags byte 0x00 (no extra modes) is
+/// accepted for either auth flag.
+pub const OMNILOCK_AUTH_ETHEREUM_DISPLAYING: u8 = 0x12;
 
 /// Verify that `sig` over `text` was produced by whoever controls `owner` under `adapter_id`.
 pub fn verify_owner_signature(

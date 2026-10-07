@@ -214,7 +214,7 @@ async fn serve(cfg: config::Config) -> Result<()> {
         chain: syncer.state.clone(),
         store,
         intake,
-        info: Arc::new(api::ServerInfo { rpc, network: net, genesis: cells, anchor_depth: cfg.server.anchor_depth, relay_lock }),
+        info: Arc::new(api::ServerInfo { rpc, network: net, genesis: cells, relay_lock }),
     };
     let web_root = cfg.server.web_root.as_ref().map(|p| cfg.path(p)).filter(|p| p.join("index.html").exists());
     if cfg.server.web_root.is_some() && web_root.is_none() {

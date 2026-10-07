@@ -17,7 +17,6 @@ listen = "127.0.0.1:8080"
 database = "/var/lib/omavote/omavote.sqlite"
 web_root = "/usr/local/share/omavote/web"
 receipt_key_file = "receipt.key"   # signs relay receipts; holds no funds
-anchor_depth = 4
 cors_origins = []
 
 [relay]

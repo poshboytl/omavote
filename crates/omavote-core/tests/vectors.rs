@@ -444,3 +444,132 @@ fn replay_vectors() {
     let _ = jcs_bytes(&v);
     check_or_write("replay.json", &v);
 }
+
+
+/// Edge cases for cross-implementation checks: a selected CANCEL, a same-anchor
+/// CONFLICT, CANCELLED_BY_CONTROL, an Omnilock 0x12 owner (also the proposer) and a
+/// selected YES whose deposit was withdrawn before the close (ZERO_FINAL_WEIGHT).
+#[test]
+fn replay_edge_vectors() {
+    let net = test_network();
+    let committee: Vec<TestKey> = (0..3).map(|i| TestKey::secp(&format!("edge-committee-{i}"))).collect();
+    let coordinator = TestKey::evm("edge-coordinator");
+    let roles = ProcessRoles::build(
+        net.genesis_hash,
+        None,
+        (2, committee.iter().map(|k| k.descriptor.clone()).collect()),
+        (1, vec![coordinator.descriptor.clone()]),
+        [7; 32],
+    )
+    .unwrap();
+    let rh = roles.roles_hash();
+    let mut c = TestChain::with_config(T0, |cfg| cfg.initial_roles_hash = Some(rh));
+    let dan = TestOwner::ckb("edge-dan", &c.net);
+    let eve = TestOwner::ckb("edge-eve", &c.net);
+    let fay = TestOwner::ckb("edge-fay", &c.net);
+    let gus = TestOwner::evm_omnilock_displaying("edge-gus", &c.net);
+    let hal = TestOwner::ckb("edge-hal", &c.net);
+    let ivy = TestOwner::ckb("edge-ivy", &c.net);
+    let kf = TestKey::evm("edge-key-fay");
+    c.deposit(&dan.lock, 10_000);
+    c.deposit(&eve.lock, 20_000);
+    c.deposit(&fay.lock, 30_000);
+    c.deposit(&gus.lock, 150_000);
+    let hal_cell = c.deposit(&hal.lock, 50_000);
+    c.deposit(&ivy.lock, 60_000);
+    c.publish_policy();
+    c.publish_roles(&roles);
+    c.mine(HOUR);
+    let anchor = c.tip_hash;
+    let gf = c.grant(&fay, &kf, 30 * DAY, anchor);
+    c.publish_controls(&[gf.clone()]);
+    c.mine(HOUR);
+    let start = c.clock_ms + 6 * HOUR;
+    let payload = c.manifest(&[&gus], start, TestChain::default_registry(), RulesParams { opening_confirmations: 2, ..RulesParams::default() }, 10_000);
+    let m = payload.manifest.clone();
+    c.publish_manifest(&payload);
+    c.mine(HOUR);
+    let anchor = c.tip_hash;
+    let admit = c.record(&roles, Role::Coordinator, &[&coordinator], Some(m.poll_id()), RecordDetail::Admission { admitted: true }, anchor);
+    c.publish_records(m.poll_id(), &[admit]);
+    c.mine(HOUR);
+    while c.clock_ms < m.start_ms {
+        c.mine(HOUR);
+    }
+    let a = c.tip_hash;
+    let ballots = vec![
+        c.direct_ballot(&m, &dan, Action::Cancel, a),
+        c.direct_ballot(&m, &eve, Action::Yes, a),
+        c.direct_ballot(&m, &eve, Action::No, a),
+        c.delegate_ballot(&m, &fay, &gf, &kf, Action::Yes, a),
+        c.direct_ballot(&m, &gus, Action::Yes, a),
+        c.direct_ballot(&m, &hal, Action::Yes, a),
+        c.direct_ballot(&m, &ivy, Action::No, a),
+    ];
+    c.publish_ballots(m.poll_id(), &ballots);
+    c.mine(HOUR);
+    let b = c.tip_hash;
+    let rf = c.revoke(&fay, RevokeMode::StopAndCancelOpen, b);
+    c.publish_controls(&[rf]);
+    c.mine(HOUR);
+    c.withdraw(hal_cell, &hal.lock, 50_000 * 100_000_000);
+    c.mine(HOUR);
+    while c.engine.polls[&m.poll_id()].close.is_none() {
+        c.mine(HOUR);
+    }
+    let rc = tally::result_core(&c.engine, &m.poll_id()).unwrap().unwrap();
+    let status = |o: &TestOwner| rc.tally.rows.iter().find(|r| r.selection.owner_id == o.id()).unwrap().selection.status;
+    assert_eq!(status(&dan), tally::FinalStatus::Cancel);
+    assert_eq!(status(&eve), tally::FinalStatus::Conflict);
+    assert_eq!(status(&fay), tally::FinalStatus::CancelledByControl);
+    assert_eq!(status(&gus), tally::FinalStatus::Yes);
+    assert_eq!(status(&hal), tally::FinalStatus::Yes);
+    assert_eq!(status(&ivy), tally::FinalStatus::No);
+    assert_eq!(tally::zero_final_weight_owners(&rc), vec![hal.id()]);
+    assert!(rc.tally.passed);
+    let anchor = c.tip_hash;
+    let att = c.record(&roles, Role::Committee, &[&committee[1], &committee[2]], Some(m.poll_id()), RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: true }, anchor);
+    c.publish_records(m.poll_id(), &[att]);
+    c.mine(HOUR);
+
+    let mut fresh = Engine::new(c.engine.cfg.clone());
+    for blk in &c.blocks {
+        fresh.process_block(blk).unwrap();
+    }
+    let rc2 = tally::result_core(&fresh, &m.poll_id()).unwrap().unwrap();
+    assert_eq!(rc2.result_hash(), rc.result_hash());
+    let close = fresh.polls[&m.poll_id()].close.as_ref().unwrap().number;
+    let mut diagnostics: Vec<Value> = fresh
+        .diagnostics
+        .iter()
+        .map(|d| {
+            obj(vec![
+                ("height", s(dec(d.position.height))),
+                ("kind", s(d.kind)),
+                ("id", Value::opt_str(d.id.map(|h| to_hex(&h)))),
+                ("code", s(d.code)),
+            ])
+        })
+        .collect();
+    for o in tally::zero_final_weight_owners(&rc2) {
+        diagnostics.push(obj(vec![("height", s(dec(close))), ("kind", s("owner")), ("id", s(to_hex(&o))), ("code", s("ZERO_FINAL_WEIGHT"))]));
+    }
+    let v = obj(vec![
+        ("network", network_json(&c.net)),
+        ("initial_roles_hash", s(to_hex(&rh))),
+        ("process_publication_delay_ms", s(dec(MAX_PROCESS_PUBLICATION_DELAY_MS))),
+        ("blocks", arr(c.blocks.iter().map(block_json).collect())),
+        (
+            "expected",
+            obj(vec![
+                ("poll_id", s(to_hex(&m.poll_id()))),
+                ("result_core", rc2.value.clone()),
+                ("result_hash", s(to_hex(&rc2.result_hash()))),
+                ("admission", s("ADMITTED")),
+                ("attestation", s("CONFIRMED")),
+                ("diagnostics", arr(diagnostics)),
+            ]),
+        ),
+    ]);
+    check_or_write("replay-edge.json", &v);
+}

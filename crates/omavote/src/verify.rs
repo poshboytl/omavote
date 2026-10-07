@@ -207,6 +207,7 @@ pub fn poll_report(engine: &omavote_core::engine::Engine, wanted: Option<Hash32>
             "governance": views::governance_json(&tally::governance(engine, id)),
             "result_hash": result_hash,
             "result_core": result_core,
+            "tally_diagnostics": views::tally_diagnostics(engine, id),
             "note": note,
         }));
     }

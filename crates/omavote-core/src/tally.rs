@@ -253,6 +253,18 @@ pub fn result_core(engine: &Engine, poll_id: &Hash32) -> Result<Option<ResultCor
     Ok(Some(ResultCore { value, tally: t }))
 }
 
+/// Owners whose selected YES/NO ballot carries zero final principal: the choice is
+/// kept in result_core and ZERO_FINAL_WEIGHT is reported as an extra diagnostic
+/// (docs/03 §11), in owner_id order.
+pub fn zero_final_weight_owners(rc: &ResultCore) -> Vec<Hash32> {
+    rc.tally
+        .rows
+        .iter()
+        .filter(|r| matches!(r.selection.status, FinalStatus::Yes | FinalStatus::No) && r.counted_weight_shannon == 0)
+        .map(|r| r.selection.owner_id)
+        .collect()
+}
+
 // ---------------------------------------------------------------------------
 // Officiality and governance views (never part of result_core)
 

@@ -590,9 +590,9 @@ pub async fn run(args: DemoArgs) -> Result<()> {
         let r = d.get(&format!("/api/receipts/{}", to_hex(&second_ids[0]))).await?;
         let n: u64 = r["items"][0]["block_number"].as_str().and_then(|x| x.parse().ok()).ok_or_else(|| anyhow!("no inclusion block"))?;
         let old_block = r["items"][0]["block_hash"].as_str().unwrap_or("").to_string();
-        // Truncate two blocks below the inclusion block: the miner may hold a solved block
-        // for the next height and would otherwise re-attach the identical block.
-        let target_n = n - 2;
+        // Truncate to just below the inclusion block. The ballots anchor at the newest
+        // block before inclusion, so their anchors stay canonical.
+        let target_n = n - 1;
         let target = d.rpc.block_hash(target_n).await?.ok_or_else(|| anyhow!("no block {target_n}"))?;
         let before = d.get("/api/status").await?["reorgs"]["count"].as_str().unwrap_or("0").parse::<u64>().unwrap_or(0);
         // The node may race the truncation with a block already in flight; repeat until

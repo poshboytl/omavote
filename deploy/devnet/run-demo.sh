@@ -35,7 +35,6 @@ listen = "127.0.0.1:$API_PORT"
 database = "omavote.sqlite"
 web_root = "$ROOT/web/dist"
 receipt_key_file = "receipt.key"
-anchor_depth = 2
 
 [relay]
 embedded = true

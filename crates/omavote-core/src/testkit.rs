@@ -49,6 +49,17 @@ impl TestOwner {
         TestOwner { secret, lock, adapter: adapter::EVM_PERSONAL_MESSAGE_V1 }
     }
 
+    /// EVM owner using an Omnilock with auth flag 0x12 (CCC's default for new addresses).
+    pub fn evm_omnilock_displaying(label: &str, net: &NetworkParams) -> Self {
+        let secret = test_secret(label);
+        let addr = adapter::evm_address(&secret).unwrap();
+        let mut args = vec![adapter::OMNILOCK_AUTH_ETHEREUM_DISPLAYING];
+        args.extend_from_slice(&addr);
+        args.push(0x00);
+        let lock = net.omnilock.expect("omnilock identity").with_args(args);
+        TestOwner { secret, lock, adapter: adapter::EVM_PERSONAL_MESSAGE_V1 }
+    }
+
     pub fn id(&self) -> Hash32 {
         self.lock.hash()
     }

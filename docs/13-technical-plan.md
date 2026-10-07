@@ -98,7 +98,9 @@ docs/、research/           设计文档与研究模型
     - **签名**：回执由独立的回执密钥签署，回执密钥不持有资金：`H("OMAVOTE/RELAY-RECEIPT/V2\0" || JCS(body))` 上的 secp256k1 可恢复签名。
     - **body 字段**：kind、对象 ID、`envelope_hash = ckbhash(JCS(envelope))`、接收时间、发布时限与中继公钥。
     - **性质**：回执是服务证据，不进入任何协议 ID。
-19. **MetaMask 编码**：`personal_sign` 一律传 `0x` 加 UTF-8 字节的十六进制，不传原文。只含十六进制字符的原文会被当作字节；签名的 v 为 27/28。
+19. **EVM 所有者 lock**：`evm-personal-message-v1` 接受 Omnilock auth flag `0x01` 与 `0x12`（flags 字节均为 `0x00`）以及 PW Lock，见 [03 §5.1](03-protocol.md)。接受 `0x12` 是本轮依据钱包源码研究作出的决定：CCC 的默认地址使用 0x12，否则这些 MetaMask 存款人无法直接投票。需在 M2 真机测试中确认。
+20. **ZERO_FINAL_WEIGHT**：选中 YES 或 NO、但截止时本金为零的 owner，在截止块高度报告此附加诊断，按 owner_id 排序，不进入 result_core。
+21. **MetaMask 编码**：`personal_sign` 一律传 `0x` 加 UTF-8 字节的十六进制，不传原文。只含十六进制字符的原文会被当作字节；签名的 v 为 27/28。
 
 ## 5. 链同步与复算
 
@@ -130,7 +132,7 @@ docs/、research/           设计文档与研究模型
 
 按 03 §12 实现只读 API 与 `POST /envelopes`。所有响应带计算所依据的区块高度与哈希；列表使用稳定游标。Atom feed 分为全局与按 owner 两种。服务端同时托管前端静态文件，但前端也可独立部署到任意静态主机。
 
-实现时 API 挂在 `/api` 前缀下，以免与前端路由冲突；完整清单见 [14：实施进度](14-implementation-status.md)。提案状态按 03 §10 计算：ANNOUNCED、OPEN、CLOSED_UNCONFIRMED、AUDITABLE、FINALIZED_BY_POLICY、EXECUTED、DISPUTED、LATE_MANIFEST。开放期间的即时统计标为 PROVISIONAL，只是诊断视图，不得显示为通过。
+实现时 API 挂在 `/api` 前缀下，以免与前端路由冲突；完整清单见 [14：实施进度](14-implementation-status.md)。提案状态按 03 §10 计算：ANNOUNCED、OPEN、CLOSED_UNCONFIRMED、AUDITABLE、FINALIZED_BY_POLICY、EXECUTED、DISPUTED、LATE_MANIFEST。开放期间的即时统计标为 PROVISIONAL，只是诊断视图，不带 outcome 字段，不得显示为通过。签名锚点接口 `/api/anchor` 总是返回最新已索引块，不提供 tip 之前的块（[11 §2、§5](11-authorization.md)）。控制消息的锚点还须高于该 owner 已知的最高控制锚点，改票的锚点须高于上一张票，必要时由客户端等待新块。
 
 ## 8. 前端
 

@@ -289,7 +289,7 @@ Ballot-Hash: <ballot_id>
 
 Neuron 代码仍包含旧签名兼容验证路径；新投票协议不自动接纳这些旧格式。历史 Metaforo 地址绑定签名无本提案域、无选项、无修订先后，绝不能被转换成一张新选票。
 
-**EVM 消息签名**：使用确定版本的 `personal_sign`/EIP-191，对完全相同的 UTF-8 挑战恢复 EOA；再按本网络指定的 Omnilock 普通 EVM 模式或 PW Lock 规则匹配完整 script。合约账户、EIP-1271、Omnilock 特殊 flags 不因返回一个 EVM 地址就自动支持。将来采用 EIP-712 必须是独立 adapter，固定 domain 与字段，不能静默切换验签模式。[EIP-191](https://eips.ethereum.org/EIPS/eip-191)、[EIP-712](https://eips.ethereum.org/EIPS/eip-712)
+**EVM 消息签名**：使用确定版本的 `personal_sign`/EIP-191，对完全相同的 UTF-8 挑战恢复 EOA；再按本网络指定的 Omnilock 普通 EVM 模式或 PW Lock 规则匹配完整 script。Omnilock 普通 EVM 模式指 args 恰为 22 字节 `auth_flag ‖ eth_address ‖ 0x00`：auth flag 取 `0x01`（Ethereum）或 `0x12`（Ethereum-displaying），flags 字节必须为 `0x00`。两种 auth flag 由同一个以太坊私钥控制，差别只在 lock 验交易时显示的消息；CCC 的 EVM 签名器给新地址默认使用 `0x12`。PW Lock 的 args 恰为 20 字节地址。合约账户、EIP-1271、带 admin list、ACP、time-lock 或 supply 模式的 Omnilock，不因返回一个 EVM 地址就自动支持。将来采用 EIP-712 必须是独立 adapter，固定 domain 与字段，不能静默切换验签模式。[EIP-191](https://eips.ethereum.org/EIPS/eip-191)、[EIP-712](https://eips.ethereum.org/EIPS/eip-712)
 
 **JoyID**：消息签名验真之外，还需验证公钥、key type、主/子密钥、授权状态与 CKB lock 的对应关系；WebAuthn challenge、origin/RP 约束不可省略。需要外部授权状态的模式须固定到收录时的历史状态，不能审计时查询今天的远程接口。未完成者标明未支持，而非“CCC 能连接就算可投”。[CCC JoyID 验签入口](https://github.com/ckb-devrel/ccc/blob/722cfe28bb184145e14887d54162d55fbe3dcadb/packages/core/src/signer/ckb/verifyJoyId.ts)
 
