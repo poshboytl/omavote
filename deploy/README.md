@@ -37,8 +37,9 @@
 | `reorgs` | 链重组次数与最近一次的深度 |
 | `relay.queue` | 各状态的队列数 |
 | `relay.balance_shannon` | 热钱包余额 |
+| `relay.oldest_in_flight_ms` | 最早一笔已广播、尚未收录的中继交易已等待的毫秒数 |
 
-需要告警的情况：落后超过约 20 个区块、出现 `last_error`、`RECEIVED` 积压长时间不降、余额低于约 2,000 CKB。
+需要告警的情况：落后超过约 20 个区块、出现 `last_error`、`RECEIVED` 积压长时间不降、在途交易超过约 10 分钟未收录、余额低于约 2,000 CKB。
 
 ## 独立复核
 

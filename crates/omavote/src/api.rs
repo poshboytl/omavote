@@ -153,10 +153,20 @@ async fn status(State(s): State<AppState>) -> Response {
         _ => Value::Null,
     };
     let counts = s.store.relay_counts().unwrap_or_default();
+    // A transaction stuck in the pool (fee policy, full pool) shows up here first.
+    let oldest_in_flight = s
+        .store
+        .relay_txs_with_status(&["BROADCAST"])
+        .unwrap_or_default()
+        .iter()
+        .map(|t| t.created_ms)
+        .min()
+        .map(|c| dec(now_ms().saturating_sub(c)));
     let mut relay = json!({
         "intake": s.intake.is_some(),
         "receipt_key": s.intake.as_ref().map(|i| i.receipt_public_key()),
         "queue": counts.into_iter().map(|(k, n)| (k, json!(n.to_string()))).collect::<serde_json::Map<_, _>>(),
+        "oldest_in_flight_ms": oldest_in_flight,
     });
     if let Some(lock) = &s.info.relay_lock {
         relay["address"] = json!(s.info.network.address(lock).ok());
