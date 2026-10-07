@@ -827,5 +827,28 @@
       "Compromised adapter guarantee conditioned on poll exclusion; polls still accepting it must hold execution",
       "Residual sequence wording removed from docs/05 §2.2 and the current freeze list"
     ]
+  },
+  "implementation_status": {
+    "date": "2026-10-08",
+    "report": "docs/14-implementation-status.md",
+    "plan": "docs/13-technical-plan.md",
+    "wire_protocol_frozen": false,
+    "deployed": "local CKB dev chain only; no testnet or mainnet deployment; no real funds",
+    "implemented": [
+      "crates/omavote-core: strict JSON/JCS, hashes, Molecule, addresses, messages and signing texts, adapters, carriers, replay engine, tally and result_core",
+      "crates/omavote-wasm: browser binding (JSON dispatch)",
+      "crates/omavote: chain sync with reorg rollback and SQLite cache, omavote verify, relay with signed receipts, public API, Atom feeds, dev-chain demo",
+      "schemas/omavote-v2.schema.json validated against vectors",
+      "vectors/external.json: Neuron/lumos, eth-sig-util and CCC outputs matched byte for byte",
+      "deploy/: systemd units, Caddyfile, configuration samples, dev-chain scripts"
+    ],
+    "encoding_decisions": "docs/13 section 4 items 9-19 (to be merged into docs/03 at the V2 freeze)",
+    "needs_humans": [
+      "real-device signing: Neuron (with Ledger), MetaMask desktop and mobile",
+      "governance values: process publication delay, opening_confirmations, result confirmations, process roles, proposer minimum deposit",
+      "independent implementation and audit by another person",
+      "mainnet accelerated sync and comparison with full replay",
+      "user testing and shadow run (M7)"
+    ]
   }
 }
