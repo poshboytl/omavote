@@ -442,12 +442,21 @@ impl Intake {
     }
 }
 
+/// Owner of a queued ballot or control (None for other kinds).
+pub fn item_owner(i: &RelayItem) -> Option<String> {
+    let v = parse(i.envelope.as_bytes()).ok()?;
+    let lock = v.as_object()?.get("body")?.as_object()?.get("owner_lock")?;
+    Some(to_hex(&omavote_core::molecule::Script::from_json(lock).ok()?.hash()))
+}
+
 pub fn item_json(i: &RelayItem, duplicate: bool) -> Value {
     json!({
         "status": i.status,
         "duplicate": duplicate,
         "message_kind": i.message_kind,
         "object_id": i.object_id,
+        "scope_id": i.scope_id,
+        "owner_id": item_owner(i),
         "tx_hash": i.tx_hash,
         "block_number": i.block_number.map(dec),
         "block_hash": i.block_hash,

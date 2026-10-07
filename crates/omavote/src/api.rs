@@ -85,6 +85,7 @@ pub fn router(state: AppState, web_root: Option<std::path::PathBuf>, cors_origin
         .route("/api/owners/{id}/authorizations", get(owner_authorizations))
         .route("/api/owners/{id}/ballots", get(owner_ballots))
         .route("/api/owners/{id}/feed.atom", get(owner_feed))
+        .route("/api/owners/{id}/queued", get(owner_queued))
         .route("/api/address/{address}", get(address))
         .route("/api/authorizations/{id}", get(authorization))
         .route("/api/keys/{id}/authorizations", get(key_authorizations))
@@ -490,6 +491,29 @@ async fn receipts(State(s): State<AppState>, Path(id): Path<String>) -> Response
         Ok(_) => not_found("receipt"),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, "STORE", e),
     }
+}
+
+/// Ballots and controls of an owner accepted by this relay but not yet confirmed, so
+/// that a signing client can anchor above them (docs/11 §5).
+async fn owner_queued(State(s): State<AppState>, Path(id): Path<String>) -> Response {
+    let owner = match id_param(&id) {
+        Ok(i) => to_hex(&i),
+        Err(r) => return r,
+    };
+    let items = match s.store.relay_with_status(&["RECEIVED", "BROADCAST", "INCLUDED"]) {
+        Ok(v) => v,
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, "STORE", e),
+    };
+    let mine: Vec<Value> = items
+        .iter()
+        .filter(|i| crate::relay::item_owner(i).as_deref() == Some(owner.as_str()))
+        .map(|i| {
+            let mut v = item_json(i, false);
+            v["envelope"] = serde_json::from_str(&i.envelope).unwrap_or(Value::Null);
+            v
+        })
+        .collect();
+    ok(json!({"owner_id": owner, "queued": mine}))
 }
 
 #[derive(Deserialize)]
