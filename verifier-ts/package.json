@@ -1,0 +1,28 @@
+{
+  "name": "omavote-verifier-ts",
+  "version": "0.1.0",
+  "description": "Independent TypeScript verifier for the Omavote V2 vote-replay protocol (docs/03, docs/11)",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "omavote-verifier-ts": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:test": "tsc -p tsconfig.test.json",
+    "test": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && node --test \"dist/test-build/test/*.test.js\"",
+    "check-vectors": "node dist/cli.js check-vectors ../vectors"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@ckb-ccc/core": "^1.23.0",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
+  }
+}
