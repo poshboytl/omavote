@@ -45,6 +45,7 @@ pub fn diag(d: &Diagnostic) -> Value {
         "owner_id": opt_hx(&d.owner_id),
         "code": d.code,
         "detail": d.detail,
+        "object": d.object.as_ref().map(to_serde),
     })
 }
 

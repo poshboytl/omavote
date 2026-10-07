@@ -97,6 +97,8 @@ pub struct Diagnostic {
     pub owner_id: Option<Hash32>,
     pub code: &'static str,
     pub detail: String,
+    /// The rejected signed object when it could be decoded (evidence bundles).
+    pub object: Option<crate::json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -300,6 +302,21 @@ impl Engine {
     }
 
     fn diag(&mut self, ctx: &Ctx, kind: &'static str, id: Option<Hash32>, poll: Option<Hash32>, owner: Option<Hash32>, code: &'static str, detail: impl Into<String>) {
+        self.diag_obj(ctx, kind, id, poll, owner, code, detail, None)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn diag_obj(
+        &mut self,
+        ctx: &Ctx,
+        kind: &'static str,
+        id: Option<Hash32>,
+        poll: Option<Hash32>,
+        owner: Option<Hash32>,
+        code: &'static str,
+        detail: impl Into<String>,
+        object: Option<crate::json::Value>,
+    ) {
         self.diagnostics.push(Diagnostic {
             position: ctx.pos,
             tx_hash: ctx.tx_hash,
@@ -309,6 +326,7 @@ impl Engine {
             owner_id: owner,
             code,
             detail: detail.into(),
+            object,
         });
     }
 
@@ -500,7 +518,7 @@ impl Engine {
         let poll_id = m.poll_id();
         let net = self.cfg.network.clone();
         let fail = |s: &mut Self, code: &'static str, d: String| {
-            s.diag(ctx, "manifest", Some(poll_id), Some(poll_id), None, code, d)
+            s.diag_obj(ctx, "manifest", Some(poll_id), Some(poll_id), None, code, d, Some(payload.to_json()))
         };
         if m.genesis != net.genesis_hash {
             return fail(self, "WRONG_NETWORK", "manifest for another network".into());
@@ -568,7 +586,7 @@ impl Engine {
         let net = self.cfg.network.clone();
         macro_rules! reject {
             ($code:expr, $detail:expr) => {{
-                self.diag(ctx, "authorization_control", Some(auth_id), None, Some(owner_id), $code, $detail);
+                self.diag_obj(ctx, "authorization_control", Some(auth_id), None, Some(owner_id), $code, $detail, Some(env.to_json()));
                 return;
             }};
         }
@@ -691,7 +709,7 @@ impl Engine {
         let net = self.cfg.network.clone();
         macro_rules! reject {
             ($code:expr, $detail:expr) => {{
-                self.diag(ctx, "ballot", Some(ballot_id), Some(poll_id), Some(owner_id), $code, $detail);
+                self.diag_obj(ctx, "ballot", Some(ballot_id), Some(poll_id), Some(owner_id), $code, $detail, Some(env.to_json()));
                 return;
             }};
         }
@@ -789,7 +807,7 @@ impl Engine {
         let record_id = r.record_id();
         macro_rules! reject {
             ($code:expr, $detail:expr) => {{
-                self.diag(ctx, "process_record", Some(record_id), r.poll_id, None, $code, $detail);
+                self.diag_obj(ctx, "process_record", Some(record_id), r.poll_id, None, $code, $detail, Some(env.to_json()));
                 return;
             }};
         }
