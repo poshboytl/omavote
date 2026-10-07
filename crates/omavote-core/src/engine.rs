@@ -858,6 +858,134 @@ impl Engine {
     }
 }
 
+// ---------------------------------------------------------------------------
+// JSON form of the reduced block data (server cache, replay vectors).
+
+impl BlockInput {
+    pub fn to_json(&self) -> crate::json::Value {
+        use crate::json::{Object, Value};
+        use crate::util::dec;
+        let txs = self
+            .transactions
+            .iter()
+            .map(|t| {
+                Value::Object(
+                    Object::new()
+                        .with("hash", Value::str(to_hex(&t.hash)))
+                        .with(
+                            "inputs",
+                            Value::Array(
+                                t.inputs
+                                    .iter()
+                                    .map(|i| {
+                                        Value::Object(
+                                            Object::new()
+                                                .with("tx_hash", Value::str(to_hex(&i.tx_hash)))
+                                                .with("index", Value::str(dec(i.index))),
+                                        )
+                                    })
+                                    .collect(),
+                            ),
+                        )
+                        .with(
+                            "outputs",
+                            Value::Array(
+                                t.outputs
+                                    .iter()
+                                    .map(|o| {
+                                        Value::Object(
+                                            Object::new()
+                                                .with("index", Value::str(dec(o.index)))
+                                                .with("capacity", Value::str(dec(o.capacity)))
+                                                .with("lock", o.lock.to_json())
+                                                .with("type", o.type_.as_ref().map(|s| s.to_json()).unwrap_or(Value::Null))
+                                                .with("data", Value::str(to_hex(&o.data))),
+                                        )
+                                    })
+                                    .collect(),
+                            ),
+                        )
+                        .with("witnesses", Value::Array(t.witnesses.iter().map(|w| Value::str(to_hex(w))).collect())),
+                )
+            })
+            .collect();
+        Value::Object(
+            Object::new()
+                .with("number", Value::str(dec(self.number)))
+                .with("hash", Value::str(to_hex(&self.hash)))
+                .with("parent_hash", Value::str(to_hex(&self.parent_hash)))
+                .with("clock_ms", Value::str(dec(self.clock_ms)))
+                .with("transactions", Value::Array(txs)),
+        )
+    }
+
+    pub fn from_json(v: &crate::json::Value) -> Result<Self> {
+        use crate::json::Fields;
+        use crate::util::{parse_dec_u64, parse_hash, parse_hex};
+        let mut f = Fields::new(v, "block")?;
+        let number = parse_dec_u64(f.str("number")?, "number")?;
+        let hash = parse_hash(f.str("hash")?, "hash")?;
+        let parent_hash = parse_hash(f.str("parent_hash")?, "parent_hash")?;
+        let clock_ms = parse_dec_u64(f.str("clock_ms")?, "clock_ms")?;
+        let mut transactions = Vec::new();
+        for t in f.array("transactions")? {
+            let mut g = Fields::new(t, "transaction")?;
+            let hash = parse_hash(g.str("hash")?, "tx hash")?;
+            let mut inputs = Vec::new();
+            for i in g.array("inputs")? {
+                let mut h = Fields::new(i, "input")?;
+                let tx_hash = parse_hash(h.str("tx_hash")?, "input tx_hash")?;
+                let index = parse_dec_u64(h.str("index")?, "input index")? as u32;
+                h.finish()?;
+                inputs.push(OutPoint { tx_hash, index });
+            }
+            let mut outputs = Vec::new();
+            for o in g.array("outputs")? {
+                let mut h = Fields::new(o, "output")?;
+                let index = parse_dec_u64(h.str("index")?, "output index")? as u32;
+                let capacity = parse_dec_u64(h.str("capacity")?, "capacity")?;
+                let lock = Script::from_json(h.value("lock")?)?;
+                let type_ = match h.value("type")? {
+                    crate::json::Value::Null => None,
+                    s => Some(Script::from_json(s)?),
+                };
+                let data = parse_hex(h.str("data")?, "data")?;
+                h.finish()?;
+                outputs.push(OutputInput { index, capacity, lock, type_, data });
+            }
+            let witnesses = g
+                .array("witnesses")?
+                .iter()
+                .map(|w| parse_hex(w.as_str().unwrap_or("x"), "witness"))
+                .collect::<Result<Vec<_>>>()?;
+            g.finish()?;
+            transactions.push(TxInput { hash, inputs, outputs, witnesses });
+        }
+        f.finish()?;
+        Ok(BlockInput { number, hash, parent_hash, clock_ms, transactions })
+    }
+}
+
+impl Engine {
+    /// Start from a known chain position with a pre-computed DAO deposit set
+    /// (accelerated mode: DAO history from the operator's own node index).
+    pub fn bootstrap(&mut self, tip_number: u64, tip_hash: Hash32, tip_clock_ms: u64, cells: Vec<(OutPoint, Script, u64)>) {
+        for (op, lock, capacity) in cells {
+            let owner_id = lock.hash();
+            self.owner_locks.entry(owner_id).or_insert(lock);
+            self.dao_cells.insert(op, DaoCell { owner_id, capacity, created: Position { height: 0, tx_index: 0, output_index: op.index, envelope_index: 0 } });
+            self.owner_cells.entry(owner_id).or_default().insert(op);
+        }
+        self.blocks.insert(tip_hash, BlockMeta { number: tip_number, clock_ms: tip_clock_ms });
+        self.tip = Some((tip_number, tip_hash, tip_clock_ms));
+    }
+
+    /// True when the outpoint is a live DAO deposit (used to filter block inputs).
+    pub fn is_tracked(&self, op: &OutPoint) -> bool {
+        self.dao_cells.contains_key(op)
+    }
+}
+
 /// Convenience: build the carrier data and witness for a payload.
 pub fn make_carrier(kind: carrier::Kind, scope_id: Hash32, payload: Vec<u8>, witness_index: u32) -> (Vec<u8>, Vec<u8>) {
     let header = Header { kind, scope_id, payload_hash: carrier::payload_hash(kind, &payload), witness_index };

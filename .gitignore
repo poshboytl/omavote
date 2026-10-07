@@ -9,3 +9,5 @@
 *.sqlite-shm
 .env
 research/__pycache__/
+/devnet/bin/
+/devnet/*.log

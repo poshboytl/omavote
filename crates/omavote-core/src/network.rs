@@ -108,6 +108,62 @@ impl NetworkParams {
         )
     }
 
+    pub fn to_json(&self) -> crate::json::Value {
+        use crate::json::{Object, Value};
+        let id = |x: &Option<ScriptId>| match x {
+            Some(i) => Value::Object(
+                Object::new()
+                    .with("code_hash", Value::str(to_hex(&i.code_hash)))
+                    .with("hash_type", Value::str(i.hash_type.as_str())),
+            ),
+            None => Value::Null,
+        };
+        Value::Object(
+            Object::new()
+                .with("name", Value::str(self.name.clone()))
+                .with("genesis_hash", Value::str(to_hex(&self.genesis_hash)))
+                .with("hrp", Value::str(self.hrp.clone()))
+                .with("secp256k1", id(&Some(self.secp256k1)))
+                .with("dao", id(&Some(self.dao)))
+                .with("omnilock", id(&self.omnilock))
+                .with("pw_lock", id(&self.pw_lock)),
+        )
+    }
+
+    pub fn from_json(v: &crate::json::Value) -> Result<Self> {
+        use crate::json::{Fields, Value};
+        let mut f = Fields::new(v, "network")?;
+        let name = f.str("name")?.to_string();
+        let genesis_hash = parse_hash(f.str("genesis_hash")?, "genesis_hash")?;
+        let hrp = f.str("hrp")?.to_string();
+        if hrp != "ckb" && hrp != "ckt" {
+            return Err(Error::format("hrp must be ckb or ckt"));
+        }
+        let read = |v: &Value| -> Result<Option<ScriptId>> {
+            if v.is_null() {
+                return Ok(None);
+            }
+            let mut g = Fields::new(v, "script id")?;
+            let code_hash = parse_hash(g.str("code_hash")?, "code_hash")?;
+            let hash_type = HashType::parse(g.str("hash_type")?)?;
+            g.finish()?;
+            Ok(Some(ScriptId { code_hash, hash_type }))
+        };
+        let secp256k1 = read(f.value("secp256k1")?)?.ok_or_else(|| Error::format("secp256k1 is required"))?;
+        let dao = read(f.value("dao")?)?.ok_or_else(|| Error::format("dao is required"))?;
+        let omnilock = read(f.value("omnilock")?)?;
+        let pw_lock = read(f.value("pw_lock")?)?;
+        f.finish()?;
+        let n = NetworkParams { name, genesis_hash, hrp, secp256k1, dao, omnilock, pw_lock };
+        // Known networks must match the fixed registry exactly.
+        if let Some(known) = NetworkParams::known(&n.genesis_hash) {
+            if known != n {
+                return Err(Error::rule("network parameters differ from the fixed registry for this genesis"));
+            }
+        }
+        Ok(n)
+    }
+
     pub fn require_genesis(&self, g: &Hash32) -> Result<()> {
         if &self.genesis_hash != g {
             return Err(Error::rule("network genesis hash does not match this verifier's network"));

@@ -1,5 +1,6 @@
 [package]
 name = "omavote-wasm"
+description = "Browser bindings for the Omavote protocol core (JSON in, JSON out)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,3 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 omavote-core = { path = "../omavote-core" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+getrandom = { version = "0.2", features = ["js"] }
