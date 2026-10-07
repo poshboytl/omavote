@@ -153,9 +153,12 @@ pub struct Barrier {
 pub struct ControlEvent {
     pub authorization_id: Hash32,
     pub position: Position,
+    pub tx_hash: Hash32,
     pub anchor_height: u64,
     pub action: ControlAction,
     pub outcome: &'static str,
+    /// Full signed control (evidence bundles carry the owner proof).
+    pub envelope: ControlEnvelope,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -189,6 +192,8 @@ pub struct CloseSnapshot {
     pub hash: Hash32,
     /// Live DAO deposits of participating owners at the end of H_close.
     pub cells: BTreeMap<Hash32, Vec<(OutPoint, u64)>>,
+    /// Creation positions of those deposits (evidence bundles).
+    pub created: BTreeMap<OutPoint, Position>,
 }
 
 #[derive(Clone, Debug)]
@@ -398,11 +403,16 @@ impl Engine {
             if needs_close && b.clock_ms >= end_ms {
                 let owners: Vec<Hash32> = self.polls[&id].owner_locks.keys().copied().collect();
                 let mut cells = BTreeMap::new();
+                let mut created = BTreeMap::new();
                 for o in owners {
-                    cells.insert(o, self.owner_deposits(&o));
+                    let deposits = self.owner_deposits(&o);
+                    for (op, _) in &deposits {
+                        created.insert(*op, self.dao_cells[op].created);
+                    }
+                    cells.insert(o, deposits);
                 }
                 let p = self.polls.get_mut(&id).unwrap();
-                p.close = Some(CloseSnapshot { number: b.number - 1, hash: b.parent_hash, cells });
+                p.close = Some(CloseSnapshot { number: b.number - 1, hash: b.parent_hash, cells, created });
             }
         }
     }
@@ -638,7 +648,15 @@ impl Engine {
                 "EFFECTIVE"
             }
         };
-        stream.history.push(ControlEvent { authorization_id: auth_id, position: ctx.pos, anchor_height: h, action: c.action, outcome });
+        stream.history.push(ControlEvent {
+            authorization_id: auth_id,
+            position: ctx.pos,
+            tx_hash: ctx.tx_hash,
+            anchor_height: h,
+            action: c.action,
+            outcome,
+            envelope: env.clone(),
+        });
         if c.action == ControlAction::Grant {
             let k = c.key_descriptor.clone().expect("validated");
             self.grants.insert(

@@ -1,0 +1,47 @@
+{
+  "provenance": "Values produced outside this repository and checked by the research agent on 2026-10-08: Neuron sign-message (lumos 0.23 signRecoverable, RFC 6979 low-S), eth-sig-util 9.0.0 personalSign (web3.js documentation example), CCC 1.23.0 WitnessArgs serialization. See docs/14 for sources.",
+  "ckb_hash": [
+    {
+      "data": "0x",
+      "hash": "0x44f4c69744d5f8c55d642062949dcae49bc4e7ef43d388c5a12f42b5633d163e"
+    }
+  ],
+  "neuron": [
+    {
+      "text": "hello",
+      "digest": "0xb0b1e8d9bf460ea3d4ad088e50f117b0b43aa414108f92841ce3e11e2ea1366e",
+      "secret": "0xd00c06bfd800d27397002dca6fb0993d5ba6399b4238b2f29ee9deb97593d2bc",
+      "signature": "0x7df657831b2cb5f20ed98306e1441f6b8ae6dfefc43993f9b2c25b6b0b0d390039ba0b5c2a4ad8d6d0434cef80b09574a57806cd8693c798caf5e3018dce507800",
+      "pubkey": "0x03fe6c6d09d1a0f70255cddf25c5ed57d41b5c08822ae710dc10f8c88290e0acdf",
+      "lock_args": "0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7"
+    },
+    {
+      "text": "Omavote test message 你好",
+      "digest": "0xd41f6d49e68cbc1d1cbeaf143c8f03494cf2009a99912be3676e61b19e4ea538",
+      "secret": "0xd00c06bfd800d27397002dca6fb0993d5ba6399b4238b2f29ee9deb97593d2bc",
+      "signature": "0x70dd08e23c9792e8ed4793e03e9d54508277339d05a6c1c4bcb1ca98f50806572d06f8ec239096f45454bf7405f7223d533cc287681ce8a4f0ea65616ebf712701",
+      "pubkey": "0x03fe6c6d09d1a0f70255cddf25c5ed57d41b5c08822ae710dc10f8c88290e0acdf",
+      "lock_args": "0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7"
+    }
+  ],
+  "eip191": [
+    {
+      "text": "Some data",
+      "digest": "0x1da44b586eb0729ff70a73c326926f6ed5a25f5b056e7f47fbc6e58d86871655",
+      "secret": "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+      "address": "0x2c7536e3605d9c16a7a3d7b1898e529396a65c23",
+      "checksum_address": "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23",
+      "signature": "0xb91467e570a6466aa9e9876cbcd013baba02900b8979d43fe208a4a4f339f5fd6007e74cd82e037b800186422fc2da167c747ef045e5d18a5f5d4300f8e1a0291c"
+    }
+  ],
+  "witness_args": [
+    {
+      "lock": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "serialized": "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "lock": null,
+      "serialized": "0x10000000100000001000000010000000"
+    }
+  ]
+}
