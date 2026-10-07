@@ -185,6 +185,16 @@ impl Demo {
         .await
     }
 
+    /// The Omavote server must have indexed `block` before its pre-checks can see it.
+    async fn server_caught_up(&self, block: u64) -> Result<()> {
+        self.wait("the server to index the transaction", 60, || async {
+            let s = self.get("/api/status").await?;
+            let n: u64 = s["indexed"]["number"].as_str().and_then(|x| x.parse().ok()).unwrap_or(0);
+            Ok(if n >= block { Some(()) } else { None })
+        })
+        .await
+    }
+
     /// Build, sign, send a faucet-paid transaction and wait until it is committed.
     async fn send(&mut self, plan: TxPlan, extra: &[&Wallet], what: &str) -> Result<(Hash32, Hash32, u64)> {
         let cells: Vec<LiveCell> = txbuilder::live_cells(&self.rpc, &self.faucet.lock)
@@ -215,6 +225,7 @@ impl Demo {
             })
             .await?;
         self.indexer_caught_up(number).await?;
+        self.server_caught_up(number).await?;
         self.say(format!("{what}: tx {hash} in block {number}"));
         Ok((hash_arg(&hash)?, hash_arg(&block_hash)?, number))
     }
