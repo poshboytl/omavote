@@ -96,7 +96,7 @@
 
 ## 5. 前端（M5）
 
-FRONTEND_RESULTS
+前端由一个子 agent 在 `web/` 中编写（React + Vite + TypeScript，签名文本、ID 与验签全部调用核心的 WASM）。本节在它完成并经验证后更新；若此处仍是这段话，表示前端尚未完成验收，代码未提交。
 
 ## 6. 独立 TypeScript 验证器（M6）
 
