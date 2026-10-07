@@ -13,7 +13,7 @@ use omavote_core::json::{parse, to_jcs};
 use omavote_core::molecule::OutPoint;
 use omavote_core::util::{to_hex, Hash32};
 
-use crate::chain::{MedianWindow, RawBlock, MEDIAN_WINDOW};
+use crate::chain::{MedianWindow, RawBlock};
 use crate::rpc::Rpc;
 use crate::store::{BlockRow, DaoEvent, Store};
 use crate::util::{core_err, now_ms};
@@ -385,11 +385,6 @@ impl<S: Source> Syncer<S> {
             }
         }
     }
-}
-
-/// Timestamps needed to compute `clock` for blocks after `height` (window preload).
-pub fn window_from_store(store: &Store, height: u64) -> Result<MedianWindow> {
-    Ok(MedianWindow::from_timestamps(&store.timestamps_ending_at(height, MEDIAN_WINDOW)?))
 }
 
 #[cfg(test)]

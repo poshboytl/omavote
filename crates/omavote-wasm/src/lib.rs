@@ -280,8 +280,26 @@ pub fn dispatch(method: &str, p: &Value) -> Result<Value> {
             let pk = adapter::recover_ckb(str_param(p, "text")?.as_bytes(), &sig65(p)?)?;
             Ok(obj(vec![("public_key", s(to_hex(&pk))), ("lock_args", s(to_hex(&omavote_core::hash::blake160(&pk))))]))
         }
+        "receipt_signer" => {
+            // Relay receipts: secp256k1 recoverable signature over
+            // H("OMAVOTE/RELAY-RECEIPT/V2\0" || JCS(body)); returns the signer key.
+            let body = field(p, "body")?;
+            let digest = omavote_core::hash::domain_hash(omavote_core::hash::domain::RELAY_RECEIPT, &omavote_core::json::jcs_bytes(body));
+            let pk = adapter::recover_digest(&digest, &sig65(p)?)?;
+            Ok(obj(vec![("public_key", s(to_hex(&pk)))]))
+        }
+        "nonce" => {
+            // 32 random bytes from the platform RNG (crypto.getRandomValues in browsers).
+            let mut n = [0u8; 32];
+            getrandom_fill(&mut n)?;
+            Ok(obj(vec![("nonce", s(to_hex(&n)))]))
+        }
         other => Err(Error::format(format!("unknown method {other}"))),
     }
+}
+
+fn getrandom_fill(buf: &mut [u8]) -> Result<()> {
+    getrandom::getrandom(buf).map_err(|_| Error::format("random number generator unavailable"))
 }
 
 /// String-level entry point shared by the WASM export and native callers.

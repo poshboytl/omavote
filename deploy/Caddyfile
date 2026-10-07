@@ -1,0 +1,16 @@
+# /etc/caddy/Caddyfile: HTTPS in front of `omavote serve` (listen = 127.0.0.1:8080).
+vote.example.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+	# Submissions are small; refuse anything larger than a full carrier payload.
+	request_body {
+		max_size 64KB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	log {
+		output file /var/log/caddy/omavote.log
+	}
+}

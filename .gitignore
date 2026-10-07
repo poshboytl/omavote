@@ -11,3 +11,7 @@
 research/__pycache__/
 /devnet/bin/
 /devnet/*.log
+/devnet/*.key
+/devnet/demo-out/
+/devnet/omavote.toml
+/devnet/roles.json

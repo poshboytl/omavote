@@ -1,0 +1,31 @@
+# Omavote server configuration (paths are relative to this file).
+# Copy to /etc/omavote/omavote.toml. Generate keys with `omavote keygen <file>`.
+
+[node]
+# Your own CKB node (Indexer RPC module enabled). Public RPCs may only accelerate.
+rpc = "http://127.0.0.1:8114"
+poll_interval_ms = 1000
+
+[protocol]
+# Fixed by the switch proposal: the initial process roles (hash or roles file).
+# initial_roles_hash = "0x..."
+# initial_roles_file = "roles.json"
+process_publication_delay_ms = 259200000   # 72 hours (candidate value, docs/09 §10)
+
+[server]
+listen = "127.0.0.1:8080"
+database = "/var/lib/omavote/omavote.sqlite"
+web_root = "/usr/local/share/omavote/web"
+receipt_key_file = "receipt.key"   # signs relay receipts; holds no funds
+anchor_depth = 4
+cors_origins = []
+
+[relay]
+# true: the publisher runs inside `omavote serve` (simple setups, devnets).
+# false: run `omavote relay --config relay.toml` as a separate user (recommended).
+embedded = false
+key_file = "relay.key"   # hot wallet: limited working capital only
+fee_rate = 1000          # shannons per 1000 bytes
+interval_ms = 3000
+confirmations = 24
+max_carriers_per_tx = 8

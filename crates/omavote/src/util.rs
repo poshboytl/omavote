@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use omavote_core::json::{self as cj, Object};
-use omavote_core::util::{parse_hash, to_hex, Hash32};
+use omavote_core::util::{parse_hash, Hash32};
 use serde_json::{Map, Value};
 
 /// Core protocol JSON → serde JSON (lossless: the core has no numbers).
@@ -38,10 +38,6 @@ pub fn from_serde(v: &Value) -> Result<cj::Value> {
             cj::Value::Object(o)
         }
     })
-}
-
-pub fn hex(h: &[u8]) -> String {
-    to_hex(h)
 }
 
 pub fn hash_arg(s: &str) -> Result<Hash32> {

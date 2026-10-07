@@ -1,0 +1,25 @@
+# /etc/systemd/system/omavote-relay.service
+# Relay publisher: the only process that can read the hot wallet key.
+# Use with `[relay] embedded = false` in the server configuration.
+[Unit]
+Description=Omavote relay publisher (hot wallet)
+After=omavote.service
+Wants=omavote.service
+
+[Service]
+User=omavote-relay
+Group=omavote
+WorkingDirectory=/var/lib/omavote
+ExecStart=/usr/local/bin/omavote relay --config /etc/omavote/relay.toml
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=info
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/omavote
+ReadOnlyPaths=/etc/omavote
+
+[Install]
+WantedBy=multi-user.target

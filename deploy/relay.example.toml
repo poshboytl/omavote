@@ -1,0 +1,15 @@
+# Relay publisher configuration (`omavote relay --config relay.toml`).
+# Shares the database with the server; only this process can read relay.key.
+[node]
+rpc = "http://127.0.0.1:8114"
+
+[server]
+database = "/var/lib/omavote/omavote.sqlite"
+
+[relay]
+embedded = false
+key_file = "/etc/omavote/relay.key"
+fee_rate = 1000
+interval_ms = 3000
+confirmations = 24
+max_carriers_per_tx = 8

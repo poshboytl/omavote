@@ -1,0 +1,19 @@
+# /etc/systemd/system/ckb.service
+# Your own CKB full node; enable the Indexer RPC module in ckb.toml
+# ([rpc] modules = [..., "Indexer"]) and keep the RPC on localhost.
+[Unit]
+Description=CKB full node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ckb
+Group=ckb
+WorkingDirectory=/var/lib/ckb
+ExecStart=/usr/local/bin/ckb run -C /var/lib/ckb
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

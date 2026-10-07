@@ -67,7 +67,38 @@ docs/、research/           设计文档与研究模型
 6. **envelope**：选票和控制消息为 `{"body": …, "proof": …}`；流程记录为 `{"body": …, "proofs": [{"signer_key_id", "proof"}]}`；manifest 载荷按 03 §3.1。
 7. **网络注册表**：按 genesis hash 固定地址前缀（主网 `ckb`，其余 `ckt`）、标准 secp256k1 lock、DAO type、Omnilock 与 PW Lock 的 code hash。开发链从自己节点的 genesis 读取，并写入验证报告。
 8. **预算摘要**：预算不足 1 CKB 时，首行写 `0CKB`，全文 `Budget-CKB` 行仍写精确值。
-9. **时钟**：`clock(b)` 为 `b` 的父块及其之前共 37 个区块时间戳的中位数（不足 37 个时取全部；排序后取下标 `len/2`），与 CKB 的 `get_block_median_time(parent)` 一致；实现时用节点 RPC 交叉核对。
+9. **时钟**：`clock(b)` 为 `b` 的父块及其之前共 37 个区块时间戳的中位数（不足 37 个时取全部；排序后取下标 `len/2`），与 CKB 的 `get_block_median_time(parent)` 一致；实现时用节点 RPC 交叉核对（开发链全部区块已核对一致）。创世块没有父块，`clock(genesis)` 取其自身时间戳；创世块不含协议对象，该取值不影响任何结果。
+10. **rules_profile 补充键**：`proposer_min_deposit_shannon`（候选 100,000 CKB，在 manifest 交易处理后检查提案人存款之和）。
+11. **发布顺序与锚点**：
+    - authorization_policy 必须在引用它的 manifest 和控制消息之前（规范位置严格更早）发布。
+    - 锚点块必须是收录块之前的规范块（高度严格更小）。
+    - 选票锚点高度不得低于 manifest 的登记高度。
+    - `publication_deadline_ms` 必须恰好等于 `clock(anchor)` 加对应期限：控制消息 24 小时，流程记录为部署参数（候选 72 小时）。
+12. **流程记录**：
+    - **签署角色**：ADMISSION 由 coordinator 签署；NOTICE 可由任一角色签署；其余由 committee 签署。
+    - **poll_id**：NOTICE 等记录必须带 poll_id；ROLES_UPDATE 的 poll_id 必须为 null。
+    - **冲突**：同一类型在最高锚点上 detail 不同即为 RECORD_CONFLICT。
+    - **初始角色生效**：带 `initial_roles_hash` 的角色对象上链时，初始角色即生效。
+13. **载荷**：所有 witness 载荷必须是规范 JCS 字节。kind 3 结果记录是任意 JSON，不具权威。
+14. **result_core 字段**：
+    - 标识与边界：`protocol_version`、`network_genesis_hash`、`poll_id`、`rules_hash`、`auth_policy_hash`、`auth_registry_hash`、`start_boundary_block_hash`、`close_block_hash`、`close_block_number`。
+    - 明细：`owners[]`，每行含 `owner_id`、`final_status`、`ballot_id`、`authorization_id`、`eligible_principal_shannon`、`counted_weight_shannon`；`counted_cells[]`，每项含 `tx_hash`、`index`、`owner_id`、`capacity_shannon`。
+    - 汇总与结论：`yes_shannon`、`no_shannon`、`participation_shannon`、`quorum_required_shannon`、`approval_numerator`、`approval_denominator`、`threshold_comparison`、`outcome`。
+
+    机器 schema 见 `schemas/omavote-v2.schema.json`。
+15. **高 s 签名**：两种消息签名 adapter 都接受高 s 签名，等价于低 s 加翻转的恢复位，与链上 secp256k1 lock 的行为一致。注意 CCC 的 `verifyMessageCkbSecp256k1` 会拒绝高 s，第二实现不能直接依赖它。
+16. **开发链网络参数**：
+    - 标准 secp256k1 与 DAO 的 type hash 与主网相同，取自开发链 genesis tx0 的 output 1 和 2；secp 依赖组为 genesis tx1 的 output 0。
+    - 只有开发链允许在配置中声明 Omnilock 与 PW Lock 身份。主网和测试网使用固定注册表，拒绝覆盖。
+17. **中继交易布局**：
+    - **载体输出**：使用中继的普通 lock，不带 type，容量 139 CKB，后续交易会回收。
+    - **载荷 witness**：放在全部输入 witness 之后，由 sighash_all 一并签名。
+    - **载体顺序**：同一交易内为 policy、roles、manifest、授权批次、流程批次、选票批次、结果记录。这样 grant 和 manifest 总排在依赖它们的消息之前。
+18. **中继回执**：
+    - **签名**：回执由独立的回执密钥签署，回执密钥不持有资金：`H("OMAVOTE/RELAY-RECEIPT/V2\0" || JCS(body))` 上的 secp256k1 可恢复签名。
+    - **body 字段**：kind、对象 ID、`envelope_hash = ckbhash(JCS(envelope))`、接收时间、发布时限与中继公钥。
+    - **性质**：回执是服务证据，不进入任何协议 ID。
+19. **MetaMask 编码**：`personal_sign` 一律传 `0x` 加 UTF-8 字节的十六进制，不传原文。只含十六进制字符的原文会被当作字节；签名的 v 为 27/28。
 
 ## 5. 链同步与复算
 
@@ -92,6 +123,8 @@ docs/、research/           设计文档与研究模型
 ## 7. API 与订阅
 
 按 03 §12 实现只读 API 与 `POST /envelopes`。所有响应带计算所依据的区块高度与哈希；列表使用稳定游标。Atom feed 分为全局与按 owner 两种。服务端同时托管前端静态文件，但前端也可独立部署到任意静态主机。
+
+实现时 API 挂在 `/api` 前缀下，以免与前端路由冲突；完整清单见 [14：实施进度](14-implementation-status.md)。提案状态按 03 §10 计算：ANNOUNCED、OPEN、CLOSED_UNCONFIRMED、AUDITABLE、FINALIZED_BY_POLICY、EXECUTED、DISPUTED、LATE_MANIFEST。开放期间的即时统计标为 PROVISIONAL，只是诊断视图，不得显示为通过。
 
 ## 8. 前端
 

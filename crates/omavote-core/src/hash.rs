@@ -18,6 +18,8 @@ pub mod domain {
     pub const PAYLOAD: &[u8] = b"OMAVOTE/PAYLOAD/V2\0";
     pub const RESULT: &[u8] = b"OMAVOTE/RESULT/V2\0";
     pub const WEBAUTHN_BALLOT: &[u8] = b"OMAVOTE/WEBAUTHN/BALLOT/V2\0";
+    /// Relay receipts (service accountability evidence; not part of any protocol ID).
+    pub const RELAY_RECEIPT: &[u8] = b"OMAVOTE/RELAY-RECEIPT/V2\0";
 }
 
 /// Incremental CKB Blake2b-256.

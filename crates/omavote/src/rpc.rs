@@ -26,10 +26,6 @@ impl Rpc {
         }
     }
 
-    pub fn url(&self) -> &str {
-        &self.url
-    }
-
     pub async fn call(&self, method: &str, params: Value) -> Result<Value> {
         let body = json!({"id": 1, "jsonrpc": "2.0", "method": method, "params": params});
         let resp: Value = self
@@ -54,11 +50,6 @@ impl Rpc {
 
     pub async fn block_by_number(&self, n: u64) -> Result<Option<Value>> {
         let v = self.call("get_block_by_number", json!([to_hex_u64(n)])).await?;
-        Ok(if v.is_null() { None } else { Some(v) })
-    }
-
-    pub async fn header_by_number(&self, n: u64) -> Result<Option<Value>> {
-        let v = self.call("get_header_by_number", json!([to_hex_u64(n)])).await?;
         Ok(if v.is_null() { None } else { Some(v) })
     }
 
@@ -100,24 +91,4 @@ impl Rpc {
         Ok((objects, cursor))
     }
 
-    /// All transactions touching a type script within `[from, to)` (indexer, grouped by transaction).
-    pub async fn txs_by_type(&self, type_script: &Value, from: u64, to: u64, limit: u32, after: Option<String>) -> Result<(Vec<Value>, Option<String>)> {
-        let search = json!({
-            "script": type_script, "script_type": "type", "script_search_mode": "exact",
-            "group_by_transaction": true,
-            "filter": {"block_range": [to_hex_u64(from), to_hex_u64(to)]}
-        });
-        let mut params = vec![search, json!("asc"), json!(to_hex_u64(limit as u64))];
-        if let Some(a) = after {
-            params.push(json!(a));
-        }
-        let v = self.call("get_transactions", Value::Array(params)).await?;
-        let objects = v["objects"].as_array().cloned().unwrap_or_default();
-        let cursor = v["last_cursor"].as_str().map(str::to_string);
-        Ok((objects, cursor))
-    }
-
-    pub async fn transaction(&self, tx_hash: &str) -> Result<Value> {
-        self.call("get_transaction", json!([tx_hash])).await
-    }
 }

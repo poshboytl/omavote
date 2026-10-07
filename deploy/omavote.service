@@ -1,0 +1,25 @@
+# /etc/systemd/system/omavote.service
+# Sync + replay + public API + frontend. Holds only the receipt key (no funds).
+[Unit]
+Description=Omavote server (sync, replay, API)
+After=network-online.target ckb.service
+Wants=network-online.target
+
+[Service]
+User=omavote
+Group=omavote
+WorkingDirectory=/var/lib/omavote
+ExecStart=/usr/local/bin/omavote serve --config /etc/omavote/omavote.toml
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=info
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/omavote
+ReadOnlyPaths=/etc/omavote
+
+[Install]
+WantedBy=multi-user.target

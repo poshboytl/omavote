@@ -1,0 +1,7 @@
+{
+  "name": "omavote-schemas",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node check.mjs" },
+  "devDependencies": { "ajv": "^8.17.1" }
+}

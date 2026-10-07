@@ -1,0 +1,1533 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omavote.invalid/schemas/omavote-v2.schema.json",
+  "title": "Omavote V2 wire objects (draft, undeployed)",
+  "description": "Machine-readable shapes of the V2 protocol objects (docs/03, docs/11, docs/13 §4). Shape only: hashes, signatures, ordering rules and canonical JCS bytes are checked by the verifier, not by this schema.",
+  "$defs": {
+    "hash32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "bytes": {
+      "type": "string",
+      "pattern": "^0x([0-9a-f]{2})*$"
+    },
+    "dec": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "description": "Integer as a canonical decimal string (protocol JSON has no numbers)."
+    },
+    "genesis": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "dao_namespace": {
+      "const": "ckb-community-fund-dao"
+    },
+    "protocol_version": {
+      "const": "2"
+    },
+    "script": {
+      "type": "object",
+      "properties": {
+        "code_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "hash_type": {
+          "enum": [
+            "data",
+            "type",
+            "data1",
+            "data2"
+          ]
+        },
+        "args": {
+          "$ref": "#/$defs/bytes"
+        }
+      },
+      "required": [
+        "code_hash",
+        "hash_type",
+        "args"
+      ],
+      "additionalProperties": false
+    },
+    "proof": {
+      "type": "object",
+      "properties": {
+        "signature": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{130}$",
+          "description": "r || s || v (65 bytes); CKB v in {0,1}, EVM v in {27,28} or {0,1}."
+        }
+      },
+      "required": [
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "adapter": {
+      "enum": [
+        "ckb-secp256k1-message-v1",
+        "evm-personal-message-v1",
+        "webauthn-es256-v2"
+      ]
+    },
+    "key_descriptor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "secp256k1"
+            },
+            "public_key": {
+              "type": "string",
+              "pattern": "^0x0[23][0-9a-f]{64}$"
+            },
+            "adapter": {
+              "const": "ckb-secp256k1-message-v1"
+            }
+          },
+          "required": [
+            "kind",
+            "public_key",
+            "adapter"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "evm_eoa"
+            },
+            "address": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{40}$"
+            },
+            "adapter": {
+              "const": "evm-personal-message-v1"
+            }
+          },
+          "required": [
+            "kind",
+            "address",
+            "adapter"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ratio": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "$ref": "#/$defs/dec"
+        },
+        "denominator": {
+          "$ref": "#/$defs/dec"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "additionalProperties": false
+    },
+    "authorization_policy": {
+      "type": "object",
+      "properties": {
+        "message_kind": {
+          "const": "authorization_policy"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "clock": {
+          "const": "ckb-parent-mtp-v1"
+        },
+        "max_term_ms": {
+          "const": "31536000000"
+        },
+        "max_control_publication_delay_ms": {
+          "const": "86400000"
+        },
+        "semantics": {
+          "const": "omavote-authorization-semantics-v2"
+        }
+      },
+      "required": [
+        "message_kind",
+        "protocol_version",
+        "network_genesis_hash",
+        "dao_namespace",
+        "clock",
+        "max_term_ms",
+        "max_control_publication_delay_ms",
+        "semantics"
+      ],
+      "additionalProperties": false
+    },
+    "auth_registry": {
+      "type": "object",
+      "properties": {
+        "owner_adapters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/adapter"
+          },
+          "uniqueItems": true,
+          "description": "Sorted lexicographically, no duplicates."
+        },
+        "key_adapters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/adapter"
+          },
+          "uniqueItems": true,
+          "description": "Sorted lexicographically, no duplicates."
+        }
+      },
+      "required": [
+        "owner_adapters",
+        "key_adapters"
+      ],
+      "additionalProperties": false
+    },
+    "rules_profile": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "omavote-ckb-community-fund-v2"
+        },
+        "asset": {
+          "const": "nervos-dao-deposit"
+        },
+        "amount": {
+          "const": "raw-capacity-principal"
+        },
+        "weight_time": {
+          "const": "final-accepted-block-state"
+        },
+        "withdraw_phase1": {
+          "const": "excluded"
+        },
+        "cast_eligibility": {
+          "const": "positive-deposit-at-valid-inclusion"
+        },
+        "revote": {
+          "const": "direct-priority-latest-anchor"
+        },
+        "authorization": {
+          "const": "term-limited-max-365-chain-days"
+        },
+        "cancel": {
+          "const": "exclude-both-sides-and-quorum"
+        },
+        "precision": {
+          "const": "exact-shannon"
+        },
+        "choices": {
+          "const": [
+            "YES",
+            "NO",
+            "CANCEL"
+          ]
+        },
+        "quorum_grant_multiplier": {
+          "$ref": "#/$defs/dec"
+        },
+        "quorum_meta_rule_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "approval_grant": {
+          "$ref": "#/$defs/ratio"
+        },
+        "approval_meta_rule": {
+          "$ref": "#/$defs/ratio"
+        },
+        "threshold_comparison": {
+          "enum": [
+            "inclusive",
+            "strict"
+          ]
+        },
+        "opening_confirmations": {
+          "$ref": "#/$defs/dec"
+        },
+        "delegate_cutoff_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "voting_period_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "proposer_min_deposit_shannon": {
+          "$ref": "#/$defs/dec"
+        }
+      },
+      "required": [
+        "profile",
+        "asset",
+        "amount",
+        "weight_time",
+        "withdraw_phase1",
+        "cast_eligibility",
+        "revote",
+        "authorization",
+        "cancel",
+        "precision",
+        "choices",
+        "quorum_grant_multiplier",
+        "quorum_meta_rule_shannon",
+        "approval_grant",
+        "approval_meta_rule",
+        "threshold_comparison",
+        "opening_confirmations",
+        "delegate_cutoff_ms",
+        "voting_period_ms",
+        "proposer_min_deposit_shannon"
+      ],
+      "additionalProperties": false
+    },
+    "manifest": {
+      "type": "object",
+      "properties": {
+        "message_kind": {
+          "const": "manifest"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "nonce": {
+          "$ref": "#/$defs/hash32"
+        },
+        "proposal_type": {
+          "enum": [
+            "grant",
+            "meta_rule"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signing_title": {
+          "type": "string",
+          "pattern": "^[\\x20-\\x7e]+$",
+          "description": "Printable ASCII; must fit the 60-byte summary line."
+        },
+        "content_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "content_locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forum_topic_id": {
+          "$ref": "#/$defs/dec"
+        },
+        "forum_revision": {
+          "$ref": "#/$defs/dec"
+        },
+        "discussion_evidence_hash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "budget_ckb_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "quorum_base_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "payment_terms_hash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recipient_lock_script": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/script"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proposer_owner_locks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/script"
+          },
+          "minItems": 1
+        },
+        "rules_profile": {
+          "$ref": "#/$defs/rules_profile"
+        },
+        "rules_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "auth_registry": {
+          "$ref": "#/$defs/auth_registry"
+        },
+        "auth_registry_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "authorization_policy": {
+          "$ref": "#/$defs/authorization_policy"
+        },
+        "auth_policy_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "signature_formats": {
+          "const": [
+            "omavote-readable-v2"
+          ]
+        },
+        "clock": {
+          "const": "ckb-parent-mtp-v1"
+        },
+        "start_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "end_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "confirmation_policy": {
+          "type": "object",
+          "properties": {
+            "result_confirmations": {
+              "$ref": "#/$defs/dec"
+            },
+            "review_window_ms": {
+              "$ref": "#/$defs/dec"
+            }
+          },
+          "required": [
+            "result_confirmations",
+            "review_window_ms"
+          ],
+          "additionalProperties": false
+        },
+        "publication_policy": {
+          "const": "full-onchain-v2"
+        }
+      },
+      "required": [
+        "message_kind",
+        "protocol_version",
+        "network_genesis_hash",
+        "dao_namespace",
+        "nonce",
+        "proposal_type",
+        "title",
+        "signing_title",
+        "content_hash",
+        "content_locations",
+        "forum_topic_id",
+        "forum_revision",
+        "discussion_evidence_hash",
+        "budget_ckb_shannon",
+        "quorum_base_shannon",
+        "payment_terms_hash",
+        "recipient_lock_script",
+        "proposer_owner_locks",
+        "rules_profile",
+        "rules_hash",
+        "auth_registry",
+        "auth_registry_hash",
+        "authorization_policy",
+        "auth_policy_hash",
+        "signature_formats",
+        "clock",
+        "start_ms",
+        "end_ms",
+        "confirmation_policy",
+        "publication_policy"
+      ],
+      "additionalProperties": false
+    },
+    "manifest_payload": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "manifest": {
+          "$ref": "#/$defs/manifest"
+        },
+        "proposer_proofs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "owner_lock": {
+                "$ref": "#/$defs/script"
+              },
+              "auth_adapter": {
+                "$ref": "#/$defs/adapter"
+              },
+              "proof": {
+                "$ref": "#/$defs/proof"
+              }
+            },
+            "required": [
+              "owner_lock",
+              "auth_adapter",
+              "proof"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "protocol_version",
+        "manifest",
+        "proposer_proofs"
+      ],
+      "additionalProperties": false
+    },
+    "ballot_body": {
+      "type": "object",
+      "properties": {
+        "message_kind": {
+          "const": "ballot"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "action": {
+          "enum": [
+            "YES",
+            "NO",
+            "CANCEL"
+          ]
+        },
+        "authority": {
+          "enum": [
+            "owner",
+            "delegate"
+          ]
+        },
+        "authorization_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "signer_key_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nonce": {
+          "$ref": "#/$defs/hash32"
+        },
+        "anchor_block_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "auth_adapter": {
+          "$ref": "#/$defs/adapter"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "owner_lock": {
+          "$ref": "#/$defs/script"
+        },
+        "poll_id": {
+          "$ref": "#/$defs/hash32"
+        },
+        "rules_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "signature_format": {
+          "const": "omavote-readable-v2"
+        }
+      },
+      "required": [
+        "message_kind",
+        "protocol_version",
+        "action",
+        "authority",
+        "authorization_id",
+        "signer_key_id",
+        "nonce",
+        "anchor_block_hash",
+        "auth_adapter",
+        "dao_namespace",
+        "network_genesis_hash",
+        "owner_lock",
+        "poll_id",
+        "rules_hash",
+        "signature_format"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "owner"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authorization_id": {
+                "type": "null"
+              },
+              "signer_key_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority": {
+                "const": "delegate"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authorization_id": {
+                "$ref": "#/$defs/hash32"
+              },
+              "signer_key_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ballot_envelope": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/ballot_body"
+        },
+        "proof": {
+          "$ref": "#/$defs/proof"
+        }
+      },
+      "required": [
+        "body",
+        "proof"
+      ],
+      "additionalProperties": false
+    },
+    "authorization_control": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "message_kind": {
+          "const": "authorization_control"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "auth_policy_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "owner_lock": {
+          "$ref": "#/$defs/script"
+        },
+        "owner_auth_adapter": {
+          "enum": [
+            "ckb-secp256k1-message-v1",
+            "evm-personal-message-v1"
+          ]
+        },
+        "action": {
+          "enum": [
+            "GRANT",
+            "REVOKE"
+          ]
+        },
+        "key_descriptor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/key_descriptor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expires_at_ms": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/dec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revoke_mode": {
+          "enum": [
+            null,
+            "STOP_ONLY",
+            "STOP_AND_CANCEL_OPEN"
+          ]
+        },
+        "anchor_block_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "publication_deadline_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "nonce": {
+          "$ref": "#/$defs/hash32"
+        },
+        "signature_format": {
+          "const": "omavote-authorization-v2"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "message_kind",
+        "network_genesis_hash",
+        "dao_namespace",
+        "auth_policy_hash",
+        "owner_lock",
+        "owner_auth_adapter",
+        "action",
+        "key_descriptor",
+        "expires_at_ms",
+        "revoke_mode",
+        "anchor_block_hash",
+        "publication_deadline_ms",
+        "nonce",
+        "signature_format"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "GRANT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "key_descriptor": {
+                "$ref": "#/$defs/key_descriptor"
+              },
+              "expires_at_ms": {
+                "$ref": "#/$defs/dec"
+              },
+              "revoke_mode": {
+                "enum": [
+                  null,
+                  "STOP_AND_CANCEL_OPEN"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "REVOKE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "key_descriptor": {
+                "type": "null"
+              },
+              "expires_at_ms": {
+                "type": "null"
+              },
+              "revoke_mode": {
+                "enum": [
+                  "STOP_ONLY",
+                  "STOP_AND_CANCEL_OPEN"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "control_envelope": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/authorization_control"
+        },
+        "proof": {
+          "$ref": "#/$defs/proof"
+        }
+      },
+      "required": [
+        "body",
+        "proof"
+      ],
+      "additionalProperties": false
+    },
+    "process_roles": {
+      "type": "object",
+      "properties": {
+        "message_kind": {
+          "const": "process_roles"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "previous_roles_hash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roles": {
+          "type": "object",
+          "properties": {
+            "committee": {
+              "type": "object",
+              "properties": {
+                "threshold": {
+                  "$ref": "#/$defs/dec"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/key_descriptor"
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "threshold",
+                "members"
+              ],
+              "additionalProperties": false
+            },
+            "coordinator": {
+              "type": "object",
+              "properties": {
+                "threshold": {
+                  "$ref": "#/$defs/dec"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/key_descriptor"
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "threshold",
+                "members"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "committee",
+            "coordinator"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "$ref": "#/$defs/hash32"
+        }
+      },
+      "required": [
+        "message_kind",
+        "protocol_version",
+        "network_genesis_hash",
+        "dao_namespace",
+        "previous_roles_hash",
+        "roles",
+        "nonce"
+      ],
+      "additionalProperties": false
+    },
+    "process_record": {
+      "type": "object",
+      "properties": {
+        "message_kind": {
+          "const": "process_record"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "dao_namespace": {
+          "$ref": "#/$defs/dao_namespace"
+        },
+        "roles_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "role": {
+          "enum": [
+            "committee",
+            "coordinator"
+          ]
+        },
+        "record_type": {
+          "enum": [
+            "ADMISSION",
+            "NOTICE",
+            "GOVERNANCE_STATUS",
+            "RESULT_ATTESTATION",
+            "EXECUTION",
+            "ROLES_UPDATE"
+          ]
+        },
+        "poll_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "object"
+        },
+        "evidence_hash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "anchor_block_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "publication_deadline_ms": {
+          "$ref": "#/$defs/dec"
+        },
+        "nonce": {
+          "$ref": "#/$defs/hash32"
+        }
+      },
+      "required": [
+        "message_kind",
+        "protocol_version",
+        "network_genesis_hash",
+        "dao_namespace",
+        "roles_hash",
+        "role",
+        "record_type",
+        "poll_id",
+        "detail",
+        "evidence_hash",
+        "anchor_block_hash",
+        "publication_deadline_ms",
+        "nonce"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "ADMISSION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "enum": [
+                      "ADMITTED",
+                      "REJECTED"
+                    ]
+                  }
+                },
+                "required": [
+                  "decision"
+                ],
+                "additionalProperties": false
+              },
+              "role": {
+                "const": "coordinator"
+              },
+              "poll_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "NOTICE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9_]{1,16}$"
+                  }
+                },
+                "required": [
+                  "code"
+                ],
+                "additionalProperties": false
+              },
+              "poll_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "GOVERNANCE_STATUS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "HOLD_EXECUTION",
+                      "CLEARED",
+                      "VOIDED"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "additionalProperties": false
+              },
+              "role": {
+                "const": "committee"
+              },
+              "poll_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "RESULT_ATTESTATION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "result_hash": {
+                    "$ref": "#/$defs/hash32"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "PASS",
+                      "FAIL"
+                    ]
+                  }
+                },
+                "required": [
+                  "result_hash",
+                  "outcome"
+                ],
+                "additionalProperties": false
+              },
+              "role": {
+                "const": "committee"
+              },
+              "poll_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "EXECUTION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "tx_hash": {
+                    "$ref": "#/$defs/hash32"
+                  }
+                },
+                "required": [
+                  "tx_hash"
+                ],
+                "additionalProperties": false
+              },
+              "role": {
+                "const": "committee"
+              },
+              "poll_id": {
+                "$ref": "#/$defs/hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_type": {
+                "const": "ROLES_UPDATE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "type": "object",
+                "properties": {
+                  "new_roles_hash": {
+                    "$ref": "#/$defs/hash32"
+                  }
+                },
+                "required": [
+                  "new_roles_hash"
+                ],
+                "additionalProperties": false
+              },
+              "role": {
+                "const": "committee"
+              },
+              "poll_id": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "process_envelope": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/process_record"
+        },
+        "proofs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "signer_key_id": {
+                "$ref": "#/$defs/hash32"
+              },
+              "proof": {
+                "$ref": "#/$defs/proof"
+              }
+            },
+            "required": [
+              "signer_key_id",
+              "proof"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "body",
+        "proofs"
+      ],
+      "additionalProperties": false
+    },
+    "ballot_batch": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "envelopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ballot_envelope"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "protocol_version",
+        "envelopes"
+      ],
+      "additionalProperties": false
+    },
+    "authorization_batch": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "envelopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/control_envelope"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "protocol_version",
+        "envelopes"
+      ],
+      "additionalProperties": false
+    },
+    "process_batch": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "envelopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/process_envelope"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "protocol_version",
+        "envelopes"
+      ],
+      "additionalProperties": false
+    },
+    "result_core": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "$ref": "#/$defs/protocol_version"
+        },
+        "network_genesis_hash": {
+          "$ref": "#/$defs/genesis"
+        },
+        "poll_id": {
+          "$ref": "#/$defs/hash32"
+        },
+        "rules_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "auth_policy_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "auth_registry_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "start_boundary_block_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "close_block_hash": {
+          "$ref": "#/$defs/hash32"
+        },
+        "close_block_number": {
+          "$ref": "#/$defs/dec"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "owner_id": {
+                "$ref": "#/$defs/hash32"
+              },
+              "final_status": {
+                "enum": [
+                  "YES",
+                  "NO",
+                  "CANCEL",
+                  "CONFLICT",
+                  "CANCELLED_BY_CONTROL"
+                ]
+              },
+              "ballot_id": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/hash32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "authorization_id": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/hash32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "eligible_principal_shannon": {
+                "$ref": "#/$defs/dec"
+              },
+              "counted_weight_shannon": {
+                "$ref": "#/$defs/dec"
+              }
+            },
+            "required": [
+              "owner_id",
+              "final_status",
+              "ballot_id",
+              "authorization_id",
+              "eligible_principal_shannon",
+              "counted_weight_shannon"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "counted_cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tx_hash": {
+                "$ref": "#/$defs/hash32"
+              },
+              "index": {
+                "$ref": "#/$defs/dec"
+              },
+              "owner_id": {
+                "$ref": "#/$defs/hash32"
+              },
+              "capacity_shannon": {
+                "$ref": "#/$defs/dec"
+              }
+            },
+            "required": [
+              "tx_hash",
+              "index",
+              "owner_id",
+              "capacity_shannon"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "yes_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "no_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "participation_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "quorum_required_shannon": {
+          "$ref": "#/$defs/dec"
+        },
+        "approval_numerator": {
+          "$ref": "#/$defs/dec"
+        },
+        "approval_denominator": {
+          "$ref": "#/$defs/dec"
+        },
+        "threshold_comparison": {
+          "enum": [
+            "inclusive",
+            "strict"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        }
+      },
+      "required": [
+        "protocol_version",
+        "network_genesis_hash",
+        "poll_id",
+        "rules_hash",
+        "auth_policy_hash",
+        "auth_registry_hash",
+        "start_boundary_block_hash",
+        "close_block_hash",
+        "close_block_number",
+        "owners",
+        "counted_cells",
+        "yes_shannon",
+        "no_shannon",
+        "participation_shannon",
+        "quorum_required_shannon",
+        "approval_numerator",
+        "approval_denominator",
+        "threshold_comparison",
+        "outcome"
+      ],
+      "additionalProperties": false
+    },
+    "relay_receipt": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "properties": {
+            "message_kind": {
+              "const": "relay_receipt"
+            },
+            "protocol_version": {
+              "$ref": "#/$defs/protocol_version"
+            },
+            "network_genesis_hash": {
+              "$ref": "#/$defs/genesis"
+            },
+            "relay_receipt_key": {
+              "type": "string",
+              "pattern": "^0x0[23][0-9a-f]{64}$"
+            },
+            "item_kind": {
+              "enum": [
+                "ballot",
+                "authorization_control",
+                "process_record",
+                "manifest",
+                "authorization_policy",
+                "process_roles"
+              ]
+            },
+            "object_id": {
+              "$ref": "#/$defs/hash32"
+            },
+            "envelope_hash": {
+              "$ref": "#/$defs/hash32"
+            },
+            "received_at_ms": {
+              "$ref": "#/$defs/dec"
+            },
+            "publish_by_ms": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/dec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "message_kind",
+            "protocol_version",
+            "network_genesis_hash",
+            "relay_receipt_key",
+            "item_kind",
+            "object_id",
+            "envelope_hash",
+            "received_at_ms",
+            "publish_by_ms"
+          ],
+          "additionalProperties": false
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{128}0[01]$"
+        }
+      },
+      "required": [
+        "body",
+        "signature"
+      ],
+      "additionalProperties": false,
+      "description": "Service evidence, not a protocol object: secp256k1 recoverable signature over H(\"OMAVOTE/RELAY-RECEIPT/V2\\0\" || JCS(body))."
+    }
+  }
+}

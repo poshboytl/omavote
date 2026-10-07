@@ -202,40 +202,10 @@ impl Store {
         Ok(())
     }
 
-    pub fn tip(&self) -> Result<Option<(u64, Hash32)>> {
-        let row: Option<(i64, String)> = self
-            .c()
-            .query_row("SELECT number, hash FROM blocks ORDER BY number DESC LIMIT 1", [], |r| Ok((r.get(0)?, r.get(1)?)))
-            .optional()?;
-        row.map(|(n, s)| Ok((n as u64, h(&s)?))).transpose()
-    }
-
     pub fn block_hash(&self, number: u64) -> Result<Option<Hash32>> {
         let s: Option<String> =
             self.c().query_row("SELECT hash FROM blocks WHERE number = ?1", [number as i64], |r| r.get(0)).optional()?;
         s.map(|s| h(&s)).transpose()
-    }
-
-    pub fn block_by_hash(&self, hash: &Hash32) -> Result<Option<BlockRow>> {
-        self.c()
-            .query_row(
-                "SELECT number, hash, parent_hash, timestamp, clock_ms, body FROM blocks WHERE hash = ?1",
-                [to_hex(hash)],
-                row_to_block,
-            )
-            .optional()?
-            .transpose()
-    }
-
-    pub fn block(&self, number: u64) -> Result<Option<BlockRow>> {
-        self.c()
-            .query_row(
-                "SELECT number, hash, parent_hash, timestamp, clock_ms, body FROM blocks WHERE number = ?1",
-                [number as i64],
-                row_to_block,
-            )
-            .optional()?
-            .transpose()
     }
 
     /// Stream stored blocks in height order within `[from, to]`.
@@ -249,18 +219,6 @@ impl Store {
             f(row_to_block(r)??)?;
         }
         Ok(())
-    }
-
-    /// Timestamps of the stored blocks `[to - n + 1, to]` in height order.
-    pub fn timestamps_ending_at(&self, to: u64, n: usize) -> Result<Vec<u64>> {
-        let from = (to + 1).saturating_sub(n as u64);
-        let c = self.c();
-        let mut st = c.prepare("SELECT timestamp FROM blocks WHERE number >= ?1 AND number <= ?2 ORDER BY number")?;
-        let v = st
-            .query_map(params![from as i64, to as i64], |r| r.get::<_, i64>(0))?
-            .map(|x| x.map(|t| t as u64))
-            .collect::<rusqlite::Result<Vec<_>>>()?;
-        Ok(v)
     }
 
     /// Remove blocks above `height` and undo their DAO history.

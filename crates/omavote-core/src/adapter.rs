@@ -86,6 +86,15 @@ pub fn recover_ckb(text: &[u8], sig: &[u8; 65]) -> Result<[u8; 33]> {
     Ok(compressed(&recover(&ckb_message_digest(text), &sig[..64], sig[64])?))
 }
 
+/// Recover the compressed public key of a recoverable signature over a 32-byte digest
+/// (relay receipts; v in {0,1}).
+pub fn recover_digest(digest: &[u8; 32], sig: &[u8; 65]) -> Result<[u8; 33]> {
+    if sig[64] > 1 {
+        return Err(Error::signature("recovery id must be 0 or 1"));
+    }
+    Ok(compressed(&recover(digest, &sig[..64], sig[64])?))
+}
+
 /// Recover the address of an EIP-191 signature (`r || s || v`, v in {27,28} or {0,1}).
 pub fn recover_evm(text: &[u8], sig: &[u8; 65]) -> Result<[u8; 20]> {
     let v = match sig[64] {

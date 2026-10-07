@@ -65,42 +65,52 @@ pub fn load_overrides(path: &Option<PathBuf>) -> Result<NetworkOverrides> {
     }
 }
 
-pub async fn run(args: VerifyArgs) -> Result<()> {
-    let rpc = Rpc::new(&args.rpc);
+pub struct ReplayOptions {
+    pub rpc: String,
+    pub overrides: NetworkOverrides,
+    pub initial_roles_hash: Option<Hash32>,
+    pub process_delay_ms: u64,
+    pub to: Option<u64>,
+    pub check_clock: bool,
+}
+
+pub struct Replay {
+    pub syncer: Syncer<Rpc>,
+    pub store: Arc<Store>,
+    pub net: omavote_core::network::NetworkParams,
+    pub to: u64,
+}
+
+/// Full replay from genesis using only the node (and an in-memory block cache).
+pub async fn replay(o: &ReplayOptions) -> Result<Replay> {
+    let rpc = Rpc::new(&o.rpc);
     let genesis = RawBlock::from_rpc(&rpc.block_by_number(0).await?.ok_or_else(|| anyhow!("node has no genesis block"))?)?;
-    let (net, _) = discover_network(&genesis, &load_overrides(&args.network_overrides)?)?;
+    let (net, _) = discover_network(&genesis, &o.overrides)?;
     let mut ecfg = EngineConfig::new(net.clone());
-    ecfg.initial_roles_hash = args.initial_roles_hash.as_deref().map(hash_arg).transpose()?;
-    ecfg.process_publication_delay_ms = args.process_delay_ms;
+    ecfg.initial_roles_hash = o.initial_roles_hash;
+    ecfg.process_publication_delay_ms = o.process_delay_ms;
     let tip = rpc.tip_number().await?;
-    let to = args.to.unwrap_or(tip).min(tip);
-    let mut cfg = SyncConfig::new(ecfg.clone());
+    let to = o.to.unwrap_or(tip).min(tip);
+    let mut cfg = SyncConfig::new(ecfg);
     cfg.batch = 100;
-    cfg.check_clock = args.check_clock;
+    cfg.check_clock = o.check_clock;
     cfg.stop_at = Some(to);
     cfg.snapshot_every = 0;
     let store = Arc::new(Store::in_memory()?);
     let syncer = Syncer::new(rpc, Some(store.clone()), cfg);
-    let started = std::time::Instant::now();
     syncer.catch_up().await.context("replay")?;
-    let st = read(&syncer.state);
-    let engine = &st.engine;
-    eprintln!(
-        "replayed {} blocks (0..={}) in {:.1}s{}",
-        to + 1,
-        to,
-        started.elapsed().as_secs_f64(),
-        if args.check_clock { ", clock checked against the node" } else { "" }
-    );
+    Ok(Replay { syncer, store, net, to })
+}
 
-    let wanted: Option<Hash32> = args.poll.as_deref().map(hash_arg).transpose()?;
+/// Per-poll verification report.
+pub fn poll_report(engine: &omavote_core::engine::Engine, wanted: Option<Hash32>) -> Vec<Value> {
     let mut polls = Vec::new();
     for (id, poll) in &engine.polls {
         if wanted.map(|w| &w != id).unwrap_or(false) {
             continue;
         }
         let rc = tally::result_core(engine, id);
-        let (result_core, result_hash, error) = match &rc {
+        let (result_core, result_hash, note) = match &rc {
             Ok(Some(r)) => (to_serde(&r.value), Value::String(to_hex(&r.result_hash())), Value::Null),
             Ok(None) => (Value::Null, Value::Null, json!("poll still open at this height")),
             Err(e) => (Value::Null, Value::Null, json!(e.to_string())),
@@ -115,12 +125,62 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
             "governance": views::governance_json(&tally::governance(engine, id)),
             "result_hash": result_hash,
             "result_core": result_core,
-            "note": error,
+            "note": note,
         }));
     }
+    polls
+}
+
+/// Reduced blocks in the replay-vector format (input for the TypeScript verifier).
+pub fn dump_blocks(r: &Replay, initial_roles_hash: Option<Hash32>, process_delay_ms: u64) -> Result<Value> {
+    let mut blocks = Vec::new();
+    r.store.for_each_block(0, r.to, |row| {
+        let b = match &row.body {
+            Some(body) => BlockInput::from_json(&parse(body.as_bytes()).map_err(core_err)?).map_err(core_err)?,
+            None => BlockInput {
+                number: row.number,
+                hash: row.hash,
+                parent_hash: row.parent_hash,
+                clock_ms: row.clock_ms,
+                transactions: Vec::new(),
+            },
+        };
+        blocks.push(to_serde(&b.to_json()));
+        Ok(())
+    })?;
+    Ok(json!({
+        "network": to_serde(&r.net.to_json()),
+        "initial_roles_hash": initial_roles_hash.map(|h| to_hex(&h)),
+        "process_publication_delay_ms": dec(process_delay_ms),
+        "blocks": blocks,
+    }))
+}
+
+pub async fn run(args: VerifyArgs) -> Result<()> {
+    let opts = ReplayOptions {
+        rpc: args.rpc.clone(),
+        overrides: load_overrides(&args.network_overrides)?,
+        initial_roles_hash: args.initial_roles_hash.as_deref().map(hash_arg).transpose()?,
+        process_delay_ms: args.process_delay_ms,
+        to: args.to,
+        check_clock: args.check_clock,
+    };
+    let started = std::time::Instant::now();
+    let r = replay(&opts).await?;
+    let st = read(&r.syncer.state);
+    let engine = &st.engine;
+    eprintln!(
+        "replayed {} blocks (0..={}) in {:.1}s{}",
+        r.to + 1,
+        r.to,
+        started.elapsed().as_secs_f64(),
+        if args.check_clock { ", clock checked against the node" } else { "" }
+    );
+    let wanted: Option<Hash32> = args.poll.as_deref().map(hash_arg).transpose()?;
+    let polls = poll_report(engine, wanted);
     if let Some(w) = wanted {
         if polls.is_empty() {
-            bail!("poll {} not found up to height {to}", to_hex(&w));
+            bail!("poll {} not found up to height {}", to_hex(&w), r.to);
         }
         if let Some(out) = &args.out {
             let b = views::bundle(engine, &w, &views::BundleMeta { mode: "full-replay-from-genesis".into(), generated_at_ms: now_ms() })?;
@@ -130,7 +190,7 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
     }
     let report = json!({
         "verifier": {"name": "omavote verify", "version": env!("CARGO_PKG_VERSION"), "mode": "full-replay-from-genesis", "clock_checked": args.check_clock},
-        "network": to_serde(&net.to_json()),
+        "network": to_serde(&r.net.to_json()),
         "tip": views::at(engine),
         "initial_roles_hash": args.initial_roles_hash,
         "process_publication_delay_ms": dec(args.process_delay_ms),
@@ -138,29 +198,8 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
         "polls": polls,
     });
     println!("{}", serde_json::to_string_pretty(&report)?);
-
     if let Some(path) = &args.dump_blocks {
-        let mut blocks = Vec::new();
-        store.for_each_block(0, to, |row| {
-            let b = match &row.body {
-                Some(body) => BlockInput::from_json(&parse(body.as_bytes()).map_err(core_err)?).map_err(core_err)?,
-                None => BlockInput {
-                    number: row.number,
-                    hash: row.hash,
-                    parent_hash: row.parent_hash,
-                    clock_ms: row.clock_ms,
-                    transactions: Vec::new(),
-                },
-            };
-            blocks.push(to_serde(&b.to_json()));
-            Ok(())
-        })?;
-        let dump = json!({
-            "network": to_serde(&net.to_json()),
-            "initial_roles_hash": args.initial_roles_hash,
-            "process_publication_delay_ms": dec(args.process_delay_ms),
-            "blocks": blocks,
-        });
+        let dump = dump_blocks(&r, opts.initial_roles_hash, args.process_delay_ms)?;
         std::fs::write(path, serde_json::to_string(&dump)? + "\n")?;
         eprintln!("reduced blocks written to {}", path.display());
     }

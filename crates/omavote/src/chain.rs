@@ -212,18 +212,6 @@ impl MedianWindow {
     pub fn clock_for_next(&self, own_timestamp: u64) -> u64 {
         self.median().unwrap_or(own_timestamp)
     }
-
-    pub fn timestamps(&self) -> Vec<u64> {
-        self.ts.iter().copied().collect()
-    }
-
-    pub fn from_timestamps(v: &[u64]) -> Self {
-        let mut w = MedianWindow::new();
-        for t in v {
-            w.push(*t);
-        }
-        w
-    }
 }
 
 /// Well-known cells every standard chain spec places in its genesis block.
