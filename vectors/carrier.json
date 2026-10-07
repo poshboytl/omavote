@@ -1,0 +1,8 @@
+{
+  "kind": "2",
+  "scope_id": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a",
+  "witness_index": "1",
+  "payload_utf8": "{\"envelopes\":[{\"body\":{},\"proof\":{}}],\"protocol_version\":\"2\"}",
+  "payload_hash": "0xffb5ab78fe7b5e16f4be576da9d5faad5cb7e5802de5d38aa7df7237f8d7258f",
+  "header": "0x4f4d41564f54450002025a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5affb5ab78fe7b5e16f4be576da9d5faad5cb7e5802de5d38aa7df7237f8d7258f01000000"
+}

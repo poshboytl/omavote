@@ -1,0 +1,24 @@
+[
+  {
+    "secret": "0x2c88941672d60399a2e6392b76228f69537ad0077ca533dc8492d0f7c8a9f104",
+    "message_utf8": "OMAVOTE VOTE YES #0011223344556677 1000CKB\nexample",
+    "ckb_digest": "0x31125b0fb24c9950f30424e41654c9e00d7812f8bf58e0c123774229aed1f327",
+    "ckb_signature": "0xd3f80d843a9171a5bc45785540aceb000bb44fc9108147e05de65d763ffa9fd53e30dcfd1ac4fa397b2b5d8d19c80950ed0c17eee47c7f096eec7a08d3477c2500",
+    "ckb_public_key": "0x037e3fb931bfcacf8570a06cd3c2862e4474e8c04a3a44a8faccafae9ec860fdf2",
+    "ckb_lock_args": "0x1e225dff4c7c875e404b938ac73d975de13e9e29",
+    "evm_digest": "0xb7e5c7b9b38d2a6110a1b81d3a6a57e958c1d8b949e4e49a4944486ffa638dd1",
+    "evm_signature": "0xec7b800bc680dc1f5f564e7183e1b16101bb1929fdbffce837a7411a6660dd4e7648893e3457d81e68ca00b263ab0b82a27d2ad05986153ea5929da6ac3216231c",
+    "evm_address": "0x1c05522b0cebc024aefe9b5c95b47e09b36d13de"
+  },
+  {
+    "secret": "0xe900af360a7d57c799ab588439baa9d70a39d8656784ee8ad61a13818f6a27db",
+    "message_utf8": "OMAVOTE VOTE YES #0011223344556677 1000CKB\nexample",
+    "ckb_digest": "0x31125b0fb24c9950f30424e41654c9e00d7812f8bf58e0c123774229aed1f327",
+    "ckb_signature": "0x181ddfffcd9f3d433f320908c6a87c45b5fdb33d1bd5b15a019f5ac64a359f4e4b83235cda20e5629c2bac6b73fda4037ab2e8c8b728a4851c1ef34af90cd04601",
+    "ckb_public_key": "0x02d5fa84b1b3da13dddd39eca1bff66d8cb8fbdb679b8d5e4ea784d92974f1c5b4",
+    "ckb_lock_args": "0x20bef6a16a78dca6686d8906072e580933f6bb18",
+    "evm_digest": "0xb7e5c7b9b38d2a6110a1b81d3a6a57e958c1d8b949e4e49a4944486ffa638dd1",
+    "evm_signature": "0x5fd7dcd19cc2f46142353519992610a4a2b77a9befc59febaf39bc1adfcab92275bcadc2e2f1ea53d2913d8c8f93b76fa6a8b5c3e5458008256352a2b266f6d21c",
+    "evm_address": "0xa4b1bb64f36b936a8f083c01f9449c78a465dc2c"
+  }
+]

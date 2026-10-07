@@ -1,0 +1,550 @@
+{
+  "network": {
+    "name": "testkit",
+    "genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+    "hrp": "ckt",
+    "secp256k1": {
+      "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+      "hash_type": "type"
+    },
+    "dao": {
+      "code_hash": "0x82d76d1b75fe2fd9a27dfbaa65a039221a380d76c926f378d3f81cf3e7e13f2e",
+      "hash_type": "type"
+    },
+    "omnilock": {
+      "code_hash": "0xc44a1b51e2b135fc6c09e07140c9f5349accff07e0ab78fe1457ba61d59982dd",
+      "hash_type": "type"
+    },
+    "pw_lock": {
+      "code_hash": "0x34e60685446c398779fb4f887c301725b8377d464ce158b3b75270b609ce51d8",
+      "hash_type": "type"
+    }
+  },
+  "items": [
+    {
+      "name": "auth_policy",
+      "json": {
+        "message_kind": "authorization_policy",
+        "protocol_version": "2",
+        "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+        "dao_namespace": "ckb-community-fund-dao",
+        "clock": "ckb-parent-mtp-v1",
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "semantics": "omavote-authorization-semantics-v2"
+      },
+      "hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80"
+    },
+    {
+      "name": "process_roles",
+      "json": {
+        "message_kind": "process_roles",
+        "protocol_version": "2",
+        "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+        "dao_namespace": "ckb-community-fund-dao",
+        "previous_roles_hash": null,
+        "roles": {
+          "committee": {
+            "threshold": "2",
+            "members": [
+              {
+                "kind": "evm_eoa",
+                "address": "0x48e416bbd07ea9cb1793c4630016c39463125d75",
+                "adapter": "evm-personal-message-v1"
+              },
+              {
+                "kind": "evm_eoa",
+                "address": "0x8e492ae5b67f756f5c9f283636b80350cae373d5",
+                "adapter": "evm-personal-message-v1"
+              },
+              {
+                "kind": "evm_eoa",
+                "address": "0x40eed45d58fca13c2d5c058a7ccfd27f0a30f9bf",
+                "adapter": "evm-personal-message-v1"
+              }
+            ]
+          },
+          "coordinator": {
+            "threshold": "1",
+            "members": [
+              {
+                "kind": "secp256k1",
+                "public_key": "0x02861645aeac06bec4b113a97c005a842365928fd33569903900339d075f90a31d",
+                "adapter": "ckb-secp256k1-message-v1"
+              }
+            ]
+          }
+        },
+        "nonce": "0x0303030303030303030303030303030303030303030303030303030303030303"
+      },
+      "hash": "0x4c8e3f57326063deb9549b790e7a0a5175203207ffbdae9c1ff7c0ee065a06f5"
+    },
+    {
+      "name": "manifest",
+      "json": {
+        "message_kind": "manifest",
+        "protocol_version": "2",
+        "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+        "dao_namespace": "ckb-community-fund-dao",
+        "nonce": "0x0c227933e68b711febff12a655133f008fa0ad0a2bbb05f1d6d9e48d3c995d16",
+        "proposal_type": "grant",
+        "title": "Fund an independent block explorer for CKB",
+        "signing_title": "Fund block explorer",
+        "content_hash": "0xc8c97607e14f101954303251f01015a2b3d069926590ed0294f3c4a2cfae6c8d",
+        "content_locations": [
+          "https://talk.nervos.org/t/example/1"
+        ],
+        "forum_topic_id": "1",
+        "forum_revision": "1",
+        "discussion_evidence_hash": null,
+        "budget_ckb_shannon": "2500000000000",
+        "quorum_base_shannon": "2500000000000",
+        "payment_terms_hash": null,
+        "recipient_lock_script": {
+          "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+          "hash_type": "type",
+          "args": "0x4242424242424242424242424242424242424242"
+        },
+        "proposer_owner_locks": [
+          {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+          }
+        ],
+        "rules_profile": {
+          "profile": "omavote-ckb-community-fund-v2",
+          "asset": "nervos-dao-deposit",
+          "amount": "raw-capacity-principal",
+          "weight_time": "final-accepted-block-state",
+          "withdraw_phase1": "excluded",
+          "cast_eligibility": "positive-deposit-at-valid-inclusion",
+          "revote": "direct-priority-latest-anchor",
+          "authorization": "term-limited-max-365-chain-days",
+          "cancel": "exclude-both-sides-and-quorum",
+          "precision": "exact-shannon",
+          "choices": [
+            "YES",
+            "NO",
+            "CANCEL"
+          ],
+          "quorum_grant_multiplier": "3",
+          "quorum_meta_rule_shannon": "18500000000000000",
+          "approval_grant": {
+            "numerator": "51",
+            "denominator": "100"
+          },
+          "approval_meta_rule": {
+            "numerator": "67",
+            "denominator": "100"
+          },
+          "threshold_comparison": "inclusive",
+          "opening_confirmations": "2",
+          "delegate_cutoff_ms": "0",
+          "voting_period_ms": "604800000",
+          "proposer_min_deposit_shannon": "10000000000000"
+        },
+        "rules_hash": "0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f",
+        "auth_registry": {
+          "owner_adapters": [
+            "ckb-secp256k1-message-v1",
+            "evm-personal-message-v1"
+          ],
+          "key_adapters": [
+            "ckb-secp256k1-message-v1",
+            "evm-personal-message-v1"
+          ]
+        },
+        "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143",
+        "authorization_policy": {
+          "message_kind": "authorization_policy",
+          "protocol_version": "2",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "clock": "ckb-parent-mtp-v1",
+          "max_term_ms": "31536000000",
+          "max_control_publication_delay_ms": "86400000",
+          "semantics": "omavote-authorization-semantics-v2"
+        },
+        "auth_policy_hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80",
+        "signature_formats": [
+          "omavote-readable-v2"
+        ],
+        "clock": "ckb-parent-mtp-v1",
+        "start_ms": "1800028800000",
+        "end_ms": "1800633600000",
+        "confirmation_policy": {
+          "result_confirmations": "100",
+          "review_window_ms": "86400000"
+        },
+        "publication_policy": "full-onchain-v2"
+      },
+      "poll_id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+      "rules_hash": "0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f",
+      "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143"
+    },
+    {
+      "name": "grant",
+      "envelope": {
+        "body": {
+          "protocol_version": "2",
+          "message_kind": "authorization_control",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "auth_policy_hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80",
+          "owner_lock": {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+          },
+          "owner_auth_adapter": "ckb-secp256k1-message-v1",
+          "action": "GRANT",
+          "key_descriptor": {
+            "kind": "evm_eoa",
+            "address": "0x3b501a221faab9317e70f9da63c437582f468cd4",
+            "adapter": "evm-personal-message-v1"
+          },
+          "expires_at_ms": "1831539600000",
+          "revoke_mode": null,
+          "anchor_block_hash": "0x2fce21e4e7dd088c7cb224c212935806dd59b374b6ac430ab6763380da5472ec",
+          "publication_deadline_ms": "1800090000000",
+          "nonce": "0x3aae4e298a91201c381e120b40f616e5802feb5924f15a108fce633c938ef6cf",
+          "signature_format": "omavote-authorization-v2"
+        },
+        "proof": {
+          "signature": "0x2a974b7642a01dd7b450574d04cbc9003dbf063e7195eae8d088636c177914a2180e20d18c335838ba746a18275d5e3f4a0b9aebec7bfff064a3676044e3659701"
+        }
+      },
+      "id": "0xa5760dbef7eb3b635dbfcd30237fb9ff034614c9cb35f32f83af7c233f2e0b30",
+      "signed_text": "OMAVOTE GRANT 0x3b501a22..2F468cd4 TO 2028-01-15\nOMAVOTE V2 - VOTING AUTHORIZATION ONLY, NO ASSET TRANSFER\n\nFormat: omavote-authorization-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nOwner: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm5xfkvwrpwk6x50l03udnwg03vpw7m2s3nx5xa\nAction: GRANT\nKey-Address: 0x3b501a221fAAB9317e70F9da63C437582F468cd4\nKey-Descriptor: {\"adapter\":\"evm-personal-message-v1\",\"address\":\"0x3b501a221faab9317e70f9da63c437582f468cd4\",\"kind\":\"evm_eoa\"}\nKey-ID: 0x1e892568f81d9dc25b15226a4d6db98cacc8a2b94d926dcc4ba7342e3a99d24d\nExpires-Chain-Time-UTC: 2028-01-15T09:00:00.000Z\nRevoke-Mode: none\nAnchor-Block: 0x2fce21e4e7dd088c7cb224c212935806dd59b374b6ac430ab6763380da5472ec\nPublish-Before-Chain-Time-UTC: 2027-01-16T09:00:00.000Z\nPolicy-Hash: 0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80\nAuthorization-Hash: 0xa5760dbef7eb3b635dbfcd30237fb9ff034614c9cb35f32f83af7c233f2e0b30"
+    },
+    {
+      "name": "proposal",
+      "envelope": {
+        "protocol_version": "2",
+        "manifest": {
+          "message_kind": "manifest",
+          "protocol_version": "2",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "nonce": "0x0c227933e68b711febff12a655133f008fa0ad0a2bbb05f1d6d9e48d3c995d16",
+          "proposal_type": "grant",
+          "title": "Fund an independent block explorer for CKB",
+          "signing_title": "Fund block explorer",
+          "content_hash": "0xc8c97607e14f101954303251f01015a2b3d069926590ed0294f3c4a2cfae6c8d",
+          "content_locations": [
+            "https://talk.nervos.org/t/example/1"
+          ],
+          "forum_topic_id": "1",
+          "forum_revision": "1",
+          "discussion_evidence_hash": null,
+          "budget_ckb_shannon": "2500000000000",
+          "quorum_base_shannon": "2500000000000",
+          "payment_terms_hash": null,
+          "recipient_lock_script": {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0x4242424242424242424242424242424242424242"
+          },
+          "proposer_owner_locks": [
+            {
+              "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+              "hash_type": "type",
+              "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+            }
+          ],
+          "rules_profile": {
+            "profile": "omavote-ckb-community-fund-v2",
+            "asset": "nervos-dao-deposit",
+            "amount": "raw-capacity-principal",
+            "weight_time": "final-accepted-block-state",
+            "withdraw_phase1": "excluded",
+            "cast_eligibility": "positive-deposit-at-valid-inclusion",
+            "revote": "direct-priority-latest-anchor",
+            "authorization": "term-limited-max-365-chain-days",
+            "cancel": "exclude-both-sides-and-quorum",
+            "precision": "exact-shannon",
+            "choices": [
+              "YES",
+              "NO",
+              "CANCEL"
+            ],
+            "quorum_grant_multiplier": "3",
+            "quorum_meta_rule_shannon": "18500000000000000",
+            "approval_grant": {
+              "numerator": "51",
+              "denominator": "100"
+            },
+            "approval_meta_rule": {
+              "numerator": "67",
+              "denominator": "100"
+            },
+            "threshold_comparison": "inclusive",
+            "opening_confirmations": "2",
+            "delegate_cutoff_ms": "0",
+            "voting_period_ms": "604800000",
+            "proposer_min_deposit_shannon": "10000000000000"
+          },
+          "rules_hash": "0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f",
+          "auth_registry": {
+            "owner_adapters": [
+              "ckb-secp256k1-message-v1",
+              "evm-personal-message-v1"
+            ],
+            "key_adapters": [
+              "ckb-secp256k1-message-v1",
+              "evm-personal-message-v1"
+            ]
+          },
+          "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143",
+          "authorization_policy": {
+            "message_kind": "authorization_policy",
+            "protocol_version": "2",
+            "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+            "dao_namespace": "ckb-community-fund-dao",
+            "clock": "ckb-parent-mtp-v1",
+            "max_term_ms": "31536000000",
+            "max_control_publication_delay_ms": "86400000",
+            "semantics": "omavote-authorization-semantics-v2"
+          },
+          "auth_policy_hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80",
+          "signature_formats": [
+            "omavote-readable-v2"
+          ],
+          "clock": "ckb-parent-mtp-v1",
+          "start_ms": "1800028800000",
+          "end_ms": "1800633600000",
+          "confirmation_policy": {
+            "result_confirmations": "100",
+            "review_window_ms": "86400000"
+          },
+          "publication_policy": "full-onchain-v2"
+        },
+        "proposer_proofs": [
+          {
+            "owner_lock": {
+              "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+              "hash_type": "type",
+              "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+            },
+            "auth_adapter": "ckb-secp256k1-message-v1",
+            "proof": {
+              "signature": "0xd0330ffee3cf2090b9cfb6b9069d0f0d1822d58aea9e7a9c5026ef154398fefa124254b2c18fad131eccee1a6b3e59cfc8c5fa155b9163937d0414365357e70a01"
+            }
+          }
+        ]
+      },
+      "id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+      "signed_text": "OMAVOTE PROPOSE #c331f7f12fa58c1d 25000CKB\nOMAVOTE V2 - PROPOSAL SUBMISSION, NO ASSET TRANSFER\n\nFormat: omavote-proposal-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nProposal: 0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa\nType: FUNDING\nTitle: Fund block explorer\nBudget-CKB: 25000\nRecipient: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2zgfpyysjzgfpyysjzgfpyysjzgfpyyssurzkcl\nStart-Chain-Time-UTC: 2027-01-15T16:00:00.000Z\nEnd-Chain-Time-UTC: 2027-01-22T16:00:00.000Z\nProposer: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm5xfkvwrpwk6x50l03udnwg03vpw7m2s3nx5xa\nRules-Hash: 0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f"
+    },
+    {
+      "name": "admission",
+      "envelope": {
+        "body": {
+          "message_kind": "process_record",
+          "protocol_version": "2",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "roles_hash": "0x4c8e3f57326063deb9549b790e7a0a5175203207ffbdae9c1ff7c0ee065a06f5",
+          "role": "coordinator",
+          "record_type": "ADMISSION",
+          "poll_id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+          "detail": {
+            "decision": "ADMITTED"
+          },
+          "evidence_hash": null,
+          "anchor_block_hash": "0xeda825accc8ec2e6409ca67cf767f6d582310f52a4532471bc442a01a1e89f91",
+          "publication_deadline_ms": "1800270000000",
+          "nonce": "0x1025ed84b92e563867cb60512a5e52a0d84caa68d28c4d63c2997d170f686997"
+        },
+        "proofs": [
+          {
+            "signer_key_id": "0x7d3179e300b63a5e2423cd19a275df350dad13e67f15e999c28dda32f74c51d3",
+            "proof": {
+              "signature": "0xf81ba5fedfa44db0731888746ff8df52aac1422d76faa519e17476a9afa290d90ec3456dc9308c0bab016d5f9e09068b2c4d9eb1f042ad4a18a012a00bcde01d01"
+            }
+          }
+        ]
+      },
+      "id": "0xceaef1b6e86fe0ee83eb50a63c3c7bc16f552b29b494e0aa0482e52af72223a3",
+      "signed_text": "OMAVOTE ADMIT #c331f7f12fa58c1d ADMITTED\nOMAVOTE V2 - PROCESS RECORD, NO ASSET TRANSFER\n\nFormat: omavote-process-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nRecord-Type: ADMISSION\nRole: COORDINATOR\nProposal: 0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa\nDetail: {\"decision\":\"ADMITTED\"}\nEvidence-Hash: none\nAnchor-Block: 0xeda825accc8ec2e6409ca67cf767f6d582310f52a4532471bc442a01a1e89f91\nPublish-Before-Chain-Time-UTC: 2027-01-18T11:00:00.000Z\nRoles-Hash: 0x4c8e3f57326063deb9549b790e7a0a5175203207ffbdae9c1ff7c0ee065a06f5\nRecord-Hash: 0xceaef1b6e86fe0ee83eb50a63c3c7bc16f552b29b494e0aa0482e52af72223a3"
+    },
+    {
+      "name": "delegate_ballot",
+      "envelope": {
+        "body": {
+          "message_kind": "ballot",
+          "protocol_version": "2",
+          "action": "YES",
+          "authority": "delegate",
+          "authorization_id": "0xa5760dbef7eb3b635dbfcd30237fb9ff034614c9cb35f32f83af7c233f2e0b30",
+          "signer_key_id": "0x1e892568f81d9dc25b15226a4d6db98cacc8a2b94d926dcc4ba7342e3a99d24d",
+          "nonce": "0xb685405b5453d655dece347124f6e39bcff770cf592e1de3cf93d646a76764f3",
+          "anchor_block_hash": "0x582b21f655ff5f188296381959041de755e3fc21df58b64bcf07a9e39effcf9b",
+          "auth_adapter": "evm-personal-message-v1",
+          "dao_namespace": "ckb-community-fund-dao",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "owner_lock": {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+          },
+          "poll_id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+          "rules_hash": "0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f",
+          "signature_format": "omavote-readable-v2"
+        },
+        "proof": {
+          "signature": "0x85656ea6f0522edf191b5a45d9a72cbb0f0ebda4db94e16f7be2e58782791fda2f3713c6be87664c7583ebe52394d7a81538f9001bebeb28b8530e99432632501b"
+        }
+      },
+      "id": "0xc6badcb83dfae82762312cdd3a1da6abb46058e7939cf985d616e787b83e07e1",
+      "signed_text": "OMAVOTE VOTE YES #c331f7f12fa58c1d 25000CKB\nOMAVOTE V2 - VOTE ONLY, NO ASSET TRANSFER\n\nFormat: omavote-readable-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nProposal: 0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa\nTitle: Fund block explorer\nBudget-CKB: 25000\nRecipient: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2zgfpyysjzgfpyysjzgfpyysjzgfpyyssurzkcl\nChoice: YES (Approve)\nOwner: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm5xfkvwrpwk6x50l03udnwg03vpw7m2s3nx5xa\nAuthority: DELEGATE (Voting key)\nAuthorization: 0xa5760dbef7eb3b635dbfcd30237fb9ff034614c9cb35f32f83af7c233f2e0b30\nSigner-Key: 0x1e892568f81d9dc25b15226a4d6db98cacc8a2b94d926dcc4ba7342e3a99d24d\nAnchor-Block: 0x582b21f655ff5f188296381959041de755e3fc21df58b64bcf07a9e39effcf9b\nClock: ckb-parent-mtp-v1\nEnd-Chain-Time-UTC: 2027-01-22T16:00:00.000Z\nRules-Hash: 0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f\nBallot-Hash: 0xc6badcb83dfae82762312cdd3a1da6abb46058e7939cf985d616e787b83e07e1"
+    },
+    {
+      "name": "direct_ballot",
+      "envelope": {
+        "body": {
+          "message_kind": "ballot",
+          "protocol_version": "2",
+          "action": "NO",
+          "authority": "owner",
+          "authorization_id": null,
+          "signer_key_id": null,
+          "nonce": "0x63f9964e9d7a78453a6370b1153752c0be1efe7a736871233c56a0bbd1315382",
+          "anchor_block_hash": "0x582b21f655ff5f188296381959041de755e3fc21df58b64bcf07a9e39effcf9b",
+          "auth_adapter": "evm-personal-message-v1",
+          "dao_namespace": "ckb-community-fund-dao",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "owner_lock": {
+            "code_hash": "0xc44a1b51e2b135fc6c09e07140c9f5349accff07e0ab78fe1457ba61d59982dd",
+            "hash_type": "type",
+            "args": "0x01b403dbca040aa9cfc30152daab11a844ed90ac8100"
+          },
+          "poll_id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+          "rules_hash": "0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f",
+          "signature_format": "omavote-readable-v2"
+        },
+        "proof": {
+          "signature": "0xbe70dbe9df5b61fbb2cc1700ea5946590a9bdda7586dc8d27c22538bdc9c2ec55f0254dbd84b6e8a576853b9385b5ea6e39388563f8c253ac4f9b905e03423ba1b"
+        }
+      },
+      "id": "0xc97744da4256faca90bf754b3bbc925d43e9f45b826097e02b3b000c513315e0",
+      "signed_text": "OMAVOTE VOTE NO #c331f7f12fa58c1d 25000CKB\nOMAVOTE V2 - VOTE ONLY, NO ASSET TRANSFER\n\nFormat: omavote-readable-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nProposal: 0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa\nTitle: Fund block explorer\nBudget-CKB: 25000\nRecipient: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2zgfpyysjzgfpyysjzgfpyysjzgfpyyssurzkcl\nChoice: NO (Reject)\nOwner: ckt1qrzy5x63u2cntlrvp8s8zsxf756f4n8lqls2k787z3tm5cw4nxpd6qgpkspahjsyp25ulscp2td2kydggnkeptypqqqf3577\nAuthority: OWNER (Direct)\nAuthorization: none\nSigner-Key: none\nAnchor-Block: 0x582b21f655ff5f188296381959041de755e3fc21df58b64bcf07a9e39effcf9b\nClock: ckb-parent-mtp-v1\nEnd-Chain-Time-UTC: 2027-01-22T16:00:00.000Z\nRules-Hash: 0xe6b77393fa0ffc81290034c66fbbf4575df9c5e10121e133a2a6aecd7e76708f\nBallot-Hash: 0xc97744da4256faca90bf754b3bbc925d43e9f45b826097e02b3b000c513315e0"
+    },
+    {
+      "name": "grant_cancel",
+      "envelope": {
+        "body": {
+          "protocol_version": "2",
+          "message_kind": "authorization_control",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "auth_policy_hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80",
+          "owner_lock": {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0xe10217729198671a9fc85e7f1ed1f9d93191cfe1"
+          },
+          "owner_auth_adapter": "ckb-secp256k1-message-v1",
+          "action": "GRANT",
+          "key_descriptor": {
+            "kind": "secp256k1",
+            "public_key": "0x02e9530cfa97815ddc2bdb9dc69de18bfccbdad1d628b4b3d00c4c90c70ca02244",
+            "adapter": "ckb-secp256k1-message-v1"
+          },
+          "expires_at_ms": "1802624400000",
+          "revoke_mode": "STOP_AND_CANCEL_OPEN",
+          "anchor_block_hash": "0xafc799f6628b1a3425e577f285db7aff9410eb2518d33c8a2f1007d4907b6f27",
+          "publication_deadline_ms": "1800118800000",
+          "nonce": "0x32f2b4ad9eb7ef366b9f91e6625351bbe6d5a3559e20f81b7ab9dad14de2b985",
+          "signature_format": "omavote-authorization-v2"
+        },
+        "proof": {
+          "signature": "0x5d556d04f359108744eb2d1506bb7ea77ca60fc857bacfb526613fba86eeca4d1f87a21a9bc02f3b48e81985f921dda6ecdac9e9bc6c25e54b1e295852e0448500"
+        }
+      },
+      "id": "0xc07e5a8fef0ff40928b70529204aef2eb723831f4cd0b7e05aedef520394a77f",
+      "signed_text": "OMAVOTE GRANT+CANCEL ckt1..hl28pxqc6qlft7nm TO 2027-02-14\nOMAVOTE V2 - VOTING AUTHORIZATION ONLY, NO ASSET TRANSFER\n\nFormat: omavote-authorization-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nOwner: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0pqgth9yvcvudfljz70u0dr7wexxgulcgaa3rl8\nAction: GRANT\nKey-Address: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0kuh9jknpdltkl55hum8n7ahl28pxqc6qlft7nm\nKey-Descriptor: {\"adapter\":\"ckb-secp256k1-message-v1\",\"kind\":\"secp256k1\",\"public_key\":\"0x02e9530cfa97815ddc2bdb9dc69de18bfccbdad1d628b4b3d00c4c90c70ca02244\"}\nKey-ID: 0x76678b0e3f06767a153deebadcc6287701a1ea43b126d741e188f94155d0480b\nExpires-Chain-Time-UTC: 2027-02-14T17:00:00.000Z\nRevoke-Mode: STOP_AND_CANCEL_OPEN\nAnchor-Block: 0xafc799f6628b1a3425e577f285db7aff9410eb2518d33c8a2f1007d4907b6f27\nPublish-Before-Chain-Time-UTC: 2027-01-16T17:00:00.000Z\nPolicy-Hash: 0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80\nAuthorization-Hash: 0xc07e5a8fef0ff40928b70529204aef2eb723831f4cd0b7e05aedef520394a77f"
+    },
+    {
+      "name": "revoke",
+      "envelope": {
+        "body": {
+          "protocol_version": "2",
+          "message_kind": "authorization_control",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "auth_policy_hash": "0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80",
+          "owner_lock": {
+            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hash_type": "type",
+            "args": "0x9ba19366386175b46a3fef8f1b3721f1605dedaa"
+          },
+          "owner_auth_adapter": "ckb-secp256k1-message-v1",
+          "action": "REVOKE",
+          "key_descriptor": null,
+          "expires_at_ms": null,
+          "revoke_mode": "STOP_ONLY",
+          "anchor_block_hash": "0x64d55f05dea6fbd196e9693c7b498af30ec0d3371029bf18dd0467a1aa973cde",
+          "publication_deadline_ms": "1800126000000",
+          "nonce": "0xf30099a0611406ca032808e59eab8bd05c2c6bc5e77f091601fd608e541b131c",
+          "signature_format": "omavote-authorization-v2"
+        },
+        "proof": {
+          "signature": "0x9157534e311a2ce141000aa0560ba01fa73a29f5b4223c04f722b42f60d97c824668779ae24c4e224ab60631caafbcd9569c881745615d2df219e60546b421bd01"
+        }
+      },
+      "id": "0x04920b7d8339bce64315bd63f7c3648a5eb2a7d0f3eed2acdce56227a3a824b2",
+      "signed_text": "OMAVOTE REVOKE STOP-ONLY\nOMAVOTE V2 - VOTING AUTHORIZATION ONLY, NO ASSET TRANSFER\n\nFormat: omavote-authorization-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nOwner: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm5xfkvwrpwk6x50l03udnwg03vpw7m2s3nx5xa\nAction: REVOKE\nKey-Address: none\nKey-Descriptor: none\nKey-ID: none\nExpires-Chain-Time-UTC: none\nRevoke-Mode: STOP_ONLY\nAnchor-Block: 0x64d55f05dea6fbd196e9693c7b498af30ec0d3371029bf18dd0467a1aa973cde\nPublish-Before-Chain-Time-UTC: 2027-01-16T19:00:00.000Z\nPolicy-Hash: 0x571611c3de018b2cc8ecc8b3245aec9e1335bd974bbc257715c5c80a5d6bad80\nAuthorization-Hash: 0x04920b7d8339bce64315bd63f7c3648a5eb2a7d0f3eed2acdce56227a3a824b2"
+    },
+    {
+      "name": "result_attestation",
+      "envelope": {
+        "body": {
+          "message_kind": "process_record",
+          "protocol_version": "2",
+          "network_genesis_hash": "0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a",
+          "dao_namespace": "ckb-community-fund-dao",
+          "roles_hash": "0x4c8e3f57326063deb9549b790e7a0a5175203207ffbdae9c1ff7c0ee065a06f5",
+          "role": "committee",
+          "record_type": "RESULT_ATTESTATION",
+          "poll_id": "0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa",
+          "detail": {
+            "result_hash": "0x6848b02d6178d8169cc1366b6ac553a8ed8f5f1060effbfa5965e0b95a9cedfd",
+            "outcome": "FAIL"
+          },
+          "evidence_hash": null,
+          "anchor_block_hash": "0x76e449c12969f00774126a7382e9b7ec6a8c5c596c4c5c215c4886aed059355e",
+          "publication_deadline_ms": "1800892800000",
+          "nonce": "0x61527afc595ebbc460b2f8333c10c37dea08b7c81d1d26609b49477b3ff664f3"
+        },
+        "proofs": [
+          {
+            "signer_key_id": "0xd3499530ad26b245adf5222689a2ea7951c4d8b5d58557aec59631b4b8b74e27",
+            "proof": {
+              "signature": "0xe16aedc92976c157298970ada400f4b028bc790eee198792a9dacbc2218cadb915351e8f6f287b35585bbbb6bac8012fa1744ee1e2b0b9847b88499da29208c51b"
+            }
+          },
+          {
+            "signer_key_id": "0x9369269494f1f7e58bc28c7ea7edd6a56de47ca31f68f9507b6c3dc22d8904e6",
+            "proof": {
+              "signature": "0x0afd74f4ff8f3f49fe1d4fc2c72d02430a609ebac343ceb875eeac7e75ae3d451330e1b0a612891449d668106858a2cc013215b687af827205b343460b1e86881c"
+            }
+          }
+        ]
+      },
+      "id": "0x138a45ac3e80605dde30a03be0d092abbe54e872311a282787e48761c83b124f",
+      "signed_text": "OMAVOTE RESULT #c331f7f12fa58c1d FAIL\nOMAVOTE V2 - PROCESS RECORD, NO ASSET TRANSFER\n\nFormat: omavote-process-v2\nDAO: ckb-community-fund-dao\nNetwork-Genesis: 0xe75085348199f7ac36f786c1f88eaa181d5637ae5e1607e16e6d48f0a3eac22a\nRecord-Type: RESULT_ATTESTATION\nRole: COMMITTEE\nProposal: 0xc331f7f12fa58c1dc6d4bdc070a27725c85bf9215b56a5a44609c8c70ed997aa\nDetail: {\"outcome\":\"FAIL\",\"result_hash\":\"0x6848b02d6178d8169cc1366b6ac553a8ed8f5f1060effbfa5965e0b95a9cedfd\"}\nEvidence-Hash: none\nAnchor-Block: 0x76e449c12969f00774126a7382e9b7ec6a8c5c596c4c5c215c4886aed059355e\nPublish-Before-Chain-Time-UTC: 2027-01-25T16:00:00.000Z\nRoles-Hash: 0x4c8e3f57326063deb9549b790e7a0a5175203207ffbdae9c1ff7c0ee065a06f5\nRecord-Hash: 0x138a45ac3e80605dde30a03be0d092abbe54e872311a282787e48761c83b124f"
+    },
+    {
+      "name": "key_descriptor",
+      "json": {
+        "kind": "evm_eoa",
+        "address": "0x3b501a221faab9317e70f9da63c437582f468cd4",
+        "adapter": "evm-personal-message-v1"
+      },
+      "key_id": "0x1e892568f81d9dc25b15226a4d6db98cacc8a2b94d926dcc4ba7342e3a99d24d",
+      "key_display": "0x3b501a221fAAB9317e70F9da63C437582F468cd4"
+    }
+  ]
+}

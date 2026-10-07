@@ -1,0 +1,48 @@
+{
+  "jcs": [
+    {
+      "input": "{\"b\":\"2\",\"a\":\"1\"}",
+      "canonical": "{\"a\":\"1\",\"b\":\"2\"}"
+    },
+    {
+      "input": "{\"ﬁ\":\"x\",\"😀\":\"y\",\"a\":[null,true,false]}",
+      "canonical": "{\"a\":[null,true,false],\"😀\":\"y\",\"ﬁ\":\"x\"}"
+    },
+    {
+      "input": "{\"esc\":\"\\u0001\\b\\f\\n\\r\\t\\\"\\\\/\",\"uni\":\"é中\"}",
+      "canonical": "{\"esc\":\"\\u0001\\b\\f\\n\\r\\t\\\"\\\\/\",\"uni\":\"é中\"}"
+    },
+    {
+      "input": "[ ]",
+      "canonical": "[]"
+    }
+  ],
+  "reject": [
+    "{\"a\":1}",
+    "{\"a\":\"1\",\"a\":\"2\"}",
+    "\"\\ud800\"",
+    "\"a\u0001\"",
+    "{\"a\":\"1\"} trailing"
+  ],
+  "ckb_hash": [
+    {
+      "utf8": "",
+      "hash": "0x44f4c69744d5f8c55d642062949dcae49bc4e7ef43d388c5a12f42b5633d163e"
+    },
+    {
+      "utf8": "abc",
+      "hash": "0x521c604cc09b814b0a9106305395def35d0211b9996a3e0f326ae4d671bd8fc2"
+    },
+    {
+      "utf8": "OMAVOTE",
+      "hash": "0x4cb273c38227f3fb68e56a334dc126cdebb4a6dc4263d293540f631210a4ab04"
+    }
+  ],
+  "domain_hash": [
+    {
+      "prefix": "OMAVOTE/BALLOT/V2\\0",
+      "data_utf8": "{}",
+      "hash": "0x93e842a67734ea6b5ce4d9d5b23d76102034f83b95e85243c3887ad9365bd769"
+    }
+  ]
+}

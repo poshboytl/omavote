@@ -1,0 +1,35 @@
+[
+  {
+    "script": {
+      "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+      "hash_type": "type",
+      "args": "0xb3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3"
+    },
+    "molecule": "0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3",
+    "script_hash": "0x514a6452993addeb34b726fd0de5eec7373e1a0ae4fea913d646d10cd5ac7bb2",
+    "mainnet_address": "ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdnkwem8vankwem8vankwem8vankwem8vccwwylz",
+    "testnet_address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdnkwem8vankwem8vankwem8vankwem8vcku9t46"
+  },
+  {
+    "script": {
+      "code_hash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "hash_type": "data1",
+      "args": "0x"
+    },
+    "molecule": "0x3500000010000000300000003100000011111111111111111111111111111111111111111111111111111111111111110200000000",
+    "script_hash": "0x1a286ad30580fc11c12483fe62a1c52b06620c1586765849464d4950bea01b96",
+    "mainnet_address": "ckb1qqg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zqsv9qk9f",
+    "testnet_address": "ckt1qqg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zqs3ra9gd"
+  },
+  {
+    "script": {
+      "code_hash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "hash_type": "data2",
+      "args": "0x010203"
+    },
+    "molecule": "0x3800000010000000300000003100000022222222222222222222222222222222222222222222222222222222222222220403000000010203",
+    "script_hash": "0x5a740b56d562aa1b4a3ac7da546bf4cc829e41f8df324a14d118cb2dd4293029",
+    "mainnet_address": "ckb1qq3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zypqpqgpsqzyak7",
+    "testnet_address": "ckt1qq3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zypqpqgps773ayt"
+  }
+]
