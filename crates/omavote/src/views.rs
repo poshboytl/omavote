@@ -262,15 +262,19 @@ pub fn owner_power(engine: &Engine, owner_id: &Hash32) -> Value {
 }
 
 fn tally_json(t: &tally::Tally, kind: &str) -> Value {
-    json!({
+    let mut v = json!({
         "kind": kind,
         "yes_shannon": dec(t.yes),
         "no_shannon": dec(t.no),
         "participation_shannon": dec(t.yes + t.no),
         "quorum_required_shannon": dec(t.quorum_required),
-        "outcome": if t.passed { "PASS" } else { "FAIL" },
         "owners": t.rows.len().to_string(),
-    })
+    });
+    // A partial count must never read as an outcome (docs/03 §10).
+    if kind == "FINAL" {
+        v["outcome"] = json!(if t.passed { "PASS" } else { "FAIL" });
+    }
+    v
 }
 
 pub fn poll_summary(engine: &Engine, poll: &PollState) -> Value {

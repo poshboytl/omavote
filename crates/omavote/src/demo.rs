@@ -400,13 +400,17 @@ pub async fn run(args: DemoArgs) -> Result<()> {
     }
 
     // --- Owners and deposits ---------------------------------------------------
-    let alice = TestOwner::ckb("omavote-demo-alice", &net);
-    let bob = TestOwner::ckb("omavote-demo-bob", &net);
-    let dave = TestOwner::ckb("omavote-demo-dave", &net);
-    let erin = TestOwner::ckb("omavote-demo-erin", &net);
-    let carol = if net.omnilock.is_some() { Some(TestOwner::evm_omnilock("omavote-demo-carol", &net)) } else { None };
-    let k1 = TestKey::evm("omavote-demo-delegate-k1");
-    let k2 = TestKey::secp("omavote-demo-delegate-k2");
+    // Fresh owners and keys per run, so that deposits from earlier runs do not add up.
+    let run = to_hex(&nonce()[..4]);
+    let label = |who: &str| format!("omavote-demo-{who}-{run}");
+    let alice = TestOwner::ckb(&label("alice"), &net);
+    let bob = TestOwner::ckb(&label("bob"), &net);
+    let dave = TestOwner::ckb(&label("dave"), &net);
+    let erin = TestOwner::ckb(&label("erin"), &net);
+    let carol = if net.omnilock.is_some() { Some(TestOwner::evm_omnilock(&label("carol"), &net)) } else { None };
+    let k1 = TestKey::evm(&label("delegate-k1"));
+    let k2 = TestKey::secp(&label("delegate-k2"));
+    d.say(format!("run {run}: fresh test owners and delegate keys"));
     let mut outputs = vec![
         dao_output(&net, &alice.lock, 150_000),
         dao_output(&net, &bob.lock, 60_000),

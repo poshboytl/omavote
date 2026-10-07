@@ -483,6 +483,11 @@ mod tests {
         assert_eq!(st.engine.owner_balance(&y.hash()), 500 * 100_000_000);
         assert_eq!(st.reorgs.len(), 1);
         assert_eq!(st.reorgs[0].fork_height, 3);
+        // Anchors on the abandoned branch are no longer known: signed objects that
+        // reference them become ANCHOR_INVALID when replayed on the new chain.
+        assert!(st.engine.block_clock(&a[5].hash).is_none());
+        assert!(st.engine.block_clock(&b[5].hash).is_some());
+        assert!(st.engine.block_clock(&a[3].hash).is_some());
         let store = s.store.as_ref().unwrap();
         assert_eq!(store.deposits_at(&x.hash(), 14).unwrap().len(), 1);
         assert_eq!(store.deposits_at(&y.hash(), 5).unwrap().len(), 0);
