@@ -1,0 +1,11 @@
+/target/
+**/node_modules/
+/web/dist/
+/web/src/wasm/pkg/
+/verifier-ts/dist/
+/devnet/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+research/__pycache__/

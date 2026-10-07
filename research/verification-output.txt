@@ -1,0 +1,50 @@
+Completion audit: abstract accounting model only
+Command: python -m unittest discover -s research -p 'test_*.py' -v
+
+test_after_close_spend_does_not_change_historical_tally (test_model.AccountingTests.test_after_close_spend_does_not_change_historical_tally) ... ok
+test_cancel_at_zero_weight_prevents_later_reactivation (test_model.AccountingTests.test_cancel_at_zero_weight_prevents_later_reactivation) ... ok
+test_cancel_excluded_from_quorum (test_model.AccountingTests.test_cancel_excluded_from_quorum) ... ok
+test_cross_network_poll_and_rule_replay_ignored (test_model.AccountingTests.test_cross_network_poll_and_rule_replay_ignored) ... ok
+test_delayed_old_vote_cannot_override_newer_sequence (test_model.AccountingTests.test_delayed_old_vote_cannot_override_newer_sequence) ... ok
+test_deposit_and_ballot_in_same_transaction (test_model.AccountingTests.test_deposit_and_ballot_in_same_transaction) ... ok
+test_distinct_deposits_same_owner_add_exactly (test_model.AccountingTests.test_distinct_deposits_same_owner_add_exactly) ... ok
+test_duplicate_outpoint_and_chain_position_fail (test_model.AccountingTests.test_duplicate_outpoint_and_chain_position_fail) ... ok
+test_fake_dao_and_wrong_data_excluded (test_model.AccountingTests.test_fake_dao_and_wrong_data_excluded) ... ok
+test_higher_sequence_replaces_vote (test_model.AccountingTests.test_higher_sequence_replaces_vote) ... ok
+test_higher_sequence_resolves_conflict (test_model.AccountingTests.test_higher_sequence_resolves_conflict) ... ok
+test_incomplete_history_fails (test_model.AccountingTests.test_incomplete_history_fails) ... ok
+test_ineligible_vote_does_not_become_valid_from_later_deposit (test_model.AccountingTests.test_ineligible_vote_does_not_become_valid_from_later_deposit) ... ok
+test_invalid_higher_sequence_does_not_erase_valid_vote (test_model.AccountingTests.test_invalid_higher_sequence_does_not_erase_valid_vote) ... ok
+test_invalid_sequence_bounds (test_model.AccountingTests.test_invalid_sequence_bounds) ... ok
+test_late_cancel_does_not_change_result (test_model.AccountingTests.test_late_cancel_does_not_change_result) ... ok
+test_new_deposit_after_valid_vote_updates_final_weight (test_model.AccountingTests.test_new_deposit_after_valid_vote_updates_final_weight) ... ok
+test_new_deposit_during_window_is_eligible (test_model.AccountingTests.test_new_deposit_during_window_is_eligible) ... ok
+test_partial_withdrawal_preserves_other_deposit (test_model.AccountingTests.test_partial_withdrawal_preserves_other_deposit) ... ok
+test_phase_one_alone_removes_weight (test_model.AccountingTests.test_phase_one_alone_removes_weight) ... ok
+test_reorg_rebuild_removes_orphan_deposit (test_model.AccountingTests.test_reorg_rebuild_removes_orphan_deposit) ... ok
+test_reorg_rebuild_removes_orphan_vote (test_model.AccountingTests.test_reorg_rebuild_removes_orphan_vote) ... ok
+test_republication_after_eligibility_not_poisoned_by_earlier_copy (test_model.AccountingTests.test_republication_after_eligibility_not_poisoned_by_earlier_copy) ... ok
+test_same_final_block_later_withdrawal_changes_weight (test_model.AccountingTests.test_same_final_block_later_withdrawal_changes_weight) ... ok
+test_same_owner_repeated_through_multiple_relays_counts_once (test_model.AccountingTests.test_same_owner_repeated_through_multiple_relays_counts_once) ... ok
+test_same_sequence_conflict_not_decided_by_relayer_order (test_model.AccountingTests.test_same_sequence_conflict_not_decided_by_relayer_order) ... ok
+test_separate_owners_have_separate_choices (test_model.AccountingTests.test_separate_owners_have_separate_choices) ... ok
+test_shannon_precision_not_truncated_per_cell (test_model.AccountingTests.test_shannon_precision_not_truncated_per_cell) ... ok
+test_two_proposals_can_use_same_principal_independently (test_model.AccountingTests.test_two_proposals_can_use_same_principal_independently) ... ok
+test_window_start_inclusive_end_exclusive (test_model.AccountingTests.test_window_start_inclusive_end_exclusive) ... ok
+test_withdraw_transfer_redeposit_cannot_double_count (test_model.AccountingTests.test_withdraw_transfer_redeposit_cannot_double_count) ... ok
+test_conservation_rebroadcast_and_fetch_order_for_1000_histories (test_model.RandomizedProperties.test_conservation_rebroadcast_and_fetch_order_for_1000_histories) ... ok
+test_exact_51_percent_and_one_unit_below (test_model.ThresholdTests.test_exact_51_percent_and_one_unit_below) ... ok
+test_exact_67_percent_inclusive_and_strict (test_model.ThresholdTests.test_exact_67_percent_inclusive_and_strict) ... ok
+test_large_integer_one_shannon_boundary (test_model.ThresholdTests.test_large_integer_one_shannon_boundary) ... ok
+test_quorum_boundary (test_model.ThresholdTests.test_quorum_boundary) ... ok
+test_reject_float_and_negative_amount (test_model.ThresholdTests.test_reject_float_and_negative_amount) ... ok
+test_two_thirds_is_not_67_percent (test_model.ThresholdTests.test_two_thirds_is_not_67_percent) ... ok
+test_zero_turnout_never_passes_even_zero_quorum (test_model.ThresholdTests.test_zero_turnout_never_passes_even_zero_quorum) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 0.087s
+
+OK
+
+This output does not verify real signatures, CKB-VM execution, wallet interoperability, or complete chain history.
+

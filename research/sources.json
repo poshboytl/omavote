@@ -1,0 +1,358 @@
+{
+  "retrieved_date": "2026-10-07",
+  "purpose": "Public-source design research; repository HEAD snapshots are not attestations of deployed versions. Forum content was collected for targeted reading, not all posts independently audited.",
+  "repositories": [
+    {
+      "local_alias": "ccc",
+      "url": "https://github.com/ckb-devrel/ccc.git",
+      "commit": "722cfe28bb184145e14887d54162d55fbe3dcadb",
+      "commit_date": "2026-10-02T11:08:26+08:00",
+      "branch": "dev"
+    },
+    {
+      "local_alias": "ckb",
+      "url": "https://github.com/nervosnetwork/ckb.git",
+      "commit": "2592ddf0502cd4adfe886db893cccc866db3c60f",
+      "commit_date": "2026-09-17T14:16:42+08:00",
+      "branch": "master"
+    },
+    {
+      "local_alias": "ckb-system-scripts",
+      "url": "https://github.com/nervosnetwork/ckb-system-scripts.git",
+      "commit": "72eb92fca090700dcb398cd8cad8fbd8bad40355",
+      "commit_date": "2025-05-13T16:20:28+08:00",
+      "branch": "master"
+    },
+    {
+      "local_alias": "dao11-app",
+      "url": "https://github.com/CCF-DAO1-1/app_view.git",
+      "commit": "7c6705975dfd787654961d75930d5a3b484068b3",
+      "commit_date": "2026-04-23T17:31:30+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "dao11-auditor",
+      "url": "https://github.com/CCF-DAO1-1/ccfdao-vote-auditor-rfc.git",
+      "commit": "efe59d77f4f1f00d050fe5f2006b5aad753d2491",
+      "commit_date": "2026-04-22T16:44:12+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "dao11-contract",
+      "url": "https://github.com/CCF-DAO1-1/ckb-dao-vote.git",
+      "commit": "d7d85f0b0beb8b2fd53c7d7f0902f5414622680b",
+      "commit_date": "2026-04-28T15:06:22+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "dao11-docs",
+      "url": "https://github.com/CCF-DAO1-1/ccfdao-v1.1-docs.git",
+      "commit": "12a6e8e15c0ebfdfbe42215cae40badde6b1e5c7",
+      "commit_date": "2026-03-24T17:50:11+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "governance-dapp",
+      "url": "https://github.com/anihdev/ckb-voting-dapp.git",
+      "commit": "2af7bafb9e579de56b0103bad2dc1eab7eee4662",
+      "commit_date": "2026-09-01T18:15:06+01:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "neuron",
+      "url": "https://github.com/nervosnetwork/neuron.git",
+      "commit": "a926e3383d3a3e305b3bde7d233474515ef01a2e",
+      "commit_date": "2026-09-12T18:14:24+08:00",
+      "branch": "develop"
+    },
+    {
+      "local_alias": "omnilock",
+      "url": "https://github.com/cryptape/omnilock.git",
+      "commit": "280dd97ac0930ea1ed766a18d49478229347c832",
+      "commit_date": "2026-09-07T10:17:42+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "rfcs",
+      "url": "https://github.com/nervosnetwork/rfcs.git",
+      "commit": "62a6e08e16a995ab94562581978ceac3726c31e6",
+      "commit_date": "2026-08-12T18:39:09+08:00",
+      "branch": "master"
+    },
+    {
+      "local_alias": "rules",
+      "url": "https://github.com/CKB-Community-Fund-DAO/rules.git",
+      "commit": "d7e5157c1345e157bf154ea52d4142bcc464769e",
+      "commit_date": "2023-06-26T13:48:48-07:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "vote-poc",
+      "url": "https://github.com/XuJiandong/ckb-vote-poc.git",
+      "commit": "c70421b45b930325a4dda558de12fcad5f8b7918",
+      "commit_date": "2026-06-30T09:44:55+08:00",
+      "branch": "main"
+    },
+    {
+      "local_alias": "watchdog",
+      "url": "https://github.com/CKBFansDAO/ckb-dao-watchdog.git",
+      "commit": "ed39312f7e8a959571ea6c759522edec98498c62",
+      "commit_date": "2026-08-21T15:01:04+08:00",
+      "branch": "main"
+    }
+  ],
+  "forum_topics": [
+    {
+      "topic_id": 10090,
+      "title": "CKB Community Fund DAO V1.1: Official Launch Announcement",
+      "url": "https://talk.nervos.org/t/ckb-community-fund-dao-v1-1-official-launch-announcement/10090",
+      "created_at": "2026-03-15T17:09:51.309Z",
+      "last_posted_at": "2026-03-15T17:09:51.509Z",
+      "loaded_posts": 1,
+      "snapshot_sha256": "6963a5e5b239ed035b49f67a654b6c6214883585c4614bb678c13d3cf3b09f9d"
+    },
+    {
+      "topic_id": 10091,
+      "title": "DAO V1.1 Whitelist and Beyond: Community-Led Code Review",
+      "url": "https://talk.nervos.org/t/dao-v1-1-whitelist-and-beyond-community-led-code-review/10091",
+      "created_at": "2026-03-16T05:51:24.605Z",
+      "last_posted_at": "2026-04-13T17:06:17.406Z",
+      "loaded_posts": 11,
+      "snapshot_sha256": "d18133e2b617ee1c39d3207e0c1a5f5811a06dc6faec4fb13a1769b0f53bae8e"
+    },
+    {
+      "topic_id": 10096,
+      "title": "Statement on DAO V1.1 Platform Launch",
+      "url": "https://talk.nervos.org/t/statement-on-dao-v1-1-platform-launch/10096",
+      "created_at": "2026-03-16T18:40:36.151Z",
+      "last_posted_at": "2026-04-09T18:04:44.790Z",
+      "loaded_posts": 38,
+      "snapshot_sha256": "7d336ec6ebb67d201510c4f61aa7778a093c951feaee6d0eb99cf03307b43a51"
+    },
+    {
+      "topic_id": 10171,
+      "title": "On-Chain Tally: DAO v1.1 Limits and a Deposit-Paired Voting Proposal",
+      "url": "https://talk.nervos.org/t/on-chain-tally-dao-v1-1-limits-and-a-deposit-paired-voting-proposal/10171",
+      "created_at": "2026-04-13T02:43:57.287Z",
+      "last_posted_at": "2026-04-21T19:42:32.035Z",
+      "loaded_posts": 30,
+      "snapshot_sha256": "f838cfccf18d0d43f31fe3e15a0039baaf61d4a4405b6fa3c87558b40a6efb4f"
+    },
+    {
+      "topic_id": 10174,
+      "title": "Thoughts on the Statement: DAO V1.1 Platform Launch",
+      "url": "https://talk.nervos.org/t/thoughts-on-the-statement-dao-v1-1-platform-launch/10174",
+      "created_at": "2026-04-13T22:33:09.682Z",
+      "last_posted_at": "2026-04-15T05:23:41.203Z",
+      "loaded_posts": 8,
+      "snapshot_sha256": "b73e65bb66aba6b46c8cb1417da6cee22b78fc27308e26878d88cfcfb3ece1bf"
+    },
+    {
+      "topic_id": 10176,
+      "title": "Declassified: DAO v1.1 Telegram Files",
+      "url": "https://talk.nervos.org/t/declassified-dao-v1-1-telegram-files/10176",
+      "created_at": "2026-04-14T22:17:39.533Z",
+      "last_posted_at": "2026-04-16T07:22:25.261Z",
+      "loaded_posts": 10,
+      "snapshot_sha256": "b5f7906e026d98d352b9c1037269044d9f89411665919aaaa00b3c099110b327"
+    },
+    {
+      "topic_id": 10182,
+      "title": "DAO v1.1 Public Testing Report",
+      "url": "https://talk.nervos.org/t/dao-v1-1-public-testing-report/10182",
+      "created_at": "2026-04-18T07:31:26.249Z",
+      "last_posted_at": "2026-04-21T19:35:27.382Z",
+      "loaded_posts": 41,
+      "snapshot_sha256": "b906dfbc5265cdb800d827bc84667f619fa45d30c0c5224d3d86f44721c6792d"
+    },
+    {
+      "topic_id": 10196,
+      "title": "DaoV1.1 Ending the Stagnation and Moving Forward",
+      "url": "https://talk.nervos.org/t/daov1-1-ending-the-stagnation-and-moving-forward/10196",
+      "created_at": "2026-04-21T17:14:05.632Z",
+      "last_posted_at": "2026-04-23T02:01:08.386Z",
+      "loaded_posts": 13,
+      "snapshot_sha256": "8db3aeb89f3452cc3b8a1fb281f3b18a5bdf5019e2e98f82ba51f1ee1239aa48"
+    },
+    {
+      "topic_id": 10201,
+      "title": "DAO V1.1 Reference Auditor: An Independent Assessment",
+      "url": "https://talk.nervos.org/t/dao-v1-1-reference-auditor-an-independent-assessment/10201",
+      "created_at": "2026-04-22T23:49:56.843Z",
+      "last_posted_at": "2026-04-23T06:28:52.206Z",
+      "loaded_posts": 4,
+      "snapshot_sha256": "5a35f96a7591625727c409d3196d4e5e7e626efbefa1f7c51aec521b1b8ece7f"
+    },
+    {
+      "topic_id": 10584,
+      "title": "CKB Governance: cell-native DAO voting protocol on testnet (create poll question, vote, delegate, aggregate & close )",
+      "url": "https://talk.nervos.org/t/ckb-governance-cell-native-dao-voting-protocol-on-testnet-create-poll-question-vote-delegate-aggregate-close/10584",
+      "created_at": "2026-08-06T07:24:35.566Z",
+      "last_posted_at": "2026-08-13T16:30:28.369Z",
+      "loaded_posts": 8,
+      "snapshot_sha256": "d425e5162c9aae6c62d8e389a70af542011fc5f99b74019495d8e1411fbc6063"
+    },
+    {
+      "topic_id": 6873,
+      "title": "CKB Community Fund DAO 规则和流程",
+      "url": "https://talk.nervos.org/t/ckb-community-fund-dao/6873",
+      "created_at": "2023-01-11T23:42:14.510Z",
+      "last_posted_at": "2023-06-26T23:43:30.589Z",
+      "loaded_posts": 5,
+      "snapshot_sha256": "6cd2a8a32fc34794f39b98b8fde656c964542a1983340983ea8ba9fe9b293034"
+    },
+    {
+      "topic_id": 6874,
+      "title": "CKB Community Fund DAO Rules and Process",
+      "url": "https://talk.nervos.org/t/ckb-community-fund-dao-rules-and-process/6874",
+      "created_at": "2023-01-11T23:47:03.656Z",
+      "last_posted_at": "2024-05-04T09:22:10.006Z",
+      "loaded_posts": 23,
+      "snapshot_sha256": "bbb714570b7ca1d369b784a475177289a7853025110686c51b6eea2bdc10b7d8"
+    },
+    {
+      "topic_id": 6888,
+      "title": "(General discussion) The voting rights of Binance and other exchanges/custodians",
+      "url": "https://talk.nervos.org/t/general-discussion-the-voting-rights-of-binance-and-other-exchanges-custodians/6888",
+      "created_at": "2023-01-15T21:59:37.674Z",
+      "last_posted_at": "2023-01-29T18:18:29.082Z",
+      "loaded_posts": 18,
+      "snapshot_sha256": "ae23a844f830adc696d137904edfe8f9d74822862838e85abca91185452b29a1"
+    },
+    {
+      "topic_id": 7001,
+      "title": "(General Discussion) Public voting in Metaforo",
+      "url": "https://talk.nervos.org/t/general-discussion-public-voting-in-metaforo/7001",
+      "created_at": "2023-02-05T21:18:29.698Z",
+      "last_posted_at": "2023-02-09T03:50:28.522Z",
+      "loaded_posts": 3,
+      "snapshot_sha256": "daa19bcae6296225efbf4168ac28c26462b45ba37a32b4acf8996916d9ad2a46"
+    },
+    {
+      "topic_id": 7069,
+      "title": "[DIS] Consideration about incentivizing voting process",
+      "url": "https://talk.nervos.org/t/dis-consideration-about-incentivizing-voting-process/7069",
+      "created_at": "2023-03-14T13:51:27.953Z",
+      "last_posted_at": "2023-04-06T04:51:12.506Z",
+      "loaded_posts": 30,
+      "snapshot_sha256": "878e4bcbc5154022a290c75de8cd75718b430bef498787a97c6e83ef602261d5"
+    },
+    {
+      "topic_id": 7120,
+      "title": "[DIS] 修改票数的计算方式 / Changing How Votes Are Calculated",
+      "url": "https://talk.nervos.org/t/dis-changing-how-votes-are-calculated/7120",
+      "created_at": "2023-03-30T03:25:17.467Z",
+      "last_posted_at": "2023-04-10T07:46:51.991Z",
+      "loaded_posts": 8,
+      "snapshot_sha256": "779e331e2bcc5742717079d697702d82ffd5e7197ec20de609d543d78c568246"
+    },
+    {
+      "topic_id": 7210,
+      "title": "Governance Security flaw",
+      "url": "https://talk.nervos.org/t/governance-security-flaw/7210",
+      "created_at": "2023-05-28T00:19:38.985Z",
+      "last_posted_at": "2023-05-29T19:46:02.058Z",
+      "loaded_posts": 6,
+      "snapshot_sha256": "72bf273919bbff41e7e9943c49a94df51069371c40a55d587920642073a96190"
+    },
+    {
+      "topic_id": 7241,
+      "title": "(DIS) Meta-rule change: Exchanges can vote with 1% of CKB they hold",
+      "url": "https://talk.nervos.org/t/dis-meta-rule-change-exchanges-can-vote-with-1-of-ckb-they-hold/7241",
+      "created_at": "2023-06-02T17:40:13.855Z",
+      "last_posted_at": "2023-06-05T02:21:26.852Z",
+      "loaded_posts": 7,
+      "snapshot_sha256": "e71d9179eafe3aff3dfcd4446f87d2461eb8c2cd2a3b5127915ccf2d24ed777d"
+    },
+    {
+      "topic_id": 7253,
+      "title": "(DIS) Meta-rule change: CKB in circulation can vote with a weight of 1%｜流通状态的CKB按1%权重投票",
+      "url": "https://talk.nervos.org/t/dis-meta-rule-change-ckb-in-circulation-can-vote-with-a-weight-of-1-ckb-1/7253",
+      "created_at": "2023-06-07T03:28:32.552Z",
+      "last_posted_at": "2023-06-08T00:34:46.693Z",
+      "loaded_posts": 6,
+      "snapshot_sha256": "aaf83302ca0c488c3667dc7266c2b0ef835e735eaf582c9a2259b8c19fb44aa3"
+    },
+    {
+      "topic_id": 7943,
+      "title": "[DIS] 元规则修改：提交提案时必须加上申请的 CKB 数量/Meta-rule change: The amount of CKB applied for must be included when submitting a proposal",
+      "url": "https://talk.nervos.org/t/dis-ckb-meta-rule-change-the-amount-of-ckb-applied-for-must-be-included-when-submitting-a-proposal/7943",
+      "created_at": "2024-03-19T02:44:40.593Z",
+      "last_posted_at": "2024-03-19T02:44:40.640Z",
+      "loaded_posts": 1,
+      "snapshot_sha256": "9529be2d31390d62eae4e63235a5e57e0d6fab050facbccb1907fe12cdd32315"
+    },
+    {
+      "topic_id": 8747,
+      "title": "Opinions on CKB Community DAO v1",
+      "url": "https://talk.nervos.org/t/opinions-on-ckb-community-dao-v1/8747",
+      "created_at": "2025-04-24T05:41:31.271Z",
+      "last_posted_at": "2025-04-26T01:29:16.600Z",
+      "loaded_posts": 30,
+      "snapshot_sha256": "18bf3f4d7a4882b776ee8e9884c1fc175eeceac4c9dc76cb7a5c48b609c53d2a"
+    },
+    {
+      "topic_id": 8750,
+      "title": "My reflection on CKB Community DAO v1",
+      "url": "https://talk.nervos.org/t/my-reflection-on-ckb-community-dao-v1/8750",
+      "created_at": "2025-04-26T09:34:34.407Z",
+      "last_posted_at": "2025-04-26T09:34:34.442Z",
+      "loaded_posts": 1,
+      "snapshot_sha256": "206799403a6bcfe57d7b9cb2330b73cef2d4b7a37cfa68dc96192da1164754e7"
+    },
+    {
+      "topic_id": 8973,
+      "title": "[DIS] Community Fund DAO v1.1 Web5 优化提案/ Community Fund DAO v1.1 Web5 Optimization Proposal",
+      "url": "https://talk.nervos.org/t/dis-community-fund-dao-v1-1-web5-community-fund-dao-v1-1-web5-optimization-proposal/8973",
+      "created_at": "2025-09-04T23:52:39.424Z",
+      "last_posted_at": "2026-03-21T16:22:26.601Z",
+      "loaded_posts": 118,
+      "snapshot_sha256": "33a5e9192153e6a9c6efe2f128a21a5b6b5bc0a51f350d66ee0ae81c120a52a4"
+    },
+    {
+      "topic_id": 9655,
+      "title": "关于对 “Community Fund DAO v1.1 Web5 优化提案” 重新投票的建议 | Recommendation for a Revote on the 'Community Fund DAO v1.1 Web5 Optimization Proposal",
+      "url": "https://talk.nervos.org/t/community-fund-dao-v1-1-web5-recommendation-for-a-revote-on-the-community-fund-dao-v1-1-web5-optimization-proposal/9655",
+      "created_at": "2025-11-04T10:27:07.049Z",
+      "last_posted_at": "2025-11-12T05:47:05.838Z",
+      "loaded_posts": 8,
+      "snapshot_sha256": "47aad791e997d6aff95d48065ad6c474a1cf26b9221b2e1af437080649a0d806"
+    },
+    {
+      "topic_id": 9736,
+      "title": "Transitional Policy Statement (Community Fund DAO v1.1)",
+      "url": "https://talk.nervos.org/t/transitional-policy-statement-community-fund-dao-v1-1/9736",
+      "created_at": "2025-12-13T03:22:31.013Z",
+      "last_posted_at": "2026-01-23T09:07:40.503Z",
+      "loaded_posts": 4,
+      "snapshot_sha256": "5bc81dbc3cd7dfae5c795ea0fe8f0df3f2522f55cd25338d29eb3b232facbe13"
+    },
+    {
+      "topic_id": 9756,
+      "title": "[DIS] CKB Integration for Rosen Bridge",
+      "url": "https://talk.nervos.org/t/dis-ckb-integration-for-rosen-bridge/9756",
+      "created_at": "2025-12-23T22:59:15.907Z",
+      "last_posted_at": "2026-08-31T13:14:15.517Z",
+      "loaded_posts": 147,
+      "snapshot_sha256": "0d9bfd37e2f50b03a662036a6fa6f945e751a66c1f16360798b73f30b1925e77"
+    },
+    {
+      "topic_id": 9839,
+      "title": "[Tool]🐕 CKB DAO Watchdog: Open-Source DAO Voting Verification Tool（开源的 DAO 投票验证工具）",
+      "url": "https://talk.nervos.org/t/tool-ckb-dao-watchdog-open-source-dao-voting-verification-tool-dao/9839",
+      "created_at": "2026-01-14T17:09:45.909Z",
+      "last_posted_at": "2026-01-14T20:48:54.928Z",
+      "loaded_posts": 7,
+      "snapshot_sha256": "a0aca5576c3c08b243c5df8068aebbb971263e8eafacb0993a8dcbb001677e88"
+    },
+    {
+      "topic_id": 9859,
+      "title": "Some questions about the recent proposal vote",
+      "url": "https://talk.nervos.org/t/some-questions-about-the-recent-proposal-vote/9859",
+      "created_at": "2026-01-21T02:08:27.955Z",
+      "last_posted_at": "2026-01-30T02:56:14.472Z",
+      "loaded_posts": 51,
+      "snapshot_sha256": "a5353f942690afb4811f2f7c74a00154300e5b821101133d1efa5afac8ed9ae8"
+    }
+  ]
+}

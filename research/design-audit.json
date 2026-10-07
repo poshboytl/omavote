@@ -1,0 +1,831 @@
+{
+  "scope": "v0.3 second colleague review corrections with user-confirmed choices. Process records sign an anchor and publication deadline, are deduplicated by record_id and ordered by anchor per poll and type; ballots carry no sequence and are ordered by anchor only (same anchor with different content is CONFLICT); ballots and control messages anchor at the newest verified block; GRANT may carry revoke_mode STOP_AND_CANCEL_OPEN for one-step key replacement; standalone REVOKE must be confirmed before a new GRANT; residual rule text cleaned. Not yet validated by executable tests or real devices.",
+  "revision": "0.3",
+  "date": "2026-10-08",
+  "artifacts": {
+    "README.md": "6e9a3bf0a1f0f55e8a69033388118da2e7986b23b75abb2518b900627440077c",
+    "research/README.md": "0a3eca1baa648740d08c66786923205db1e934e530f12004eca798a276a05560",
+    "docs/00-design-index.md": "133706bf266b7567bd5996aa9b9705a9f0cf69f555db6004d5e475e7e2f230ab",
+    "docs/01-research.md": "0adf4255634b1b2145664054f7430de68d5e4b6d14f1f50dd42413a058181bbc",
+    "docs/02-design.md": "7f1ad9c7bb3ea69bf8bce3802432a59b93ace5ea8a6cf2be7fa3cc3908e2e4a4",
+    "docs/03-protocol.md": "17a5d63b2f733cbf01e0b069c798ebc7086aa7729aea7ed25f054df101409312",
+    "docs/04-security.md": "1f0117f752badf086c04c5b33887b7b2265d24b4e3fd8573df3e984078d6b8d2",
+    "docs/05-delivery.md": "b43f84d50cc86954446db32933bd0a950d5d1c68192ee3020c22eb24e6cb91a8",
+    "docs/06-alternatives.md": "db7922b7803670dc9a25ae9fd7d39e13f4c838dead8ad22fd5374769f820ca94",
+    "docs/07-completion-audit.md": "43007fed7b214711b6afb9da1f00393efcf6d20e2107b30a8c4d6dff4d061286",
+    "docs/08-design-review.md": "90db7a3303f9a4fa4ea4cefe6abfb840f9c1da7d14b8f49f985ed751b8371d80",
+    "docs/09-design-update.md": "863a2747e895001eb60ba18d817bc0e62d0bc34100edbc66eb99e3dce35a937a",
+    "docs/10-user-journey.md": "ccaf121532b8414b90854ad08efedf32b8b7d12bdaada3bd517db95753b665dc",
+    "docs/11-authorization.md": "327489860235672f050dd9707942a6f61937db3993414e487068a4dd53769843",
+    "docs/12-review-guide.md": "5ab564b335961346578790dfd8048a824c759d8fb7a34104fdd4c8374c04a8b9",
+    "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+    "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+    "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+    "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+  },
+  "document_checks": {
+    "markdown_files": 15,
+    "relative_links_checked": 159,
+    "numbered_section_references_checked": 246,
+    "json_examples_checked": 3,
+    "authorization_expected_scenarios": 31,
+    "review_questions": 18,
+    "protected_files_unchanged": 4,
+    "broken_links": 0,
+    "unbalanced_code_fences": 0,
+    "section_reference_problems": 0,
+    "first_line_summary_max_bytes_worst_case": 59,
+    "scope": "Static documentation checks: relative links, numbered section references, code fences, JSON example syntax, worst-case summary line length, residual search for the removed ballot sequence and the tip-minus-k anchor allowance, research model file hashes; no protocol implementation, model or wallet tests",
+    "section_reference_method": "Counts every referenced section number, including list and range members",
+    "semantic_review": "Process records: anchor, publication deadline, record_id dedup, anchor ordering per poll and type, RECORD_CONFLICT with HOLD_EXECUTION fallback; ballots: no sequence, anchor-only ordering, same-anchor conflict, newest-block anchors and wait-for-new-block between revisions; GRANT+CANCEL one-step replacement; standalone REVOKE confirmed before new GRANT",
+    "json_examples": "Syntax valid; placeholders are not signing vectors",
+    "ledger_display_source": "Pinned ledger-app-nervos apdu_sign.c read via source: 64-byte display buffer with ellipsis at bytes 61-63, bytes outside 32-126 shown as *; not a device test",
+    "machine_schema_or_crypto_validation": false
+  },
+  "preserved_inputs": {
+    "fable_deleted": true,
+    "fable_files_deleted": 27,
+    "fable_deletion": "2026-10-08 at the user's request; docs/ is the single design baseline; cited research summarized in docs/01-research.md section 8; links removed",
+    "research_files_unchanged": {
+      "research/model.py": true,
+      "research/test_model.py": true,
+      "research/sources.json": true,
+      "research/verification-output.txt": true
+    },
+    "comparison": "4 research model/source file SHA-256 hashes matched the snapshot taken before the second-review revision"
+  },
+  "model_validation": {
+    "rerun_this_revision": false,
+    "previous_test_count": 39,
+    "previous_random_histories": 1000,
+    "stored_output": "research/verification-output.txt",
+    "limitation": "Historical abstract model assumes VerifiedBallot and complete chain inputs. It does not implement V2 serialization, anchor-ordered GRANT/REVOKE, authorization conflicts, revocation barriers, SEQUENCE_GAP, adapter gating, process records, key custody, passkeys, real cryptography, CKB-VM, chain sync or wallets. Prior 39 tests/1000 random histories do not validate this authorization design."
+  },
+  "previous_research_checks": {
+    "source_repositories": 14,
+    "source_forum_topics": 28,
+    "pinned_source_paths_checked": 26,
+    "note": "Historical initial-design checks; not rerun for this document revision"
+  },
+  "previous_artifact_hashes": {
+    "README.md": "8e3bb4fedbc5b2648c63afa71576a817eca10859c4454284863f65f15f72fe2f",
+    "docs/00-design-index.md": "de45732ce2481058dd17f273611e4cf1d0ffb495a4b19401480912ec320f38b2",
+    "docs/01-research.md": "b49946bc92aee58f7a494ea785044f59961a38e39396d5da970025b25a6aafd7",
+    "docs/02-design.md": "1c2cd84a21d6c4d8a9fd41acf94ca66e014c98192db0e0260bac16c42c11ea8e",
+    "docs/03-protocol.md": "6449b939c1ac777e587c465b30244f42f0382f883475a9747790b47cbb17f8de",
+    "docs/04-security.md": "07b5736bd69b060850ad6590e9facc5791c86b8dd9df3461200fe4452b183889",
+    "docs/05-delivery.md": "8de1449f61d166fecec71f5036afd26a78e4668f3fc247ebf625b6348a105a90",
+    "docs/06-alternatives.md": "4c7597182f78001e815556b5bf606043fdc4b7cb5f032e812dfca378c66969a6",
+    "docs/07-completion-audit.md": "d1a176e4628cbf8ec583087d1036e6aac63a3786eb196a3ad4ce374ed809ec53",
+    "docs/08-design-review.md": "7b2efd22fcbe5885c9cbc85be17a8cb1e9446c0c4f1f8255ba0976f459f55d7b",
+    "research/README.md": "60903acab11dad674034e3dd41ef9acf71f56a3e392829a178718e503efd0e8e",
+    "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+    "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+    "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+    "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+  },
+  "layout_before_move_artifacts": {
+    "README.md": "c2909393f6a2af0f25c84a427efd8d8c33d047e299c0f86c560f341f54b38cef",
+    "docs/codex/00-design-index.md": "1c3b3118ac2a6985ec657196f40f5613319208c1bee76ec71d4edeaeccc625c0",
+    "docs/codex/01-research.md": "d4f522fcf3d391474b143a475fbcc8ab3c30bf4973dc4ddcaac7c917ef78887a",
+    "docs/codex/02-design.md": "f3e26f89c6bf1cfd3d103fb68a6fe1a20dc62c5fdf5e7399f490ce7e2c5386a9",
+    "docs/codex/03-protocol.md": "5b59a83670c005ce652f0ccf84376704204df5c9926055e5bcc272f25c767c97",
+    "docs/codex/04-security.md": "2cd81b62527e451d1bdee63ee146ecd6561c307cfa79ced3ea77d246c7d7546f",
+    "docs/codex/05-delivery.md": "7830aff040a9292c45dc38a44434ff9ac94adeb89f78a3eec3fb056e3478ad29",
+    "docs/codex/06-alternatives.md": "c8c6105348a4f605a76360240a531835b89d08dc9acb9c88622e927b080bdceb",
+    "docs/codex/07-completion-audit.md": "d2a3e6afe4a3e026257af0529f8db81e23612bb2516e5d9e12be99b8498efd16",
+    "docs/codex/08-design-review.md": "fb49a678362a8b753ed503567ca8732488d417a381476a0a98c5fab5ef7b7810",
+    "docs/codex/09-design-update.md": "50c31ea16b464f6c11081a6d3f1e20adf7c05db1065af9a003015fbfb120b347",
+    "docs/codex/10-user-journey.md": "e523d7ef57fffbad0c6e47cd9674fb9642a2095de1413285a366998f678b4741",
+    "research/README.md": "ff68cf2e59ea4b1d52073bb7f35449fc646dd8ac251104d49722aec6f724458d",
+    "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+    "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+    "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+    "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+  },
+  "layout_checks": {
+    "date": "2026-10-07",
+    "scope": "User moved design documents to docs/; repaired navigation only, no protocol changes",
+    "markdown_files": 13,
+    "relative_links_checked": 106,
+    "broken_links": 0,
+    "unbalanced_code_fences": 0,
+    "protected_files_unchanged": 31,
+    "model_tests_rerun": false,
+    "note": "Existing document_checks records the previous v0.2 review; this maintenance reran only the checks listed here"
+  },
+  "authorization_decision_review": {
+    "date": "2026-10-07",
+    "scope": "Recorded user decision in index and decision log; authorization protocol remains pending, no implementation or model changes",
+    "ui_default_days": 30,
+    "maximum_term": "one year; precise chain-time encoding pending",
+    "first_release_authorization": true,
+    "permanent_authorization": false,
+    "changed_markdown": [
+      "docs/00-design-index.md",
+      "docs/09-design-update.md"
+    ],
+    "prior_hashes": {
+      "docs/00-design-index.md": "59bdb49f8d19c8579e077b67af99a0e31211fabf51c6e3812decd6a5ed211887",
+      "docs/09-design-update.md": "f5e18160b14931f07879c043b3d8b7f3ffbf1e47caf38a9c04bbf2e28d8bde39"
+    },
+    "reviewed_fable_v3_sha256": "1e89ef468d56e64ae8ad6dc0e96d4629fa4046ded3c92f9d21190fca17fedcff",
+    "local_links_checked": 107,
+    "broken_links": 0,
+    "fable_files_unchanged": 27,
+    "model_tests_rerun": false,
+    "status": "Historical decision-only record, superseded by the v0.3 unified specification and checks"
+  },
+  "revision_history": [
+    {
+      "revision": "0.2",
+      "date": "2026-10-07",
+      "scope": "Design v0.2 document revision; not production implementation, wallet testing or security certification",
+      "document_checks": {
+        "markdown_files": 13,
+        "relative_links_checked": 106,
+        "numbered_section_references_checked": 50,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "json_examples": "syntax valid; placeholders are not signing vectors",
+        "semantic_review": "readable challenge/body binding, selected B baseline, multi-address flow, custody and incomplete-data boundaries reviewed"
+      },
+      "artifacts": {
+        "README.md": "84a40ef61c34d0a9daf8bfcaa323921d4401ad662a57f3d53b557a2dc3fa3b8a",
+        "docs/00-design-index.md": "2f08420f5ea3749e886ffc4f07b795a694638ee3624fdfc580d922469cbd6550",
+        "docs/01-research.md": "6dec0abfe140174e1a8a2976bf1f1dd031b57017c93f7b65b8e000d215f53488",
+        "docs/02-design.md": "f3e26f89c6bf1cfd3d103fb68a6fe1a20dc62c5fdf5e7399f490ce7e2c5386a9",
+        "docs/03-protocol.md": "5b59a83670c005ce652f0ccf84376704204df5c9926055e5bcc272f25c767c97",
+        "docs/04-security.md": "2cd81b62527e451d1bdee63ee146ecd6561c307cfa79ced3ea77d246c7d7546f",
+        "docs/05-delivery.md": "a30df713241b6bac06f05d5763dabd6f1b58d8614dcbec3f2d69883d4275a065",
+        "docs/06-alternatives.md": "3019ed0c08d2204dc4057095d78c2b63b98a0c8f83ed7096b32f5d430fa96bc4",
+        "docs/07-completion-audit.md": "d226f9eb5d78a9e520c4e792e8077b4b8795ab79ff7fe557e16fc115d98f51e2",
+        "docs/08-design-review.md": "408976b9af2ba9a52e56b69296927d9a92e01d0141f000deeb2dfb513b390f4b",
+        "docs/09-design-update.md": "bc695a099a0d92ecab1291f2298747fd5c6c6ff814403bca7341a5c70b3038fa",
+        "docs/10-user-journey.md": "e523d7ef57fffbad0c6e47cd9674fb9642a2095de1413285a366998f678b4741",
+        "research/README.md": "e9b2eb8542ce3bd168884bfe79c5a0907d8e14cedff8b1aa11efca5ceee9a911",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "note": "Historical v0.2/layout and decision-record fingerprints, before v0.3 unified authorization revision"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "Design v0.3 peer-review baseline: V2 ballot publication and bounded repeated authorization; no production implementation, wallet testing or security certification",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 126,
+        "numbered_section_references_checked": 49,
+        "json_examples_checked": 1,
+        "authorization_expected_scenarios": 18,
+        "review_questions": 15,
+        "protected_files_unchanged": 31,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "semantic_review": "Manually reviewed owner/key separation, default 30 and maximum 365 chain days, causal control ordering, ballot eligibility, direct takeover, revocation barriers, expiry and renewal, complete historical replay, signature formats, canonical result scope, and recovery limitations",
+        "scope": "Static document checks and manual specification review; 18 expected scenarios and 15 peer-review questions are requirements, not executed tests",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "d1cc6aaef23e10240ef213ee7df6b21c3c85d4ad0445c456232710a886959252",
+        "research/README.md": "de82b5ad5260380aff0f86ea3b57bff3c124ff7347bb4aa4a9e813eb12017f65",
+        "docs/00-design-index.md": "2029a04e259ab02ac9564bea5ea6f62bc1dfb596f741977fa16a02faa90ef7c8",
+        "docs/01-research.md": "69c582b71384ad100d9bd2dfa6b051baca1e09c69d4a00d095369db52e1cc233",
+        "docs/02-design.md": "41f71e44097a996301138a97104b4a5ad7dbf557ae6281cd1676dc375f6a1bd0",
+        "docs/03-protocol.md": "ac48b504758bc3e84dd1d3675c0fccd76688891acf9fc9407d37fdd5ba4e57ff",
+        "docs/04-security.md": "37687d7c78b4d05b7704536dcb8afce300fa03994d0b6151fabadcb8efe7c071",
+        "docs/05-delivery.md": "c976deeb7691ce8b920e048cea08d77815716d2fb70db94a87cb15599396e67a",
+        "docs/06-alternatives.md": "38d932c31d9d76b6071f5cc04d182c8aa78c3e34df0776315c4c7cd4fc825e26",
+        "docs/07-completion-audit.md": "3664ba6b89b712e8e1852c9d3ad1a98df3395c40d930dd493cc949688a62482b",
+        "docs/08-design-review.md": "0b03ba1aac01f35d7a82db938d0d4cfd44a8126234f7d35fe1af03688c8bc186",
+        "docs/09-design-update.md": "454d4aa2c5dedd1669d9e3eb7549203ebd9f099a50a2a2ddd924a530cb5c81f6",
+        "docs/10-user-journey.md": "07e08e1e4d3d1d1d363ab95d2cbf5d199367e263a41b43c4beddf9d227496b78",
+        "docs/11-authorization.md": "358923047f0151f145975e22f1eb1abedbb5d3f088fd8cfe7dcd078c8c27f948",
+        "docs/12-review-guide.md": "009bff879992052b9d4f0d9cd3e9da03657684f32845771b5cf64c2c40f258d0",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "current_authorization_decision": {
+        "first_release_authorization": true,
+        "ui_default_term_days": 365,
+        "ui_presets_days": [
+          30,
+          90,
+          365
+        ],
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "clock": "ckb-parent-mtp-v1",
+        "permanent_authorization": false,
+        "core_wire_protocol": "undeployed V2 draft",
+        "specification": "docs/11-authorization.md",
+        "review_entry": "docs/12-review-guide.md",
+        "implementation_complete": false,
+        "new_behavior_tests_executed": false
+      },
+      "note": "Historical first v0.3 baseline, before the user changed the UI default from 30 to 365 chain days"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "v0.3 decision sync: UI default one year, 30/90-day alternatives; accepted C/D/E directions, B explanation pending. Claude review freeze blockers remain unresolved.",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 128,
+        "numbered_section_references_checked": 51,
+        "json_examples_checked": 1,
+        "authorization_expected_scenarios": 18,
+        "review_questions": 15,
+        "protected_files_unchanged": 31,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "scope": "Static documentation checks for this preference update; no new protocol/model implementation or tests",
+        "semantic_review": "Default 365 and maximum 365 chain days, 30/90 alternatives, UI defaults outside policy/rules hash, explicit signed expiry unchanged, accepted C/D/E directions and undecided B matched across documents",
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "a8132ae8b5e8be7f744a4e918a7e130ad9a1f84d3c3012400464dd050a6111bb",
+        "research/README.md": "de82b5ad5260380aff0f86ea3b57bff3c124ff7347bb4aa4a9e813eb12017f65",
+        "docs/00-design-index.md": "fd14ce143854a6129751493346fbb789d2198ce1a345e5d3ec82f7936e30c497",
+        "docs/01-research.md": "22710224f3ef2339cdcdc417cb87c6c9c23c36e771741dbb28c96e3bdf7f6036",
+        "docs/02-design.md": "fba5407d2d61601049b9471ca6813752e21775cbc4ee7c6ca5f31c11c7e2e6b4",
+        "docs/03-protocol.md": "c8a16c569fd89462845462e3dab75d8e10de4a2c026cfbbda49432e4fd37c643",
+        "docs/04-security.md": "c0ecb35853e3365c87b8c16342aa84d1af5263405f91c4572d6d385534142f1e",
+        "docs/05-delivery.md": "74ebc2c871823cc5d326457709cfc2de8dbb6aaf249184f51bc058453bb8f067",
+        "docs/06-alternatives.md": "38d932c31d9d76b6071f5cc04d182c8aa78c3e34df0776315c4c7cd4fc825e26",
+        "docs/07-completion-audit.md": "a7b38320b0b33b71daec83177f4fb9340f1317c96dee0a13b9ae750da28d5f21",
+        "docs/08-design-review.md": "0b03ba1aac01f35d7a82db938d0d4cfd44a8126234f7d35fe1af03688c8bc186",
+        "docs/09-design-update.md": "3983767e545ce47c8b827ba7f360d7fd181ecde7c24bbfa50f42de2ee97d8739",
+        "docs/10-user-journey.md": "bea2b4091379a9dd653a43a0b7e1bd06f12efed916a8d65b39d1f73f606c87b2",
+        "docs/11-authorization.md": "4d1f701349fb206dfeb6a48f586216e874a2f425f502300f5f097630f93cb9db",
+        "docs/12-review-guide.md": "f9121dacfc72345002f8ae6929a8ccb9eb80e8c84e5df6af72e9dedec1d56a87",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "note": "Historical state before the user reaffirmed free voting as a hard product requirement"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "v0.3 free-user-voting requirement: relays/operators/helpers cover transaction fees and carrier capacity for supported voting and recovery. Self-paid C template is research-only. Existing wire-protocol freeze blockers remain.",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 130,
+        "numbered_section_references_checked": 53,
+        "json_examples_checked": 1,
+        "authorization_expected_scenarios": 18,
+        "review_questions": 15,
+        "protected_files_unchanged": 31,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "scope": "Static documentation checks and fee/custody boundary review; no service implementation or model test changes",
+        "semantic_review": "Supported user setup, renewal, voting, revoting, cancellation and recovery are free; ordinary balances not required; backup sponsors rather than mandatory user payment; C self-payment template excluded from supported product scope until sponsorship is audited",
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "6bde59986010315a830f7b5c71db63c54a2c50f43587d65050e2d172207d7eb5",
+        "research/README.md": "de82b5ad5260380aff0f86ea3b57bff3c124ff7347bb4aa4a9e813eb12017f65",
+        "docs/00-design-index.md": "d92df486b58270e9c9de4ddf551eaf8f13426936b179b29ee91d1419d185e2ed",
+        "docs/01-research.md": "22710224f3ef2339cdcdc417cb87c6c9c23c36e771741dbb28c96e3bdf7f6036",
+        "docs/02-design.md": "6f7b689e69ca3a8a48fac5b742a1e22b084de342d06f768c8d54320975baefa1",
+        "docs/03-protocol.md": "ef6cdc611b6b519c08dc44817d4d011baa1121f690be052cd2d12e450d80a88f",
+        "docs/04-security.md": "41625c248629e074d61f8f9212c129532b2b3be6a0b11fd07e34b7d9d0f5fbc7",
+        "docs/05-delivery.md": "58f0d23b576f24ec4709c6ee3e5a0194739d4febac15d956deaed370911d535c",
+        "docs/06-alternatives.md": "6fa0d132eb4f803732c8d7d207d321ba67b2a3a751c7212821a42a189f425d66",
+        "docs/07-completion-audit.md": "3af825f9c6fbe27da37d9a061a7c1ce52db008238c1d218d32fbb0cb554b9d32",
+        "docs/08-design-review.md": "0b03ba1aac01f35d7a82db938d0d4cfd44a8126234f7d35fe1af03688c8bc186",
+        "docs/09-design-update.md": "f2b21befc4ced1e5171eefb509e4d2c90f0fc12bb7ff7e3bde9d731eea1ac202",
+        "docs/10-user-journey.md": "e1862a0cad3df742c31f4cedd37fa3a91ed7207671dbe776043416246e6beec1",
+        "docs/11-authorization.md": "c17bc6d49443e7c44bf263590959e8d93296672faf896c902e33b9b26e283c80",
+        "docs/12-review-guide.md": "8dab1669da94ab89c2f22d3679895f210f21974b5415978fa604a5eb86e8df30",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "current_authorization_decision": {
+        "first_release_authorization": true,
+        "ui_default_term_days": 365,
+        "ui_presets_days": [
+          30,
+          90,
+          365
+        ],
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "clock": "ckb-parent-mtp-v1",
+        "permanent_authorization": false,
+        "core_wire_protocol": "undeployed V2 draft",
+        "specification": "docs/11-authorization.md",
+        "review_entry": "docs/12-review-guide.md",
+        "implementation_complete": false,
+        "new_behavior_tests_executed": false
+      },
+      "current_fee_requirement": {
+        "user_voting_fee": "0",
+        "covers": [
+          "authorization",
+          "renewal",
+          "vote",
+          "revote",
+          "cancel",
+          "revoke",
+          "recovery"
+        ],
+        "transaction_fee_and_capacity_payers": [
+          "relay",
+          "operator",
+          "community helper"
+        ],
+        "user_liquid_ckb_required": false,
+        "mandatory_self_payment_fallback": false,
+        "self_paid_C_template": "research-only, not a supported product path",
+        "protocol_accepts_external_voluntary_publication": true,
+        "specification": "docs/09-design-update.md, section 7",
+        "sponsored_C_implementation_or_audit_complete": false
+      },
+      "note": "Historical state before the user confirmed an online wallet as the primary Neuron voting key holder; browser-generated local key was still required in that document baseline"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "v0.3 Neuron user flow sync: first authorize a second online wallet, then sign specific ballots with that wallet; browser-generated local keys are optional candidates, not first-release requirements. Default 365 chain days with 30/90 alternatives and free user voting preserved. Existing protocol freeze blockers remain unresolved.",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 133,
+        "numbered_section_references_checked": 56,
+        "json_examples_checked": 1,
+        "authorization_expected_scenarios": 18,
+        "review_questions": 15,
+        "protected_files_unchanged": 31,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "scope": "Static documentation consistency, links, section references, code fences, JSON syntax and protected-file hash checks; no protocol implementation, model or wallet tests",
+        "semantic_review": "Neuron first grants each owner to a supported online wallet key; subsequent wallet signatures bind each poll/owner/choice, relay publishing remains free; website does not hold wallet secrets; local key vault is optional; default 365 with 30/90 alternatives unchanged; one control body per owner; unresolved freeze blockers remain explicit",
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "ac5be390ded9bac51e9701d561774bd8f8fe8442e35163844d66de4fc5ca5927",
+        "research/README.md": "de82b5ad5260380aff0f86ea3b57bff3c124ff7347bb4aa4a9e813eb12017f65",
+        "docs/00-design-index.md": "a402df0f80a92804317c3500e1ee382353437725fe819b87a2b4e622cf677780",
+        "docs/01-research.md": "22710224f3ef2339cdcdc417cb87c6c9c23c36e771741dbb28c96e3bdf7f6036",
+        "docs/02-design.md": "f4ea6b02ecc7ce695e4611d1f84b209a7d07412227f8e67212040ed20349a75f",
+        "docs/03-protocol.md": "d54e6a814b55f87d018823be03b8478f9b382b1ea874396439d213b0ca22e68c",
+        "docs/04-security.md": "fedfc1c442dfeb5eb93421b9ef02ee7b1ae85cc99310c9c9289e1dc0f5ab3cc5",
+        "docs/05-delivery.md": "db361c54521b935c5439d6f2c24f9edb0b0b6f23a8d9007e46089faeecd9a400",
+        "docs/06-alternatives.md": "0300b9042dfa757983395c95960a8db8d8c5b58011638ff7b4a29068adb21bc4",
+        "docs/07-completion-audit.md": "93a3bb0535fc6a2dccf399070febed30572b3768e803c94aa19659f564e8673f",
+        "docs/08-design-review.md": "7dd731b5da48bcd978cd2e805f5f7c80badaabd2c8dbe3d27408b46f65103d35",
+        "docs/09-design-update.md": "10d6368c2d632db280113a93cc1de1b403999dbb6b0e4b836db36d195141d5a7",
+        "docs/10-user-journey.md": "925e3b292739649a5c8d9049b7140fb8757c4985273df09e0d305eaf5b0475f2",
+        "docs/11-authorization.md": "b6bfa9f4695351fceb25a3dacdd392e19ccddc7b5751c425b9d5aff01e5320c9",
+        "docs/12-review-guide.md": "ad99e4fc8e415688146849499d29b57e0b106565d9208f71e15007ba445d0a2e",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "current_authorization_decision": {
+        "first_release_authorization": true,
+        "ui_default_term_days": 365,
+        "ui_presets_days": [
+          30,
+          90,
+          365
+        ],
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "clock": "ckb-parent-mtp-v1",
+        "permanent_authorization": false,
+        "core_wire_protocol": "undeployed V2 draft",
+        "specification": "docs/11-authorization.md",
+        "review_entry": "docs/12-review-guide.md",
+        "implementation_complete": false,
+        "new_behavior_tests_executed": false
+      },
+      "current_fee_requirement": {
+        "user_voting_fee": "0",
+        "covers": [
+          "authorization",
+          "renewal",
+          "vote",
+          "revote",
+          "cancel",
+          "revoke",
+          "recovery"
+        ],
+        "transaction_fee_and_capacity_payers": [
+          "relay",
+          "operator",
+          "community helper"
+        ],
+        "user_liquid_ckb_required": false,
+        "mandatory_self_payment_fallback": false,
+        "self_paid_C_template": "research-only, not a supported product path",
+        "protocol_accepts_external_voluntary_publication": true,
+        "specification": "docs/09-design-update.md, section 7",
+        "sponsored_C_implementation_or_audit_complete": false
+      },
+      "current_key_custody_and_ux_decision": {
+        "date": "2026-10-08",
+        "primary_neuron_path": "First authorize a second online wallet using per-owner Neuron GRANT signatures; use the same online wallet key for subsequent specific poll ballots",
+        "private_key_holder": "online wallet; voting website does not receive or store its private key or recovery secrets",
+        "neuron_needed_for": [
+          "initial authorization",
+          "renewal",
+          "new key authorization",
+          "revocation/recovery",
+          "direct takeover or non-delegated voting"
+        ],
+        "one_grant_per_owner": true,
+        "one_grant_per_deposit": false,
+        "per_ballot_signature_required": true,
+        "wallet_connection_is_not_a_ballot": true,
+        "wallet_popup_count": "per-adapter acceptance tests; not guaranteed one prompt across multiple owners",
+        "online_wallet_ckb_required": false,
+        "user_voting_fee": "0",
+        "browser_generated_key": "optional candidate, not the default or a first-release dependency",
+        "generic_passkey": "independent PoC; not automatically equivalent to JoyID",
+        "actual_wallet_support": "pending adapter/real-device acceptance tests",
+        "specification": "docs/09-design-update.md section 8; docs/10-user-journey.md section 3; docs/11-authorization.md section 4"
+      },
+      "review_followup_decisions": {
+        "A": "Default 365 chain days; optional 30 and 90; signed existing expiries unchanged",
+        "B": "Not decided; no proxy cutoff enabled; illustrative 12 hours is not a selected parameter",
+        "C": "Independent process signing keys and existing governance-approved committee threshold; schemas still pending",
+        "D": "Evaluate Neuron batch signing/dApp connection in parallel, without blocking Omavote; no outreach sent",
+        "E": "User may bundle tool migration and explicitly listed rule clarifications in a public meta-rule proposal"
+      },
+      "freeze_status": {
+        "wire_protocol_frozen": false,
+        "pending": "Control sequencing and recovery attacks; policy/adapter separation; proposer/process-role signature schemas; deterministic opening confirmation; hardware display; executable V2 model and tests"
+      },
+      "note": "Historical state after the online-wallet main-path sync, before the second Claude review fixes were written into the specification"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "v0.3 second Claude review: protocol freeze-blocker fixes written into the specification. Authorization controls ordered by signed anchor height (auth_sequence removed); semantics-only auth_policy with immutable versioned adapter IDs accepted per poll via auth_registry; ASCII first-line summaries and Key-Address for hardware displays; proposal signatures, process roles/records and carrier kinds 6/7; deterministic opening confirmation; no-gap ballot sequences; online-wallet exposure mitigations; key-based authorization lookup and per-owner feed. Not yet validated by executable tests or real devices.",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 152,
+        "numbered_section_references_checked": 176,
+        "json_examples_checked": 3,
+        "authorization_expected_scenarios": 22,
+        "review_questions": 17,
+        "protected_files_unchanged": 31,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "first_line_summary_max_bytes_worst_case": 55,
+        "scope": "Static documentation checks: relative links, numbered section references, code fences, JSON example syntax, worst-case first-line summary lengths, residual removed-field search, protected-file hashes; no protocol implementation, model or wallet tests",
+        "section_reference_method": "Counts every referenced section number, including list and range members; three references in docs/08 point to Fable document sections and are not omavote headings. The previous count of 56 used a different method and is not comparable.",
+        "semantic_review": "Control ordering by anchor height with same-anchor conflict; adapters out of auth_policy and gated per poll for controls and delegate ballots; summary lines carry choice/poll/budget, key address/expiry, revoke mode; process roles bootstrapped from the switch meta-rule proposal and updated by committee threshold; LATE_MANIFEST rule; SEQUENCE_GAP rule; delegate_cutoff_ms reserved at 0",
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "ledger_display_source": "Pinned ledger-app-nervos apdu_sign.c read via source: 64-byte display buffer with ellipsis at bytes 61-63, bytes outside 32-126 shown as *; not a device test",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "45d91797305c31183f6ba1a133c9f535cdb0dc67977ae0e3f29a9849f5d5d5d4",
+        "research/README.md": "0a3eca1baa648740d08c66786923205db1e934e530f12004eca798a276a05560",
+        "docs/00-design-index.md": "37cbdc46dea52b3771ef3750ba957aac9a42b36f758e1ab9d2f99c18e0132937",
+        "docs/01-research.md": "22710224f3ef2339cdcdc417cb87c6c9c23c36e771741dbb28c96e3bdf7f6036",
+        "docs/02-design.md": "f6489472400a94ab787deaf85fb8059ae9fffd1fabf61c87a91d2bc413fa9687",
+        "docs/03-protocol.md": "666e556579a88491827ce7d96f1bf11bc22be781f8ea1861f648284431cccdee",
+        "docs/04-security.md": "4960cee5150f30ce1f7d6bbbd846204e9800672d7471af5657deda405d62bed7",
+        "docs/05-delivery.md": "23da61ee5067a4336ca1224107ae1fe65d839b86db47abddbc7f587d55bf79eb",
+        "docs/06-alternatives.md": "0300b9042dfa757983395c95960a8db8d8c5b58011638ff7b4a29068adb21bc4",
+        "docs/07-completion-audit.md": "4768f122817560d78ed30025774cab99ca553976be29281992ff0edab2fdfcdd",
+        "docs/08-design-review.md": "213e7a1540b96125515bb31ee71c264bbd1f94740e894eefacbf86495e6c9b25",
+        "docs/09-design-update.md": "9e20fedd68aed35464c59ddab8cc83fdb3f0fd7f71d64dfaa0ff0a9c092431f5",
+        "docs/10-user-journey.md": "32c00565b15c9d819c55d8c5a114fc25dd97e14fbf93a0a7e9a6796e19fbd7d5",
+        "docs/11-authorization.md": "9c004ea1ea4a1f737e1e5f621a6b1fe24e71888b176790f10a1315f8a6526063",
+        "docs/12-review-guide.md": "25e7cd9b97f38ab5d7e42703abf294e686e4296487ef4dfac08661ce00300ba0",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "current_authorization_decision": {
+        "first_release_authorization": true,
+        "ui_default_term_days": 365,
+        "ui_presets_days": [
+          30,
+          90,
+          365
+        ],
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "clock": "ckb-parent-mtp-v1",
+        "permanent_authorization": false,
+        "core_wire_protocol": "undeployed V2 draft",
+        "specification": "docs/11-authorization.md",
+        "review_entry": "docs/12-review-guide.md",
+        "implementation_complete": false,
+        "new_behavior_tests_executed": false,
+        "control_ordering": "anchor_height of the signed canonical anchor block; same anchor with a different body is AUTH_CONFLICT; auth_sequence removed",
+        "adapter_binding": "immutable versioned adapter IDs, not part of auth_policy; each poll auth_registry lists accepted owner/key adapters",
+        "ballot_sequence_rule": "no gaps: sequence <= previous max valid + 1, otherwise SEQUENCE_GAP"
+      },
+      "review_followup_decisions": {
+        "A": "Default 365 chain days; optional 30 and 90; signed existing expiries unchanged",
+        "B": "Not decided; rules_profile reserves delegate_cutoff_ms = 0 (disabled); enabling later needs a confirmed profile, not a wire change",
+        "C": "Independent process keys with thresholds; schemas defined in docs/03 §3.1; initial roles fixed via the switch meta-rule proposal and deployment config, updates by committee-threshold ROLES_UPDATE; members and threshold pending",
+        "D": "Evaluate Neuron batch signing/dApp connection in parallel, without blocking Omavote; no outreach sent",
+        "E": "User may bundle tool migration and explicitly listed rule clarifications in a public meta-rule proposal"
+      },
+      "freeze_status": {
+        "wire_protocol_frozen": false,
+        "written_into_spec": [
+          "Anchor-height ordering of authorization controls; auth_sequence removed (docs/11 §2, §5)",
+          "auth_policy limited to semantics; versioned adapter IDs accepted per poll (docs/03 §3, §5.1; docs/11 §2, §5-6)",
+          "ASCII first-line summaries and Key-Address (docs/03 §3.1, §5; docs/11 §3-4)",
+          "Proposal signatures, process roles, process records, carrier kinds 6/7 (docs/03 §3.1, §7)",
+          "Deterministic opening confirmation via opening_confirmations (docs/03 §3-4)",
+          "No-gap ballot sequences (docs/03 §6; docs/11 §6)"
+        ],
+        "pending": "Executable state-machine/encoding tests for docs/11 §8 and the new attack scenarios; real-device display tests (Ledger, online wallets); user/governance confirmation of first online wallet, B (delegate_cutoff_ms), initial process roles and committee threshold, opening_confirmations value"
+      },
+      "second_review_revision": {
+        "date": "2026-10-08",
+        "specification": "docs/09-design-update.md section 9",
+        "first_online_wallet_recommendation": "EVM EOA via evm-personal-message-v1 (pending user confirmation); JoyID needs its own adapter ID",
+        "delegate_cutoff_ms": "0 (reserved, B undecided)",
+        "opening_confirmations_candidate": 100,
+        "pending_confirmations": [
+          "first online wallet",
+          "B / delegate_cutoff_ms",
+          "initial process roles and committee threshold",
+          "opening_confirmations value"
+        ],
+        "implementation_or_tests_added": false
+      },
+      "note": "Historical state after the second Claude review fixes, before the colleague review corrections and Fable deletion"
+    },
+    {
+      "revision": "0.3",
+      "date": "2026-10-08",
+      "scope": "v0.3 colleague review corrections and Fable removal. Authorization controls are processed under a global append-only control adapter set; per-poll auth_registry filters ballots only, so narrowing it can never revive a revoked grant. The no-gap ballot rule is withdrawn: ballots sign an anchor block and are ordered by (anchor height, sequence), delegate ballots by (grant anchor, ballot anchor, sequence). Anchor-ordering claims narrowed with recovery-client requirements; Ledger summary documented as a limited display guarantee; admission records need opening confirmations; V2 freeze criteria listed in docs/05 section 8. The fable/ directory was deleted at the user's request; docs/ is the single baseline. Not yet validated by executable tests or real devices.",
+      "document_checks": {
+        "markdown_files": 15,
+        "relative_links_checked": 157,
+        "numbered_section_references_checked": 226,
+        "json_examples_checked": 3,
+        "authorization_expected_scenarios": 26,
+        "review_questions": 18,
+        "protected_files_unchanged": 4,
+        "broken_links": 0,
+        "unbalanced_code_fences": 0,
+        "section_reference_problems": 0,
+        "first_line_summary_max_bytes_worst_case": 55,
+        "scope": "Static documentation checks: relative links, numbered section references, code fences, JSON example syntax, residual search for withdrawn rules and fable/ links, research model file hashes; no protocol implementation, model or wallet tests",
+        "section_reference_method": "Counts every referenced section number, including list and range members",
+        "semantic_review": "Control messages never filtered by poll lists; invariant that narrowing accepted formats cannot revive revoked grants; unknown control formats reported incomplete; ballots ordered by anchor so the latest revision can be published alone and withheld older signatures cannot override later ones; recovery clients check node sync, use the newest verified anchor and confirm effect after inclusion; Ledger fields not shown on device listed",
+        "json_examples": "Syntax valid; placeholders are not signing vectors",
+        "ledger_display_source": "Pinned ledger-app-nervos apdu_sign.c read via source: 64-byte display buffer with ellipsis at bytes 61-63, bytes outside 32-126 shown as *; not a device test",
+        "machine_schema_or_crypto_validation": false
+      },
+      "artifacts": {
+        "README.md": "ca8449ecff83f6fb0ccf36cbf318b9180a15ac063b3fe0b8284c62fab52423f2",
+        "research/README.md": "0a3eca1baa648740d08c66786923205db1e934e530f12004eca798a276a05560",
+        "docs/00-design-index.md": "ef395ad4f633720703c10e627825e3c9a7a89fa73b62f46b0ba8744b073ed430",
+        "docs/01-research.md": "0adf4255634b1b2145664054f7430de68d5e4b6d14f1f50dd42413a058181bbc",
+        "docs/02-design.md": "963f3f50e2a9ef3de2c6eccf314763c169b4a1c36268dd17965cfbbecef64583",
+        "docs/03-protocol.md": "475fecd2e1d49dc7635aca9e9ba63b08c6417dc93aa88d34e1e38dbb3a06962f",
+        "docs/04-security.md": "e5d326875de507e30d17c0fd080b6770898e8e43f71ab69d8f71f74a9aeb7e77",
+        "docs/05-delivery.md": "03d66c5e5adde0e3ee4893655c469b371dd83d5fc09d167066b760e44f823640",
+        "docs/06-alternatives.md": "3074d6cfd0a5c2f9233278b25a20ee7c896c5c1426bf16f311cbf2acc20868b5",
+        "docs/07-completion-audit.md": "2c302800e34d278c2527857697b331ed4d142f4e16508fd77f92dc9e9f8ad205",
+        "docs/08-design-review.md": "4cc972c955950ac56bf03a2fe0f7de62ace74fb139de040133dd52a997df42e3",
+        "docs/09-design-update.md": "454bcb781630c16d4653b502a8fe0d89ab64073597dbfe96e3545d5a78b10f7e",
+        "docs/10-user-journey.md": "e863ac5aa3625bdc84a8081699d4e813530aecaca570dfcd12efc3609e840424",
+        "docs/11-authorization.md": "2a35e68c189eca3579f94c7a099b8089393a08da7644f7f0a3dab521702b785b",
+        "docs/12-review-guide.md": "eb81454eecdd358a8eca02d6afdef11224b7411a4c2d445e645cb47cd1675189",
+        "research/model.py": "584682e32cf901f57e79a1370be2ed0b158c85ec5bd9ef86ef1e5e32a75186d0",
+        "research/test_model.py": "96c1aef41f7d48aa2999c9043ea1f4d07c9eebb51b0808db216e26316191d548",
+        "research/sources.json": "41deb9d75fa4c7ae0cf9b36f9ca4aa601dca12d61458cdf4c20baee12f0382bf",
+        "research/verification-output.txt": "31f67768012334526b228a34363a6eb3a8123b050f57b65945fccaaa229e5211"
+      },
+      "current_authorization_decision": {
+        "first_release_authorization": true,
+        "ui_default_term_days": 365,
+        "ui_presets_days": [
+          30,
+          90,
+          365
+        ],
+        "max_term_ms": "31536000000",
+        "max_control_publication_delay_ms": "86400000",
+        "clock": "ckb-parent-mtp-v1",
+        "permanent_authorization": false,
+        "core_wire_protocol": "undeployed V2 draft",
+        "specification": "docs/11-authorization.md",
+        "review_entry": "docs/12-review-guide.md",
+        "implementation_complete": false,
+        "new_behavior_tests_executed": false,
+        "control_ordering": "anchor_height of the signed canonical anchor block; same anchor with a different body is AUTH_CONFLICT; auth_sequence removed",
+        "adapter_binding": "immutable versioned adapter IDs, not part of auth_policy; GRANT/REVOKE use the global append-only control adapter set; each poll auth_registry filters ballots only",
+        "ballot_sequence_rule": "ballots sign anchor_block_hash; direct ordered by (ballot anchor height, sequence), delegate by (grant anchor height, ballot anchor height, sequence); no-gap rule withdrawn"
+      },
+      "review_followup_decisions": {
+        "A": "Default 365 chain days; optional 30 and 90; signed existing expiries unchanged",
+        "B": "Not enabled in the first release: delegate_cutoff_ms = 0; enabling later requires rule confirmation",
+        "C": "Independent process keys with thresholds; schemas in docs/03 §3.1; members and threshold follow existing governance, fixed in the switch meta-rule proposal and deployment config; verification reports state the initial roles_hash",
+        "D": "Evaluate Neuron batch signing/dApp connection in parallel, without blocking Omavote; no outreach sent",
+        "E": "User may bundle tool migration and explicitly listed rule clarifications in a public meta-rule proposal"
+      },
+      "freeze_status": {
+        "wire_protocol_frozen": false,
+        "written_into_spec": [
+          "Anchor-height ordering of authorization controls; auth_sequence removed (docs/11 §2, §5)",
+          "auth_policy limited to semantics; global append-only control adapter set; per-poll auth_registry filters ballots only (docs/03 §5.1; docs/11 §2, §5-6)",
+          "Ballots carry anchor_block_hash and are ordered by anchor then sequence; no-gap rule withdrawn (docs/03 §5-6; docs/11 §6)",
+          "Recovery-client requirements: node sync check, newest verified anchor, post-inclusion effect check, reorg re-signing (docs/11 §5)",
+          "ASCII first-line summaries and Key-Address as a limited display guarantee (docs/03 §3.1, §5; docs/11 §3-4)",
+          "Proposal signatures, process roles, process records, carrier kinds 6/7 (docs/03 §3.1, §7)",
+          "Deterministic opening confirmation for manifests and admission records via opening_confirmations (docs/03 §3-4)"
+        ],
+        "freeze_criteria": "docs/05-delivery.md section 8: executable state machine covering docs/11 §8 and review counterexamples; reorder/reorg combination and property tests; machine schema; cross-language and real-signature vectors; first-release wallet PoCs (Neuron incl. Ledger display, MetaMask-class EOA incl. mobile)",
+        "pending": "All freeze criteria; governance-provided process role members/threshold and final opening_confirmations; stop rule for a compromised control format"
+      },
+      "colleague_review_revision": {
+        "date": "2026-10-08",
+        "specification": "docs/09-design-update.md section 10",
+        "adopted": [
+          "Separate control adapter set from per-poll ballot acceptance; narrowing cannot revive revoked grants",
+          "Withdraw no-gap ballot rule; anchor plus local sequence ordering for ballots",
+          "Narrow anchor-ordering safety claim; recovery-client requirements",
+          "Ledger summary is a limited guarantee; list computer-verified fields; 64-bit identifiers are auxiliary",
+          "Admission records need opening confirmations; opening_confirmations 100 is a test candidate only",
+          "Freeze criteria beyond the scenario table",
+          "Block reading and DAO history replay may start now; relay queueing, auth state machine and final wire format wait"
+        ],
+        "first_online_wallet": "MetaMask-class EVM EOA first PoC (mobile connection, full-text display, multi-address signing); final support per PoC",
+        "b_delegate_cutoff": "not enabled in first release (0)",
+        "process_roles": "members and threshold from existing governance; initial roles_hash fixed in switch proposal and stated in verification reports",
+        "fable_directory_deleted": true,
+        "implementation_or_tests_added": false
+      },
+      "note": "Historical state after the first colleague review corrections and Fable deletion, before the second colleague review corrections"
+    }
+  ],
+  "current_authorization_decision": {
+    "first_release_authorization": true,
+    "ui_default_term_days": 365,
+    "ui_presets_days": [
+      30,
+      90,
+      365
+    ],
+    "max_term_ms": "31536000000",
+    "max_control_publication_delay_ms": "86400000",
+    "clock": "ckb-parent-mtp-v1",
+    "permanent_authorization": false,
+    "core_wire_protocol": "undeployed V2 draft",
+    "specification": "docs/11-authorization.md",
+    "review_entry": "docs/12-review-guide.md",
+    "implementation_complete": false,
+    "new_behavior_tests_executed": false,
+    "control_ordering": "anchor_height of the signed canonical anchor block; same anchor with a different body is AUTH_CONFLICT; auth_sequence removed",
+    "adapter_binding": "immutable versioned adapter IDs, not part of auth_policy; GRANT/REVOKE use the global append-only control adapter set; each poll auth_registry filters ballots only",
+    "ballot_sequence_rule": "no ballot sequence: direct ordered by ballot anchor height, delegate by (grant anchor height, ballot anchor height); same anchor with different content is CONFLICT; clients anchor at the newest verified block and wait for a new block between revisions",
+    "grant_revoke_mode": "GRANT revoke_mode null keeps prior delegate votes; STOP_AND_CANCEL_OPEN also establishes the safe revocation barrier at the GRANT position"
+  },
+  "review_followup_decisions": {
+    "A": "Default 365 chain days; optional 30 and 90; signed existing expiries unchanged",
+    "B": "Not enabled in the first release: delegate_cutoff_ms = 0; enabling later requires rule confirmation",
+    "C": "Independent process keys with thresholds; schemas in docs/03 §3.1; members and threshold follow existing governance, fixed in the switch meta-rule proposal and deployment config; verification reports state the initial roles_hash",
+    "D": "Evaluate Neuron batch signing/dApp connection in parallel, without blocking Omavote; no outreach sent",
+    "E": "User may bundle tool migration and explicitly listed rule clarifications in a public meta-rule proposal"
+  },
+  "freeze_status": {
+    "wire_protocol_frozen": false,
+    "written_into_spec": [
+      "Anchor-height ordering of authorization controls; auth_sequence removed (docs/11 §2, §5)",
+      "auth_policy limited to semantics; global append-only control adapter set; per-poll auth_registry filters ballots only (docs/03 §5.1; docs/11 §2, §5-6)",
+      "Ballots carry anchor_block_hash; no-gap rule withdrawn; ordering by anchor only after the sequence removal (docs/03 §5-6; docs/11 §6)",
+      "Recovery-client requirements: node sync check, newest verified anchor, post-inclusion effect check, reorg re-signing (docs/11 §5)",
+      "ASCII first-line summaries and Key-Address as a limited display guarantee (docs/03 §3.1, §5; docs/11 §3-4)",
+      "Proposal signatures, process roles, process records, carrier kinds 6/7 (docs/03 §3.1, §7)",
+      "Deterministic opening confirmation for manifests and admission records via opening_confirmations (docs/03 §3-4)",
+      "Process records ordered by signed anchor with publication deadline and record_id dedup (docs/03 §3.1)",
+      "Ballot sequence removed; anchors at newest verified block for ballots and controls (docs/03 §5-6; docs/11 §2, §6)",
+      "GRANT with revoke_mode STOP_AND_CANCEL_OPEN; standalone REVOKE confirmed before new GRANT (docs/11 §3, §5)",
+      "RESULT_ATTESTATION outcome must match the conclusion in the result_core named by result_hash (docs/03 §3.1)",
+      "Compromised adapter guarantee limited to polls that exclude it; polls still accepting it need HOLD_EXECUTION (docs/03 §5.1; docs/11 §5)"
+    ],
+    "freeze_criteria": "docs/05-delivery.md section 8: executable state machine covering docs/11 §8 and review counterexamples; reorder/reorg combination and property tests; machine schema; cross-language and real-signature vectors; first-release wallet PoCs (Neuron incl. Ledger display, MetaMask-class EOA incl. mobile)",
+    "pending": "All freeze criteria in docs/05 §8; governance-provided process role members/threshold and final opening_confirmations; final max_process_publication_delay_ms (candidate 72 hours); stop rule for a compromised control format"
+  },
+  "current_fee_requirement": {
+    "user_voting_fee": "0",
+    "covers": [
+      "authorization",
+      "renewal",
+      "vote",
+      "revote",
+      "cancel",
+      "revoke",
+      "recovery"
+    ],
+    "transaction_fee_and_capacity_payers": [
+      "relay",
+      "operator",
+      "community helper"
+    ],
+    "user_liquid_ckb_required": false,
+    "mandatory_self_payment_fallback": false,
+    "self_paid_C_template": "research-only, not a supported product path",
+    "protocol_accepts_external_voluntary_publication": true,
+    "specification": "docs/09-design-update.md, section 7",
+    "sponsored_C_implementation_or_audit_complete": false
+  },
+  "current_key_custody_and_ux_decision": {
+    "date": "2026-10-08",
+    "primary_neuron_path": "First authorize a second online wallet using per-owner Neuron GRANT signatures; use the same online wallet key for subsequent specific poll ballots",
+    "private_key_holder": "online wallet; voting website does not receive or store its private key or recovery secrets",
+    "neuron_needed_for": [
+      "initial authorization",
+      "renewal",
+      "new key authorization",
+      "revocation/recovery",
+      "direct takeover or non-delegated voting"
+    ],
+    "one_grant_per_owner": true,
+    "one_grant_per_deposit": false,
+    "per_ballot_signature_required": true,
+    "wallet_connection_is_not_a_ballot": true,
+    "wallet_popup_count": "per-adapter acceptance tests; not guaranteed one prompt across multiple owners",
+    "online_wallet_ckb_required": false,
+    "user_voting_fee": "0",
+    "browser_generated_key": "optional candidate, not the default or a first-release dependency",
+    "generic_passkey": "independent PoC; not automatically equivalent to JoyID",
+    "actual_wallet_support": "pending adapter/real-device acceptance tests",
+    "specification": "docs/09-design-update.md section 8; docs/10-user-journey.md section 3; docs/11-authorization.md section 4"
+  },
+  "second_review_revision": {
+    "date": "2026-10-08",
+    "specification": "docs/09-design-update.md section 9",
+    "first_online_wallet_recommendation": "EVM EOA via evm-personal-message-v1 (pending user confirmation); JoyID needs its own adapter ID",
+    "delegate_cutoff_ms": "0 (reserved, B undecided)",
+    "opening_confirmations_candidate": 100,
+    "pending_confirmations": [
+      "first online wallet",
+      "B / delegate_cutoff_ms",
+      "initial process roles and committee threshold",
+      "opening_confirmations value"
+    ],
+    "implementation_or_tests_added": false,
+    "superseded_by": "colleague_review_revision"
+  },
+  "colleague_review_revision": {
+    "date": "2026-10-08",
+    "specification": "docs/09-design-update.md section 10",
+    "adopted": [
+      "Separate control adapter set from per-poll ballot acceptance; narrowing cannot revive revoked grants",
+      "Withdraw no-gap ballot rule; anchor plus local sequence ordering for ballots",
+      "Narrow anchor-ordering safety claim; recovery-client requirements",
+      "Ledger summary is a limited guarantee; list computer-verified fields; 64-bit identifiers are auxiliary",
+      "Admission records need opening confirmations; opening_confirmations 100 is a test candidate only",
+      "Freeze criteria beyond the scenario table",
+      "Block reading and DAO history replay may start now; relay queueing, auth state machine and final wire format wait"
+    ],
+    "first_online_wallet": "MetaMask-class EVM EOA first PoC (mobile connection, full-text display, multi-address signing); final support per PoC",
+    "b_delegate_cutoff": "not enabled in first release (0)",
+    "process_roles": "members and threshold from existing governance; initial roles_hash fixed in switch proposal and stated in verification reports",
+    "fable_directory_deleted": true,
+    "implementation_or_tests_added": false,
+    "superseded_by": "colleague_review_2_revision"
+  },
+  "colleague_review_2_revision": {
+    "date": "2026-10-08",
+    "specification": "docs/09-design-update.md section 11",
+    "user_confirmed_choices": [
+      "remove ballot sequence field",
+      "allow GRANT to cancel open delegate votes (summary line uses TO instead of UNTIL)"
+    ],
+    "adopted": [
+      "Process records: anchor, publication deadline (candidate 72 hours), record_id dedup, anchor ordering, RECORD_CONFLICT",
+      "Anchor at the newest verified block for ballots and all control messages; no tip-minus-k allowance",
+      "Same-anchor different-content ballots are CONFLICT; ballot sequence removed",
+      "GRANT+CANCEL one-step key replacement; standalone REVOKE must be confirmed effective before a new GRANT",
+      "Residuals fixed: rules_profile revote line; docs/11 §4.2 cutoff status"
+    ],
+    "implementation_or_tests_added": false,
+    "follow_up": [
+      "RESULT_ATTESTATION outcome checked against result_hash conclusion; mismatch shown as dispute",
+      "Compromised adapter guarantee conditioned on poll exclusion; polls still accepting it must hold execution",
+      "Residual sequence wording removed from docs/05 §2.2 and the current freeze list"
+    ]
+  }
+}

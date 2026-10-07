@@ -1,0 +1,161 @@
+<div id="omavote-journey-v1">
+  <style>
+    #omavote-journey-v1 { color: var(--foreground); }
+    #omavote-journey-v1 .journey-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 16px; padding-right: 90px; }
+    #omavote-journey-v1 .journey-heading h3 { margin: 0; }
+    #omavote-journey-v1 .journey-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 0 8px; }
+    #omavote-journey-v1 .journey-panel { margin: 16px 0; }
+    #omavote-journey-v1 .journey-panel h3 { margin-top: 0; }
+    #omavote-journey-v1 dl { display: grid; grid-template-columns: minmax(80px, 0.7fr) minmax(0, 1.8fr); gap: 12px 20px; margin-bottom: 0; }
+    #omavote-journey-v1 dt { font-weight: 400; }
+    #omavote-journey-v1 dd { margin: 0; overflow-wrap: anywhere; }
+    #omavote-journey-v1 .journey-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; }
+    #omavote-journey-v1 .journey-choice { margin-top: 16px; }
+    #omavote-journey-v1 .journey-detail { margin-top: 12px; }
+    #omavote-journey-v1 [hidden] { display: none !important; }
+    @media (max-width: 400px) {
+      #omavote-journey-v1 dl { grid-template-columns: minmax(70px, 0.65fr) minmax(0, 1.35fr); gap: 12px; }
+    }
+  </style>
+  <div class="journey-heading">
+    <h3>一步步体验投票</h3>
+    <span class="text-small">示例数据 · 不连接钱包</span>
+  </div>
+  <div class="viz-controls">
+    <label class="form-label" for="ovj-scenario">体验场景
+      <select class="form-select" id="ovj-scenario">
+        <option value="normal">浏览器钱包：从打开到付款</option>
+        <option value="neuron">Neuron：复制、签名、粘贴</option>
+        <option value="revote">我想从赞成改为反对</option>
+        <option value="conflict">电脑与手机的选择冲突</option>
+        <option value="relay">发布服务没有响应</option>
+      </select>
+    </label>
+  </div>
+  <div class="journey-status">
+    <span id="ovj-position" class="tabular-nums"></span>
+    <span id="ovj-place" class="viz-badge"></span>
+  </div>
+  <div class="progress" id="ovj-progress" role="progressbar" aria-label="场景进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <div class="progress-bar" id="ovj-progress-bar"></div>
+  </div>
+  <div class="card journey-panel" aria-live="polite" aria-atomic="true">
+    <h3 id="ovj-title"></h3>
+    <dl id="ovj-fields"></dl>
+    <div id="ovj-choice" class="viz-row journey-choice" hidden>
+      <button type="button" class="btn" id="ovj-yes" aria-pressed="true">赞成</button>
+      <button type="button" class="btn" id="ovj-no" aria-pressed="false">反对</button>
+    </div>
+  </div>
+  <div class="journey-actions">
+    <button type="button" class="btn" id="ovj-back">上一步</button>
+    <button type="button" class="btn btn-primary" id="ovj-next"></button>
+  </div>
+  <div class="text-small journey-detail" id="ovj-detail" aria-live="polite"></div>
+  <script>
+  (() => {
+    const root = document.getElementById('omavote-journey-v1');
+    const el = (name) => root.querySelector('#ovj-' + name);
+    const scenarios = {
+      normal: [
+        { title: '你从论坛打开正式投票链接', place: '浏览器 · 提案页', fields: [['示例提案', '社区开发工具资助'], ['申请预算', '1,000,000 CKB'], ['投票窗口', '7 天 · 当前开放'], ['连接钱包', '尚未连接；仍可阅读提案和结果']], next: '连接钱包（演示）', detail: '网页是主要入口，不需要新装投票 App。' },
+        { title: '网页找到这个地址的 DAO 存款', place: '浏览器 · 我的票权', fields: [['当前地址', '你的存款地址 A'], ['预计票权', '100,000 CKB'], ['资产操作', '仅查询，存款不移动']], choose: true, next: '查看投票确认页', detail: '示例按截止时有效存款结算；正式规则需先确认。' },
+        { title: '签名前，核对你的选择', place: '浏览器 · 确认页', fields: [['提案', '社区开发工具资助'], ['我的选择', '$choice'], ['我支付的手续费', '0 CKB · 默认由发布服务代付'], ['公开内容', '投票地址、选择与计入权重']], next: '打开钱包签名请求（演示）', detail: '这里签署本次选票，没有建立长期代投授权。' },
+        { title: '你在原来的钱包里确认签名', place: '原钱包 · 签名请求', fields: [['请求类型', '消息签名'], ['用途', '仅本提案的选票'], ['选择', '$choice'], ['资金转移', '无']], next: '确认签名并提交（演示）', detail: '实际钱包展示样式各异；此处只演示操作类型。' },
+        { title: '服务已接收，正在发布', place: '浏览器 · 我的回执', fields: [['我的选择', '$choice'], ['状态', '已接收 · 尚未收录'], ['原始选票', '已保存，可以重发'], ['下一步', '由发布服务支付费用并提交到链上']], next: '查看已收录状态（演示）', detail: '已接收不等于投票完成；关闭网页后服务仍可继续发布。' },
+        { title: '你的选票已有公共记录', place: '浏览器 · 我的回执', fields: [['当前选择', '$choice'], ['状态', '已收录，并达到确认要求'], ['预计权重', '100,000 CKB'], ['仍可操作', '改票、撤回、查看公开记录']], next: '投票截止后（演示）', detail: '此时权重仍是预览，截止状态决定最终计入值。' },
+        { title: '投票关闭，等待结果复核', place: '浏览器 · 结果页', fields: [['本地址最终选择', '$choice'], ['本地址最终权重', '100,000 CKB · 示例存款未变化'], ['新票和改票', '窗口已关闭'], ['结果状态', '等待链确认与独立复算']], next: '查看复核后结果（演示）', detail: '复核期不接受补投，也不允许管理员手选某张票。' },
+        { title: '提案通过后，金库人工多签打款', place: '浏览器 · 结果与执行', fields: [['社区赞成 / 反对', '$totals'], ['参与权重', '5,000,000 CKB · 超过 3,000,000 门槛'], ['结论', '示例：提案通过，已完成复核'], ['执行方式', '三位金库管理者按既有多签规则手动付款']], detail: '投票服务本身没有金库付款权限。' }
+      ],
+      neuron: [
+        { title: '在网页选择 Neuron 签名入口', place: '浏览器', fields: [['使用地址', '持有 DAO 存款的地址 A'], ['预计票权', '100,000 CKB'], ['所需应用', '这个网页 + 你原有的 Neuron']], next: '选择赞成并复制选票原文（演示）', detail: '不用把助记词或私钥输入网页。' },
+        { title: '切换到 Neuron 的消息签名功能', place: 'Neuron', fields: [['签名地址', '存款地址 A'], ['粘贴内容', '网页生成的完整选票原文'], ['待确认选项', '赞成']], next: '在 Neuron 确认签名（演示）', detail: '必须使用对应存款地址，不能随便选钱包里的另一个地址。' },
+        { title: '复制签名，回到网页粘贴', place: 'Neuron → 浏览器', fields: [['返回网页的内容', '签名结果'], ['网页检查', '签名、选票与存款地址是否对应'], ['本金', '仍在原来的 Nervos DAO 存款中']], next: '提交已验证选票（演示）', detail: '粘贴错了会提示重新检查，不会产生资产转账。' },
+        { title: '后续流程与浏览器钱包相同', place: '浏览器 · 我的回执', fields: [['状态', '已接收，等待公开收录'], ['默认费用', '由发布服务代付'], ['可以做', '保存回执，稍后查看收录状态']], detail: '同一地址的多笔存款可一起计权；多个不同地址要分别授权。' }
+      ],
+      revote: [
+        { title: '你已经投了赞成，现在想改为反对', place: '浏览器 · 我的回执', fields: [['当前已收录', '赞成'], ['预计权重', '100,000 CKB'], ['投票窗口', '仍开放']], next: '准备反对选票', detail: '改变的是当前选择，不是再增加一份票权。' },
+        { title: '确认并签署新的反对选票', place: '原钱包', fields: [['原来选择', '赞成'], ['新选择', '反对'], ['费用', '默认由发布服务代付']], next: '签名并提交（演示）', detail: '修订顺序由程序处理，正常用户不用填写序号。' },
+        { title: '新票还在途中，页面同时显示两种状态', place: '浏览器 · 我的回执', fields: [['当前已生效', '赞成'], ['正在提交', '反对'], ['状态', '等待新票收录']], next: '新票收录（演示）', detail: '在新票有效收录前，不把界面提前显示成已改票成功。' },
+        { title: '反对成为当前选择', place: '浏览器 · 我的回执', fields: [['当前已收录', '反对'], ['计入方式', '这份本金只计一次'], ['原赞成票', '保留历史记录，已被新票替代']], detail: '中继之后再发布旧票，也不能把你改回赞成。' }
+      ],
+      conflict: [
+        { title: '电脑与手机签出了冲突的修改', place: '两个设备', fields: [['电脑', '赞成 · 同一修订序号'], ['手机', '反对 · 同一修订序号'], ['主体', '同一个存款地址']], next: '查看冲突提示', detail: '不同用户投相反意见是正常投票，不属于这种冲突。' },
+        { title: '无法确定你的最终选择，需要重新确认', place: '浏览器 · 我的回执', fields: [['状态', '选票冲突'], ['当前计入权重', '0 · 该主体暂不计票'], ['本金状态', '不受影响']], choose: true, next: '重新签署所选选票（演示）', detail: '后台不能替你从两张已签选票中挑一张。' },
+        { title: '网页生成一份新的、明确的选择', place: '原钱包', fields: [['重新确认', '$choice'], ['修订顺序', '高于两张冲突票'], ['窗口要求', '仍须在截止前有效收录']], next: '新票收录（演示）', detail: '这次重新签名用于明确意图，不需要挪动本金。' },
+        { title: '冲突解除，继续正常计票', place: '浏览器 · 我的回执', fields: [['当前选择', '$choice'], ['预计权重', '100,000 CKB'], ['冲突记录', '保留在历史中']], detail: '若直到截止仍未解决，则该主体不计入最终票数。' }
+      ],
+      relay: [
+        { title: '选票已签，但发布服务迟迟没有收录结果', place: '浏览器 · 我的回执', fields: [['签名', '已完成'], ['链上收录', '尚未完成'], ['原始选票', '可以导出']], next: '切换另一家发布服务（演示）', detail: '网页不能在这时显示投票完成。' },
+        { title: '把同一份选票交给另一家服务', place: '浏览器 · 备用发布入口', fields: [['是否重新签名', '不需要'], ['是否移动存款', '不需要'], ['提交内容', '原来那份已签选票']], next: '重发原选票（演示）', detail: '如果两家最终都发布，也不会重复计算票权。' },
+        { title: '备用服务完成发布', place: '浏览器 · 我的回执', fields: [['状态', '已收录'], ['票权', '仍只计一份'], ['后续', '等待确认，按原截止时间结算']], detail: '全部服务都不可用时，还需帮助者代发或支持的自费通道；不能保证毫无影响。' }
+      ]
+    };
+    let state = { scenario: 'normal', step: 0, choice: 'YES' };
+    const apply = (saved) => {
+      const s = saved && saved.privateContent;
+      if (!s || !Object.prototype.hasOwnProperty.call(scenarios, s.scenario)) return;
+      state.scenario = s.scenario;
+      state.step = Number.isInteger(s.step) ? Math.max(0, Math.min(s.step, scenarios[s.scenario].length - 1)) : 0;
+      state.choice = s.choice === 'NO' ? 'NO' : 'YES';
+    };
+    const save = () => {
+      const host = window.openai;
+      if (host && typeof host.setWidgetState === 'function') {
+        Promise.resolve(host.setWidgetState({ modelContent: { scenario: state.scenario, step: state.step + 1, choice: state.choice }, privateContent: { ...state } })).catch(() => {});
+      }
+    };
+    const resolveValue = (v) => {
+      if (v === '$choice') return state.choice === 'YES' ? '赞成' : '反对';
+      if (v === '$totals') return state.choice === 'YES' ? '4,000,000 / 1,000,000 CKB' : '3,900,000 / 1,100,000 CKB';
+      return v;
+    };
+    const render = () => {
+      const steps = scenarios[state.scenario];
+      const s = steps[state.step];
+      el('scenario').value = state.scenario;
+      el('position').textContent = '第 ' + (state.step + 1) + ' 步 / ' + steps.length + ' 步';
+      el('place').textContent = s.place;
+      el('title').textContent = s.title;
+      el('detail').textContent = s.detail;
+      el('fields').replaceChildren();
+      s.fields.forEach(([label, value]) => {
+        const dt = document.createElement('dt');
+        const dd = document.createElement('dd');
+        dt.textContent = label;
+        dd.textContent = resolveValue(value);
+        el('fields').append(dt, dd);
+      });
+      el('choice').hidden = !s.choose;
+      el('yes').setAttribute('aria-pressed', String(state.choice === 'YES'));
+      el('no').setAttribute('aria-pressed', String(state.choice === 'NO'));
+      el('back').disabled = state.step === 0;
+      el('next').disabled = state.step === steps.length - 1;
+      el('next').textContent = s.next || '本场景结束';
+      const progress = Math.round((state.step + 1) / steps.length * 100);
+      el('progress').setAttribute('aria-valuenow', String(progress));
+      el('progress-bar').style.width = progress + '%';
+    };
+    el('scenario').addEventListener('change', () => {
+      state.scenario = el('scenario').value;
+      state.step = 0;
+      render(); save();
+    });
+    el('back').addEventListener('click', () => {
+      state.step = Math.max(0, state.step - 1); render(); save();
+    });
+    el('next').addEventListener('click', () => {
+      state.step = Math.min(scenarios[state.scenario].length - 1, state.step + 1); render(); save();
+    });
+    [['yes', 'YES'], ['no', 'NO']].forEach(([id, value]) => {
+      el(id).addEventListener('click', () => { state.choice = value; render(); save(); });
+    });
+    apply(window.openai && window.openai.widgetState);
+    window.addEventListener('openai:set_globals', (event) => {
+      const globals = event.detail && event.detail.globals;
+      if (globals && Object.prototype.hasOwnProperty.call(globals, 'widgetState')) { apply(globals.widgetState); render(); }
+    });
+    render();
+  })();
+  </script>
+</div>
