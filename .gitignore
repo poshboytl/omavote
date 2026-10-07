@@ -3,15 +3,10 @@
 /web/dist/
 /web/src/wasm/pkg/
 /verifier-ts/dist/
-/devnet/data/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
 .env
 research/__pycache__/
-/devnet/bin/
-/devnet/*.log
-/devnet/*.key
-/devnet/demo-out/
-/devnet/omavote.toml
-/devnet/roles.json
+# Local development chain runtime (keys, data, logs); scripts live in deploy/devnet/
+/devnet/
