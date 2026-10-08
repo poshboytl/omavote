@@ -6,6 +6,7 @@ mod bootstrap;
 mod chain;
 mod config;
 mod demo;
+mod devtools;
 mod forum;
 mod relay;
 mod rpc;
@@ -89,6 +90,9 @@ enum Cmd {
         #[arg(long)]
         text_file: PathBuf,
     },
+    /// Development-chain helpers: test identities, faucet funding, deposits, balances.
+    #[command(subcommand)]
+    Devnet(devtools::DevCmd),
     /// Development chains: print the deterministic demo process roles (initial_roles_file).
     DemoRoles {
         #[arg(long, default_value = "http://127.0.0.1:18114")]
@@ -149,6 +153,7 @@ async fn main() -> Result<()> {
             Ok(())
         }
         Cmd::Demo(args) => demo::run(args).await,
+        Cmd::Devnet(cmd) => devtools::run(cmd).await,
         Cmd::Sign { key, format, text_file } => {
             let text = if text_file.as_os_str() == "-" {
                 let mut t = String::new();
