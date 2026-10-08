@@ -401,6 +401,13 @@ fn history_json(store: &crate::store::Store, to: u64) -> anyhow::Result<(Value, 
     Ok((Value::Array(blocks), seed))
 }
 
+/// History bundles are large (every reduced block since the start); building several at
+/// once could exhaust a public server, so extra requests are refused rather than queued.
+fn history_limiter() -> &'static tokio::sync::Semaphore {
+    static LIMIT: std::sync::OnceLock<tokio::sync::Semaphore> = std::sync::OnceLock::new();
+    LIMIT.get_or_init(|| tokio::sync::Semaphore::new(2))
+}
+
 async fn bundle(State(s): State<AppState>, Path(id): Path<String>, Query(q): Query<BundleQuery>) -> Response {
     let id = match id_param(&id) {
         Ok(i) => i,
@@ -417,6 +424,9 @@ async fn bundle(State(s): State<AppState>, Path(id): Path<String>, Query(q): Que
     let mut name = format!("attachment; filename=\"omavote-{}-bundle.json\"", short_id(&id));
     if q.history == Some(true) {
         let Some((tip_n, _, _)) = tip else { return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "no indexed blocks yet") };
+        let Ok(_permit) = history_limiter().try_acquire() else {
+            return err(StatusCode::TOO_MANY_REQUESTS, "BUSY", "other history bundles are being built; retry shortly");
+        };
         // The cache is written right after each indexed batch: wait for the bundle's tip.
         for _ in 0..30 {
             if matches!(s.store.block_hash(tip_n), Ok(Some(_))) {
