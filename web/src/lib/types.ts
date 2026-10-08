@@ -245,6 +245,22 @@ export interface ApiErrorBody {
   error: { code: string; detail: string };
 }
 
+/** `GET /api/forum/import`: the current revision of a Nervos Talk topic (untrusted). */
+export interface ForumImport {
+  source: string;
+  topic_id: string;
+  title: string;
+  revision: string;
+  post_id: string;
+  author: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  content_raw: string;
+  content_hash: Hex;
+  recipient_candidates: string[];
+  historical_likes_verified: boolean;
+}
+
 export interface StatusView {
   version: string;
   network: { name: string; genesis_hash: Hex };

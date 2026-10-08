@@ -4,6 +4,7 @@
 import type {
   AddressView,
   AnchorView,
+  ForumImport,
   BallotsView,
   DiagnosticsView,
   KeyAuthorizationsView,
@@ -117,6 +118,11 @@ export class Api {
 
   get<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: "GET" });
+  }
+
+  /** Server-side fetch of a Nervos Talk topic (fixed host, no redirects, bounded). */
+  forumImport(topic: string): Promise<ForumImport> {
+    return this.get(`/api/forum/import?topic=${encodeURIComponent(topic)}`);
   }
 
   status(): Promise<StatusView> {

@@ -6,6 +6,7 @@ mod bootstrap;
 mod chain;
 mod config;
 mod demo;
+mod forum;
 mod relay;
 mod rpc;
 mod store;

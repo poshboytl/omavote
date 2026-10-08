@@ -31,7 +31,7 @@ import {
 import { big, ckbToShannon, durationText, formatCkb, fromUtcInputValue, isDec, pollTag, toUtcInputValue, utcHuman } from "../lib/format";
 import { parseHash32 } from "../lib/hex";
 import { savePending } from "../lib/storage";
-import type { LockInfo, Manifest, ManifestInfo, NetworkInfo, RulesProfile, Script } from "../lib/types";
+import type { ForumImport, LockInfo, Manifest, ManifestInfo, NetworkInfo, RulesProfile, Script } from "../lib/types";
 
 export function CreatePage() {
   return <NeedCore>{(core, network) => <CreateView core={core} network={network} />}</NeedCore>;
@@ -47,7 +47,7 @@ interface Built {
 
 function CreateView({ core, network }: { core: Core; network: NetworkInfo }) {
   const { t, lang } = useI18n();
-  const { status } = useApp();
+  const { status, api } = useApp();
   const net = network.network;
   const isDevnet = net.name !== "mainnet" && net.name !== "testnet";
 
@@ -78,6 +78,10 @@ function CreateView({ core, network }: { core: Core; network: NetworkInfo }) {
   const [advOpening, setAdvOpening] = useState("");
   const [advPeriodMin, setAdvPeriodMin] = useState("");
   const [built, setBuilt] = useState<Built | null>(null);
+  const [forumInput, setForumInput] = useState("");
+  const [imported, setImported] = useState<ForumImport | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState<unknown>(null);
   const [buildError, setBuildError] = useState<unknown>(null);
 
   const rules: RulesProfile = useMemo(() => {
@@ -214,6 +218,66 @@ function CreateView({ core, network }: { core: Core; network: NetworkInfo }) {
       <p className="lead">{t("create.lead")}</p>
       <Notice tone="info">{t("create.forumNote")}</Notice>
       {network.authorization_policy.published === null && <Notice tone="warn">{t("create.policyUnpublished")}</Notice>}
+
+      <Section title={t("create.importTitle")}>
+        <p>{t("create.importLead")}</p>
+        <form
+          className="row"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setImportBusy(true);
+            setImportError(null);
+            try {
+              const d = await api.forumImport(forumInput);
+              setImported(d);
+              wrap(setTitle)(d.title);
+              wrap(setBody)(d.content_raw);
+              wrap(setHashOverride)("");
+              wrap(setLocations)(d.source);
+              wrap(setTopic)(d.topic_id);
+              wrap(setRevision)(d.revision);
+            } catch (err) {
+              setImportError(err);
+            } finally {
+              setImportBusy(false);
+            }
+          }}
+        >
+          <input className="mono grow" value={forumInput} onChange={(e) => setForumInput(e.target.value)} placeholder="https://talk.nervos.org/t/…/12345" spellCheck={false} />
+          <button type="submit" className="btn btn-primary" disabled={importBusy || forumInput.trim() === ""}>
+            {t("create.importButton")}
+          </button>
+        </form>
+        {importError !== null && <ErrorView error={importError} />}
+        {imported && (
+          <>
+            <KV
+              rows={[
+                [t("create.importSource"), <a key="s" href={imported.source} rel="noreferrer noopener" target="_blank">{imported.source}</a>],
+                [t("create.revision"), imported.revision],
+                [t("create.importAuthor"), `${imported.author ?? "—"} · ${imported.updated_at ?? imported.created_at ?? ""}`],
+                [t("create.importHash"), <code key="h">{imported.content_hash}</code>],
+              ]}
+            />
+            {contentHash === imported.content_hash ? (
+              <Check ok>{t("create.importMatches", { rev: imported.revision })}</Check>
+            ) : (
+              <Notice tone="warn">{t("create.importEdited", { rev: imported.revision })}</Notice>
+            )}
+            {imported.recipient_candidates.length > 0 && (
+              <div className="small">
+                {t("create.importCandidates")}{" "}
+                {imported.recipient_candidates.map((a) => (
+                  <button key={a} type="button" className="btn btn-small mono" onClick={() => wrap(setRecipient)(a)}>
+                    {a.slice(0, 12)}…{a.slice(-8)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <Notice tone="warn">{t("create.importUnverified")}</Notice>
+          </>
+        )}
+      </Section>
 
       <Section title={t("create.formTitle")}>
         <div className="form-grid">

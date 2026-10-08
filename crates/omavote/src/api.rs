@@ -95,6 +95,9 @@ pub fn router(state: AppState, web_root: Option<std::path::PathBuf>, cors_origin
         .route("/api/diagnostics", get(diagnostics))
         .route("/api/envelopes", post(envelopes))
         .route("/api/core/{method}", post(core_call))
+        .route("/api/forum/import", get(forum_import))
+        // Unknown API paths must not fall through to the single-page app.
+        .route("/api/{*rest}", axum::routing::any(|| async { not_found("API route") }))
         .route("/feed.atom", get(global_feed))
         .with_state(state)
         // Submissions are at most one 32 KiB payload; leave room for whitespace.
@@ -551,6 +554,27 @@ async fn owner_queued(State(s): State<AppState>, Path(id): Path<String>) -> Resp
         })
         .collect();
     ok(json!({"owner_id": owner, "queued": mine}))
+}
+
+#[derive(Deserialize)]
+struct ForumQuery {
+    topic: String,
+}
+
+/// Current revision of a Nervos Talk topic for the proposal form (never trusted as is).
+async fn forum_import(Query(q): Query<ForumQuery>) -> Response {
+    match crate::forum::import(&q.topic).await {
+        Ok(v) => ok(v),
+        Err(e) => {
+            let text = format!("{e:#}");
+            let code = text
+                .split(|c: char| !(c.is_ascii_uppercase() || c == '_'))
+                .find(|w| w.starts_with("FORUM_"))
+                .unwrap_or("FORUM_UNAVAILABLE")
+                .to_string();
+            err(StatusCode::BAD_GATEWAY, &code, text)
+        }
+    }
 }
 
 #[derive(Deserialize)]
