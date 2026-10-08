@@ -3,19 +3,22 @@
 //!
 //! The server, not the browser, fetches (the page's CSP only allows same-origin
 //! scripts). Only `https://talk.nervos.org` is contacted, redirects are refused, and
-//! time and size are bounded. Nothing imported is trusted: budget, recipient and text
+//! time, size and concurrency are bounded. Nothing imported is trusted: budget, recipient and text
 //! must be confirmed by the proposer, and forum likes are not verified.
 
 use std::collections::BTreeSet;
+use std::sync::OnceLock;
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use omavote_core::hash::ckb_hash;
 use omavote_core::util::to_hex;
 use serde_json::{json, Value};
 
 pub const FORUM_HOST: &str = "talk.nervos.org";
 const MAX_BYTES: usize = 2_000_000;
+/// Imports fetched at the same time; more are refused (`FORUM_BUSY`) rather than queued.
+const MAX_CONCURRENT: usize = 4;
 
 /// Topic ID from a number or a Nervos Talk topic URL (`/t/<id>`, `/t/<slug>/<id>[/<post>]`).
 pub fn forum_topic(input: &str) -> Result<String> {
@@ -73,8 +76,19 @@ pub fn address_candidates(raw: &str) -> Vec<String> {
         .collect()
 }
 
+/// The `FORUM_*` code in an error chain, or `default`.
+pub fn error_code(e: &anyhow::Error, default: &str) -> String {
+    format!("{e:#}").split(|c: char| !(c.is_ascii_uppercase() || c == '_')).find(|w| w.starts_with("FORUM_")).unwrap_or(default).to_string()
+}
+
+fn limiter() -> &'static tokio::sync::Semaphore {
+    static LIMIT: OnceLock<tokio::sync::Semaphore> = OnceLock::new();
+    LIMIT.get_or_init(|| tokio::sync::Semaphore::new(MAX_CONCURRENT))
+}
+
 pub async fn import(input: &str) -> Result<Value> {
     let topic = forum_topic(input)?;
+    let _permit = limiter().try_acquire().map_err(|_| anyhow!("FORUM_BUSY: too many imports in progress; retry shortly"))?;
     let client = reqwest::Client::builder().timeout(Duration::from_secs(15)).redirect(reqwest::redirect::Policy::none()).build()?;
     let topic_url = format!("https://{FORUM_HOST}/t/{topic}.json");
     let t = get_json(&client, &topic_url).await?;
@@ -135,6 +149,15 @@ mod tests {
         ] {
             assert!(forum_topic(input).is_err(), "accepted {input}");
         }
+    }
+
+    #[test]
+    fn error_codes_come_from_the_error_chain() {
+        let e = forum_topic("https://other.example/t/42").unwrap_err();
+        assert_eq!(error_code(&e, "X"), "FORUM_LINK_REQUIRES_HTTPS_NERVOS_TALK");
+        let e = forum_topic("not a link").unwrap_err();
+        assert_eq!(error_code(&e, "FORUM_TOPIC_LINK_REQUIRED"), "FORUM_TOPIC_LINK_REQUIRED");
+        assert_eq!(error_code(&anyhow!("FORUM_BUSY: retry").context("import"), "X"), "FORUM_BUSY");
     }
 
     #[test]

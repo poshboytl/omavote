@@ -632,16 +632,16 @@ struct ForumQuery {
 
 /// Current revision of a Nervos Talk topic for the proposal form (never trusted as is).
 async fn forum_import(Query(q): Query<ForumQuery>) -> Response {
-    match crate::forum::import(&q.topic).await {
+    let topic = match crate::forum::forum_topic(&q.topic) {
+        Ok(t) => t,
+        Err(e) => return err(StatusCode::BAD_REQUEST, &crate::forum::error_code(&e, "FORUM_TOPIC_LINK_REQUIRED"), format!("{e:#}")),
+    };
+    match crate::forum::import(&topic).await {
         Ok(v) => ok(v),
         Err(e) => {
-            let text = format!("{e:#}");
-            let code = text
-                .split(|c: char| !(c.is_ascii_uppercase() || c == '_'))
-                .find(|w| w.starts_with("FORUM_"))
-                .unwrap_or("FORUM_UNAVAILABLE")
-                .to_string();
-            err(StatusCode::BAD_GATEWAY, &code, text)
+            let code = crate::forum::error_code(&e, "FORUM_UNAVAILABLE");
+            let status = if code == "FORUM_BUSY" { StatusCode::TOO_MANY_REQUESTS } else { StatusCode::BAD_GATEWAY };
+            err(status, &code, format!("{e:#}"))
         }
     }
 }

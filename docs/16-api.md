@@ -15,7 +15,8 @@
   - `404 NOT_FOUND`：对象不存在（未知的 `/api/...` 路径同样返回 JSON 404，不会落到前端页面）；
   - `413`：请求体超过 64 KiB；
   - `422`：提交被拒绝，码表见 §4；
-  - `502`：论坛导入失败；
+  - `429`：同时进行的论坛导入过多；
+  - `502`：论坛不可用；
   - `503`：节点不可用或索引未就绪。
 - **跨域**：
   - `cors_origins` 为空时，GET 对任何 origin 开放（便于别家页面把本服务当作独立来源），提交只允许同源；
@@ -180,10 +181,10 @@
 - `POST /api/core/{method}` 通过 HTTP 调用与浏览器相同的 WASM 核心，供命令行客户端生成规范文本、哈希和签名对象。方法如 `jcs`、`ckb_hash`、`ballot`、`control`、`record`、`proposal_text`、`manifest_from_draft`、`verify_owner`，完整列表见 `crates/omavote-wasm/src/lib.rs`。
 - `GET /api/forum/import?topic=` 读取 Nervos Talk 主题首帖的当前修订：
   - 输入：主题号或 `https://talk.nervos.org/t/…` 链接；
-  - 访问限制：只访问 talk.nervos.org，拒绝跳转，15 秒超时，最大 2 MB；
+  - 访问限制：只访问 talk.nervos.org，拒绝跳转，15 秒超时，最大 2 MB，同时最多 4 个导入；
   - 返回内容：标题、修订号、原文与哈希、作者、文中出现的地址（只作为收款人候选）；
   - 不可信的部分：导入内容需要发起人逐项确认，论坛点赞数不经验证；
-  - 失败时：返回 502，码以 `FORUM_` 开头。
+  - 失败时：码以 `FORUM_` 开头。输入无效返回 400，同时进行的导入过多返回 429（`FORUM_BUSY`），论坛不可用或内容不完整返回 502。
 
 ## 5. 命令行
 
