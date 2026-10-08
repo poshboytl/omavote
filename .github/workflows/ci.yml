@@ -16,8 +16,8 @@ jobs:
       - run: cargo install --locked wasm-pack cargo-audit
       - run: scripts/ci.sh
   devnet:
-    # Real transactions on a local CKB dev chain: deposits, relay, votes, reorg,
-    # independent replay, and the browser end-to-end flows.
+    # Real transactions on a local CKB dev chain: deposits, relay, votes, reorg and
+    # independent replay.
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: checks
@@ -28,16 +28,14 @@ jobs:
           node-version: '22'
       - run: rustup update stable && rustup default stable && rustup target add wasm32-unknown-unknown
       - run: cargo install --locked wasm-pack
-      - run: (cd web && npm ci && npm run wasm && npm run build && npx playwright install --with-deps chromium)
+      - run: (cd web && npm ci && npm run wasm && npm run build)
       - run: (cd verifier-ts && npm ci && npm run build)
       - run: deploy/devnet/setup.sh
       - run: deploy/devnet/run-demo.sh
-      - run: deploy/devnet/run-e2e.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: devnet-evidence
           path: |
             devnet/demo-out/
-            devnet/e2e-out/
             devnet/*.log

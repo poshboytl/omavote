@@ -6,7 +6,7 @@ members = ["crates/omavote-core", "crates/omavote-wasm", "crates/omavote"]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/nervosnetwork/omavote"
+repository = "https://github.com/poshboytl/omavote"
 
 [profile.release]
 lto = "thin"
