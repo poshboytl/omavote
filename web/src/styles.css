@@ -210,6 +210,13 @@ h3 {
 .main {
   flex: 1;
   padding-bottom: 2rem;
+  /* Addresses, hashes and signed texts are long unbroken tokens: let them wrap
+     instead of widening the page on phones. Tables scroll in .table-wrap instead. */
+  overflow-wrap: anywhere;
+}
+
+.main .table {
+  overflow-wrap: normal;
 }
 
 .foot {

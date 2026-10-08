@@ -1,0 +1,81 @@
+{
+  "bundle_result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+  "completeness": "checked: every block equals your node (http://127.0.0.1:18114) and was re-reduced (43397 blocks)",
+  "history": {
+    "accelerated_start": false,
+    "from_height": "0",
+    "to_height": "43396"
+  },
+  "polls": [
+    {
+      "admission": {
+        "record_id": "0x12aed286b8cbf9a93161b475428e5a39f524f5d92ba76ab2a4efed7abbc8bac4",
+        "state": "ADMITTED"
+      },
+      "attestation": {
+        "record_id": "0x81067022f13ff1209a84536ec4972098ff36cc02922c4ac3b848621fc38776f0",
+        "state": "CONFIRMED"
+      },
+      "governance": {
+        "state": "NONE"
+      },
+      "note": null,
+      "poll_id": "0x04a0e5fafb90f93867c820dea10c72f8102b7f9c472bdeda453b426c73025f2d",
+      "registered_height": "42556",
+      "result_core": {
+        "approval_denominator": "100",
+        "approval_numerator": "51",
+        "auth_policy_hash": "0x9fe268dfa955b490fdb8074d4c58750488097bb329cf8757c52248d509bdace0",
+        "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143",
+        "close_block_hash": "0xada0f15cfc8706a47f3b4e02447abdc1662e57e11d4299604f13c9ef248b8813",
+        "close_block_number": "43371",
+        "counted_cells": [
+          {
+            "capacity_shannon": "8000000000000",
+            "index": "0",
+            "owner_id": "0x26582a5c12d9338c356c05c37ca7ff657791ce5d9c93b62abf048a89e72f52a1",
+            "tx_hash": "0xc9e78c67c9fcffb2cd820b5c4db0147b84050d348ac78567ec7f3bf8a44a92dc"
+          }
+        ],
+        "network_genesis_hash": "0x91a924450384dabf192eb92b0838acd36429e7ec9041c2c164677670d3a0da5a",
+        "no_shannon": "8000000000000",
+        "outcome": "FAIL",
+        "owners": [
+          {
+            "authorization_id": null,
+            "ballot_id": "0x920b092136d4b6c2cd740beddf2791e407478d973603f64b0905e45ee1a8b125",
+            "counted_weight_shannon": "8000000000000",
+            "eligible_principal_shannon": "8000000000000",
+            "final_status": "NO",
+            "owner_id": "0x26582a5c12d9338c356c05c37ca7ff657791ce5d9c93b62abf048a89e72f52a1"
+          },
+          {
+            "authorization_id": null,
+            "ballot_id": "0x779d339446352ff8578a7116f9cacc6cac317c11cfeeb24ea107f99ee5ce2ad2",
+            "counted_weight_shannon": "0",
+            "eligible_principal_shannon": "15000000000000",
+            "final_status": "CANCEL",
+            "owner_id": "0xb15b44f03b3720a5be4b63d486a725471ec6f0d0f56614d8d048e66f5c031dbd"
+          }
+        ],
+        "participation_shannon": "8000000000000",
+        "poll_id": "0x04a0e5fafb90f93867c820dea10c72f8102b7f9c472bdeda453b426c73025f2d",
+        "protocol_version": "2",
+        "quorum_required_shannon": "300000000000",
+        "rules_hash": "0x87d1b3f0c71eb6521c1252466c500b6af3fb05ee278d0a204551ad4245735ba1",
+        "start_boundary_block_hash": "0xaba6d5aca64b81b51dd73d5a541e05e087f517921c8a8cab6419a433091d594c",
+        "threshold_comparison": "inclusive",
+        "yes_shannon": "0"
+      },
+      "result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+      "status": "AUDITABLE",
+      "tally_diagnostics": [],
+      "title": "E2E 20261008T092115Z-mobile: fund the explorer"
+    }
+  ],
+  "recomputed_matches_bundle": true,
+  "verifier": {
+    "name": "omavote verify-evidence",
+    "version": "0.1.0"
+  }
+}

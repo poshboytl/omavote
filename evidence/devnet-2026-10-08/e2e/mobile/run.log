@@ -1,0 +1,29 @@
+[   0.0s] run 20261008T092115Z-mobile (mobile) → devnet/e2e-out/20261008T092115Z-mobile
+[   0.0s] == servers
+[  12.8s] primary server up on http://127.0.0.1:18090
+[  24.9s] backup server up on http://127.0.0.1:18091
+[  33.6s] == identities and deposits
+[  34.1s]   balances before any action: 7 addresses, all 0
+[  46.8s]   balances after deposits: 7 addresses, all 0
+[  46.9s] == a create proposal (Neuron proposer)
+[  53.9s] == b coordinator admission
+[  61.0s] == c owner A grants K1 (Neuron)
+[  68.1s] == d wait for OPEN
+[ 396.3s] == e K1 delegate YES for A
+[ 403.5s] == f B votes NO then YES (MetaMask owner)
+[ 417.4s] == g A GRANT+CANCEL to K2, K2 votes NO
+[ 431.6s] == h A direct CANCEL (Neuron)
+[ 439.0s]   balances after the votes: 7 addresses, all 0
+[ 439.5s] == i failover to the backup relay
+[ 440.0s]   stopping the primary server before the submission
+[ 440.0s] primary server stopped
+[ 449.0s] primary server up on http://127.0.0.1:18090
+[ 449.5s] == j owners and keys hold no ordinary capacity
+[ 450.0s]   balances after failover: 7 addresses, all 0
+[ 450.4s] == k wait for AUDITABLE
+[ 889.8s] == l committee attestation (2 of 3)
+[ 897.0s] == m evidence bundle verified by Rust and TypeScript
+[ 905.1s] == n final statuses
+[ 905.6s]   balances at the end: 7 addresses, all 0
+[ 905.9s] primary server stopped
+[ 905.9s] backup server stopped

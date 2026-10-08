@@ -71,7 +71,7 @@ OMAVOTE_API=http://127.0.0.1:8080 npm run dev
 | `#/wallet-check` | M2 preparation: sign fixed samples (ballot with a Chinese title, GRANT, hex-looking text) with MetaMask or Neuron, verify locally, show the recovered address/key and download a JSON record `{wallet, version_notes, text, signature, recovered, …}`. |
 | `#/settings` | API base URL, language. |
 
-Chinese and English are toggled in the header (dictionary in `src/i18n/`).
+The interface starts in English; Chinese is one click away in the header or in Settings, and the choice is remembered (dictionaries in `src/i18n/`).
 
 ## Signing flow (all wallets)
 
@@ -105,25 +105,26 @@ Chinese and English are toggled in the header (dictionary in `src/i18n/`).
 ## Source layout
 
 ```
-src/lib/       plain TS (no DOM): core facade, API client, EIP-1193, flows, formatting,
-               i18n logic, storage, wallet-check samples
+src/lib/       plain TS (no DOM): core facade, API client, EIP-1193, flows, tip check,
+               formatting, i18n logic, storage, wallet-check samples
 src/wasm/      browser loader; pkg/ is the wasm-pack output (git-ignored)
 src/i18n/      en.ts / zh.ts dictionaries (same keys, checked by the compiler and tests)
 src/app/       React contexts (app state, i18n, wallet) and layout
 src/components/ shared UI: signing text, tracker, vote panel, authorization panel, badges
 src/pages/     one file per route
 test/          vitest suites and helpers (WASM loader, mock wallet, mock server)
+e2e/           browser end-to-end test on the local dev chain (Playwright)
 ```
 
 ## Tests
 
-`npm test` runs 48 tests in Node with the real WASM core:
+`npm test` runs 53 tests in Node with the real WASM core:
 
 - end-to-end vote flows against a mocked server (`test/helpers/mock-server.ts`, which
   checks envelopes like the relay and signs receipts): MetaMask owner (Omnilock),
   delegate (voting key), Neuron (pasted signature), rejected/duplicate submissions,
   wrong receipt signer, anchor waiting rules (including anchors queued at the relay),
-  sync checks;
+  sync checks, the independent tip check;
 - authorization controls (GRANT, GRANT+CANCEL, REVOKE modes), multi-member process
   records, proposal payloads with several proposers;
 - a mock EIP-1193 provider built on `@noble/curves` + `@noble/hashes` (EIP-191), and a
@@ -131,18 +132,53 @@ test/          vitest suites and helpers (WASM loader, mock wallet, mock server)
 - i18n key and placeholder parity, formatting helpers (cross-checked with the core),
   hex/signature parsing, API client, storage, wallet-check samples.
 
+## Browser end-to-end test on the dev chain
+
+`deploy/devnet/run-e2e.sh` builds everything and runs `web/e2e/devnet-e2e.mjs`
+(Playwright, Chromium) on a desktop viewport (1440×1000) and on a Pixel 7, one after the
+other (`deploy/devnet/run-e2e.sh mobile` runs one mode; `DEVICE=mobile node
+web/e2e/devnet-e2e.mjs` runs it without rebuilding). It needs the dev chain from
+`deploy/devnet/setup.sh`. Each run starts its own servers with fresh databases and keys:
+a primary on 127.0.0.1:18090 serving `web/dist`, and a backup on 127.0.0.1:18091 that
+accepts submissions from the primary's origin. Both relays are funded from the dev
+faucet; the owners get Nervos DAO deposits under run-specific test labels.
+
+Every protocol action goes through the UI:
+
+1. proposal created on the create page, signed by owner A with Neuron;
+2. coordinator ADMISSION on the records page (EVM member, MetaMask);
+3. A grants voting key K1 on the address page (Neuron); wait until the poll is OPEN;
+4. K1 votes YES for A (delegate mode); owner B (Omnilock 0x12) votes NO, then YES;
+5. A rotates to K2 with GRANT+CANCEL (K1's ballot is cancelled), K2 votes NO;
+   A takes over with a direct CANCEL (Neuron);
+6. failover: the primary is stopped between signing and submission, the submission fails
+   and the envelope stays on the device, the API base is switched to the backup in
+   Settings, the envelope is resubmitted from Receipts and becomes SELECTED; the
+   restarted primary shows the same ballot as SELECTED; the page switches back;
+7. owners and voting keys hold no ordinary CKB at any point (every action was free);
+8. after the close (AUDITABLE) the committee attests the result, 2 of 3 members;
+9. the evidence bundle with chain history is downloaded from the proposal page and
+   replayed by `omavote verify-evidence --rpc` and by `verifier-ts`: both must equal
+   the page's result_hash; the final per-owner statuses are checked through the API.
+
+MetaMask is an injected EIP-1193/EIP-6963 provider whose `personal_sign` runs
+`omavote sign --format evm` on the hex it receives; Neuron signatures are
+`omavote sign --format ckb` over the exact bytes the page shows. The run fails on any
+page error, CSP violation or horizontal overflow. Output in `devnet/e2e-out/<run>/`:
+`report.json`, a screenshot per step, both servers' logs, the downloaded bundle and the
+verifiers' output, and a Playwright trace on failure. A mode takes about 15 minutes,
+mostly the 5-minute lead before the opening and the 8-minute voting period.
+
 ## What needs a real browser or device
 
 Not automated here (see `NOTES.md`):
 
 - MetaMask desktop and mobile (in-app browser): `personal_sign` display of the full text,
-  account switching, EIP-6963 discovery with several wallets.
+  account switching, EIP-6963 discovery with several wallets. The end-to-end test uses
+  an injected provider, not the MetaMask extension.
 - Neuron *Sign/Verify Message* (menu names, line breaks after copy/paste on each OS,
-  signature format) with and without Ledger (first-line display).
-- Submitting through the UI to a server: the UI was smoke-tested in headless Chromium
-  against the live devnet server through a read-only proxy (no POST was sent), and the
-  submit/track logic is covered by the tests. Run a full vote on a fresh devnet before M5
-  sign-off.
+  signature format) with and without Ledger (first-line display). The end-to-end test
+  signs the same bytes with `omavote sign`, which matches Neuron's output byte for byte.
 
 Use `#/wallet-check` for the device tests and attach the downloaded records to the M2
 report.

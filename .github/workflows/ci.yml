@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: rustup update stable && rustup default stable
@@ -16,26 +16,28 @@ jobs:
       - run: cargo install --locked wasm-pack cargo-audit
       - run: scripts/ci.sh
   devnet:
-    # Real transactions on a local CKB dev chain: deposits, relay, votes, reorg and
-    # independent replay.
+    # Real transactions on a local CKB dev chain: deposits, relay, votes, reorg,
+    # independent replay, and the browser end-to-end flows on desktop and mobile.
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     needs: checks
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: rustup update stable && rustup default stable && rustup target add wasm32-unknown-unknown
       - run: cargo install --locked wasm-pack
-      - run: (cd web && npm ci && npm run wasm && npm run build)
+      - run: (cd web && npm ci && npm run wasm && npm run build && npx playwright install --with-deps chromium)
       - run: (cd verifier-ts && npm ci && npm run build)
       - run: deploy/devnet/setup.sh
       - run: deploy/devnet/run-demo.sh
-      - uses: actions/upload-artifact@v4
+      - run: deploy/devnet/run-e2e.sh
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: devnet-evidence
           path: |
             devnet/demo-out/
+            devnet/e2e-out/
             devnet/*.log

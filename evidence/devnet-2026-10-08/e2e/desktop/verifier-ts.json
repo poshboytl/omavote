@@ -1,0 +1,105 @@
+{
+  "poll_id": "0xb6f895ac0215d081d38d7e3712728402ef0a3bfbe6fcd493bc7628438e7fc812",
+  "status": "CLOSED",
+  "result_core": {
+    "protocol_version": "2",
+    "network_genesis_hash": "0x91a924450384dabf192eb92b0838acd36429e7ec9041c2c164677670d3a0da5a",
+    "poll_id": "0xb6f895ac0215d081d38d7e3712728402ef0a3bfbe6fcd493bc7628438e7fc812",
+    "rules_hash": "0x87d1b3f0c71eb6521c1252466c500b6af3fb05ee278d0a204551ad4245735ba1",
+    "auth_policy_hash": "0x9fe268dfa955b490fdb8074d4c58750488097bb329cf8757c52248d509bdace0",
+    "auth_registry_hash": "0x5088f2dff4fb0b8510837e9f82a08235ac111167e95e1a3609d2b85cddc6e143",
+    "start_boundary_block_hash": "0x077cdadc4ddf0199b80f228a463fcb35bdb1db1a8008a3f184e31edff22906c6",
+    "close_block_hash": "0xb70693d0d5cd4a3360540c6be41cb814afe166bc81e8a0c00f7cf4af9913e175",
+    "close_block_number": "42477",
+    "owners": [
+      {
+        "owner_id": "0xb67d4a42a2437d880a19ccbf967b8a3f489c02d33845b943217f6f024ff36448",
+        "final_status": "CANCEL",
+        "ballot_id": "0x355c5d59ca584de5d0f35db8f0ae5fd09653166a96679d6c9ceb148b5d38a69a",
+        "authorization_id": null,
+        "eligible_principal_shannon": "15000000000000",
+        "counted_weight_shannon": "0"
+      },
+      {
+        "owner_id": "0xb7012591694b3297a80ea338c8ece37e8cd9b9789674fa38ab9be83a66a7daf7",
+        "final_status": "NO",
+        "ballot_id": "0x26ef6f2c5e89ccac8c9c487becf9052665f35404cc3aa29847e0ef612a1a241c",
+        "authorization_id": null,
+        "eligible_principal_shannon": "8000000000000",
+        "counted_weight_shannon": "8000000000000"
+      }
+    ],
+    "counted_cells": [
+      {
+        "tx_hash": "0xbe918dd76f2a2714db08e98b7557ae159ea7beb82c0e3dd95889895bee3799e4",
+        "index": "0",
+        "owner_id": "0xb7012591694b3297a80ea338c8ece37e8cd9b9789674fa38ab9be83a66a7daf7",
+        "capacity_shannon": "8000000000000"
+      }
+    ],
+    "yes_shannon": "0",
+    "no_shannon": "8000000000000",
+    "participation_shannon": "8000000000000",
+    "quorum_required_shannon": "300000000000",
+    "approval_numerator": "51",
+    "approval_denominator": "100",
+    "threshold_comparison": "inclusive",
+    "outcome": "FAIL"
+  },
+  "result_hash": "0x459ab9d211f2f03895af27c098989081fe87a2169a1c03f89797f7d91d930c7f",
+  "admission": "ADMITTED",
+  "attestation": "CONFIRMED",
+  "governance_status": null,
+  "formal": true,
+  "proposer_check": {
+    "required_shannon": "10000000000000",
+    "observed_shannon": "15000000000000",
+    "eligible": true,
+    "check_block": {
+      "number": "41689",
+      "hash": "0x8e50bf284a720df3f9b07d9777d4ac11140776973e5b19a8987abe963e86a906"
+    }
+  },
+  "manifest_block": {
+    "number": "41689",
+    "hash": "0x8e50bf284a720df3f9b07d9777d4ac11140776973e5b19a8987abe963e86a906"
+  },
+  "start_boundary_block": {
+    "number": "42001",
+    "hash": "0x077cdadc4ddf0199b80f228a463fcb35bdb1db1a8008a3f184e31edff22906c6"
+  },
+  "close_block": {
+    "number": "42477",
+    "hash": "0xb70693d0d5cd4a3360540c6be41cb814afe166bc81e8a0c00f7cf4af9913e175"
+  },
+  "confirmations": "19",
+  "owners_evidence": [
+    {
+      "owner_id": "0xb67d4a42a2437d880a19ccbf967b8a3f489c02d33845b943217f6f024ff36448",
+      "final_status": "CANCEL",
+      "authority": "owner",
+      "ballot_id": "0x355c5d59ca584de5d0f35db8f0ae5fd09653166a96679d6c9ceb148b5d38a69a",
+      "authorization_id": null,
+      "grant_anchor_height": null,
+      "ballot_anchor_height": "42036",
+      "ballot_height": "42041",
+      "delegate_ballots_excluded_by_barrier": "0"
+    },
+    {
+      "owner_id": "0xb7012591694b3297a80ea338c8ece37e8cd9b9789674fa38ab9be83a66a7daf7",
+      "final_status": "NO",
+      "authority": "owner",
+      "ballot_id": "0x26ef6f2c5e89ccac8c9c487becf9052665f35404cc3aa29847e0ef612a1a241c",
+      "authorization_id": null,
+      "grant_anchor_height": null,
+      "ballot_anchor_height": "42043",
+      "ballot_height": "42048",
+      "delegate_ballots_excluded_by_barrier": "0"
+    }
+  ],
+  "records": {
+    "notices": [],
+    "executions": []
+  },
+  "diagnostics": []
+}

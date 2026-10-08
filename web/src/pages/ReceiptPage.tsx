@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useI18n } from "../app/i18n";
 import { useApp, useLoad } from "../app/state";
@@ -75,6 +75,17 @@ function ReceiptView({ core, network, id }: { core: Core; network: NetworkInfo; 
   const valid = id !== null && isHash32(id);
   const receipts = useLoad(() => (valid && id ? api.receipts(id) : Promise.resolve(null)), [api, id]);
   const local = useMemo(() => (valid && id ? getPending(id) : null), [id, valid, pendingTick]);
+  // Keep the relay status current while the item is in flight (or kept here and unknown).
+  const relayStatus = receipts.data?.items[0]?.status ?? null;
+  const inFlight = relayStatus === null ? local !== null : !["CONFIRMED", "EXPIRED", "FAILED", "ALREADY_ON_CHAIN"].includes(relayStatus);
+  useEffect(() => {
+    if (!valid || !inFlight) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "hidden") receipts.reload();
+    }, 5000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valid, inFlight, api, id]);
   const [resubmit, setResubmit] = useState<SubmitOutcome | null>(null);
   const [busy, setBusy] = useState(false);
   const receiptKey = status?.relay.receipt_key ?? network.receipt_key;
@@ -158,6 +169,8 @@ function ReceiptView({ core, network, id }: { core: Core; network: NetworkInfo; 
                 setBusy(true);
                 try {
                   setResubmit(await submitEnvelope(core, api, local.envelope as object));
+                  // The relay now knows the item: refresh its status and receipt above.
+                  receipts.reload();
                 } finally {
                   setBusy(false);
                 }
@@ -183,6 +196,18 @@ function ReceiptView({ core, network, id }: { core: Core; network: NetworkInfo; 
             </Notice>
           )}
           {resubmit?.ok && <Notice tone="ok">{t("receiptPage.resubmitted", { status: resubmit.item.status })}</Notice>}
+          {resubmit?.ok && (
+            <ReceiptChecks
+              check={checkReceipt(core, resubmit.item, {
+                receiptKey,
+                objectId: local.id,
+                itemKind: resubmit.item.message_kind,
+                envelopeJcs: resubmit.envelopeJcs,
+                genesis: network.network.genesis_hash,
+              })}
+              item={resubmit.item}
+            />
+          )}
           <JsonBlock value={local.envelope} summary={t("receiptPage.envelopeJson")} />
         </Section>
       )}

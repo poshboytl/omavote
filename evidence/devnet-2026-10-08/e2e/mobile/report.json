@@ -1,0 +1,605 @@
+{
+  "run": "20261008T092115Z-mobile",
+  "device": "mobile",
+  "base": "http://127.0.0.1:18090",
+  "backup": "http://127.0.0.1:18091",
+  "started_at": "2026-10-08T09:35:48.547Z",
+  "finished_at": "2026-10-08T09:50:54.492Z",
+  "duration_s": 906,
+  "ok": true,
+  "failure": null,
+  "identities": {
+    "A": {
+      "label": "e2e-20261008T092115Z-mobile-owner-a",
+      "kind": "secp256k1 (Neuron)",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "owner_id": "0xb15b44f03b3720a5be4b63d486a725471ec6f0d0f56614d8d048e66f5c031dbd",
+      "check_addresses": [
+        "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl"
+      ]
+    },
+    "B": {
+      "label": "e2e-20261008T092115Z-mobile-owner-b",
+      "kind": "Omnilock 0x12 (MetaMask)",
+      "evm_address": "0x87a0d348ce37246e1e1718f40d1f894663e49e09",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "owner_id": "0x26582a5c12d9338c356c05c37ca7ff657791ce5d9c93b62abf048a89e72f52a1",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux"
+      ]
+    },
+    "K1": {
+      "label": "e2e-20261008T092115Z-mobile-key-1",
+      "kind": "EVM voting key",
+      "evm_address": "0x925eeb44c48c1a9ee42b260eb26fb64f5b8d3a09",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw"
+      ]
+    },
+    "K2": {
+      "label": "e2e-20261008T092115Z-mobile-key-2",
+      "kind": "EVM voting key",
+      "evm_address": "0xb3dc6d19d098b5b06cf37264878a8c6d13ea02c5",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2"
+      ]
+    }
+  },
+  "poll_id": "0x04a0e5fafb90f93867c820dea10c72f8102b7f9c472bdeda453b426c73025f2d",
+  "steps": [
+    {
+      "name": "servers",
+      "ok": true,
+      "started_s": "0.0",
+      "ms": 33564,
+      "notes": {
+        "primary_relay_funding_tx": "0x10787a3132b9bacfd0b1bee9d0ef36137dd002200ba9366ee945ea12697d5858",
+        "backup_relay_funding_tx": "0x26f33e29fa6973b4f533831297262165279ae80da5764ad3c0c527f3a066138b",
+        "network": "devnet",
+        "policy_hash": "0x9fe268dfa955b490fdb8074d4c58750488097bb329cf8757c52248d509bdace0",
+        "roles_hash": "0xfe3eebc2679150720019cd9c402c562ef7a4cfc80e087d88373560b6db363c2f"
+      },
+      "screenshot": null
+    },
+    {
+      "name": "identities and deposits",
+      "ok": true,
+      "started_s": "33.6",
+      "ms": 13183,
+      "notes": {
+        "deposit_a": "0xd7c208005f39f162fda7bcdac775f793869eedd87c7a3f2352783a10da50bada",
+        "deposit_b": "0xc9e78c67c9fcffb2cd820b5c4db0147b84050d348ac78567ec7f3bf8a44a92dc"
+      },
+      "screenshot": null
+    },
+    {
+      "name": "a create proposal (Neuron proposer)",
+      "ok": true,
+      "started_s": "46.9",
+      "ms": 6638,
+      "notes": {
+        "start_ms": "1791452520000",
+        "poll_id": "0x04a0e5fafb90f93867c820dea10c72f8102b7f9c472bdeda453b426c73025f2d",
+        "end_ms": "1791453000000"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/01-a-create-proposal-neuron-proposer-.png"
+    },
+    {
+      "name": "b coordinator admission",
+      "ok": true,
+      "started_s": "53.9",
+      "ms": 6843,
+      "notes": {},
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/02-b-coordinator-admission.png"
+    },
+    {
+      "name": "c owner A grants K1 (Neuron)",
+      "ok": true,
+      "started_s": "61.0",
+      "ms": 6837,
+      "notes": {
+        "authorization_id": "0x31137eb1d00844f4decdb5ca2f07322967de54d78e14668a5954730af6ef8d59"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/03-c-owner-a-grants-k1-neuron-.png"
+    },
+    {
+      "name": "d wait for OPEN",
+      "ok": true,
+      "started_s": "68.1",
+      "ms": 327825,
+      "notes": {
+        "admission": "ADMITTED"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/04-d-wait-for-open.png"
+    },
+    {
+      "name": "e K1 delegate YES for A",
+      "ok": true,
+      "started_s": "396.3",
+      "ms": 6736,
+      "notes": {
+        "ballot_id": "0xaaa7cd132336d309f879c7cb451f2979cc2b378294ee4dca7930363517a2fe9b"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/05-e-k1-delegate-yes-for-a.png"
+    },
+    {
+      "name": "f B votes NO then YES (MetaMask owner)",
+      "ok": true,
+      "started_s": "403.5",
+      "ms": 13423,
+      "notes": {
+        "b_no": "0x36dea23f1b51324d1896f1f074f699805a4906a0eb14738d725bab9f6d475253",
+        "b_yes": "0x42848b0d6d4267bd657651d2afe6c67e9c17e87a296abc95771e388180843fa6"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/06-f-b-votes-no-then-yes-metamask-owner-.png"
+    },
+    {
+      "name": "g A GRANT+CANCEL to K2, K2 votes NO",
+      "ok": true,
+      "started_s": "417.4",
+      "ms": 13653,
+      "notes": {
+        "authorization_id": "0x605eee19fb0a01693bb3b64a1eee97b9bbfcac9b676d57854bac1319d672d19f",
+        "k2_no": "0xb1fee09559933f37da44f6448edc224448b6a240a9e0a2e8b3f1b31267bb5b92"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/07-g-a-grant-cancel-to-k2-k2-votes-no.png"
+    },
+    {
+      "name": "h A direct CANCEL (Neuron)",
+      "ok": true,
+      "started_s": "431.6",
+      "ms": 7337,
+      "notes": {
+        "ballot_id": "0x779d339446352ff8578a7116f9cacc6cac317c11cfeeb24ea107f99ee5ce2ad2"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/08-h-a-direct-cancel-neuron-.png"
+    },
+    {
+      "name": "i failover to the backup relay",
+      "ok": true,
+      "started_s": "439.5",
+      "ms": 9651,
+      "notes": {
+        "ballot_id": "0x920b092136d4b6c2cd740beddf2791e407478d973603f64b0905e45ee1a8b125",
+        "failed_with": "NETWORK",
+        "resubmitted": "Submitted: RECEIVED",
+        "backup_tx": "0xd833e88c35ee0aec1b99e86b1b316c98eff0470afef0ba6c6e22555753a68d41",
+        "primary_relay_status": "unknown to the primary relay"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/11-i-failover-to-the-backup-relay.png"
+    },
+    {
+      "name": "j owners and keys hold no ordinary capacity",
+      "ok": true,
+      "started_s": "449.5",
+      "ms": 498,
+      "notes": {},
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/12-j-owners-and-keys-hold-no-ordinary-capacity.png"
+    },
+    {
+      "name": "k wait for AUDITABLE",
+      "ok": true,
+      "started_s": "450.4",
+      "ms": 439052,
+      "notes": {
+        "result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/13-k-wait-for-auditable.png"
+    },
+    {
+      "name": "l committee attestation (2 of 3)",
+      "ok": true,
+      "started_s": "889.8",
+      "ms": 6908,
+      "notes": {
+        "outcome": "FAIL",
+        "attestation": "CONFIRMED"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/14-l-committee-attestation-2-of-3-.png"
+    },
+    {
+      "name": "m evidence bundle verified by Rust and TypeScript",
+      "ok": true,
+      "started_s": "897.0",
+      "ms": 7715,
+      "notes": {
+        "bundle": "devnet/e2e-out/20261008T092115Z-mobile/bundle-history.json"
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/15-m-evidence-bundle-verified-by-rust-and-typescript.png"
+    },
+    {
+      "name": "n final statuses",
+      "ok": true,
+      "started_s": "905.1",
+      "ms": 494,
+      "notes": {
+        "owner_a": {
+          "authorization_id": null,
+          "ballot_id": "0x779d339446352ff8578a7116f9cacc6cac317c11cfeeb24ea107f99ee5ce2ad2",
+          "counted_weight_shannon": "0",
+          "eligible_principal_shannon": "15000000000000",
+          "final_status": "CANCEL",
+          "owner_id": "0xb15b44f03b3720a5be4b63d486a725471ec6f0d0f56614d8d048e66f5c031dbd"
+        },
+        "owner_b": {
+          "authorization_id": null,
+          "ballot_id": "0x920b092136d4b6c2cd740beddf2791e407478d973603f64b0905e45ee1a8b125",
+          "counted_weight_shannon": "8000000000000",
+          "eligible_principal_shannon": "8000000000000",
+          "final_status": "NO",
+          "owner_id": "0x26582a5c12d9338c356c05c37ca7ff657791ce5d9c93b62abf048a89e72f52a1"
+        },
+        "ballot_statuses": {
+          "0xaaa7cd132336d309f879c7cb451f2979cc2b378294ee4dca7930363517a2fe9b": "OVERRIDDEN_BY_OWNER",
+          "0xb1fee09559933f37da44f6448edc224448b6a240a9e0a2e8b3f1b31267bb5b92": "OVERRIDDEN_BY_OWNER",
+          "0x779d339446352ff8578a7116f9cacc6cac317c11cfeeb24ea107f99ee5ce2ad2": "SELECTED",
+          "0x36dea23f1b51324d1896f1f074f699805a4906a0eb14738d725bab9f6d475253": "SUPERSEDED",
+          "0x42848b0d6d4267bd657651d2afe6c67e9c17e87a296abc95771e388180843fa6": "SUPERSEDED",
+          "0x920b092136d4b6c2cd740beddf2791e407478d973603f64b0905e45ee1a8b125": "SELECTED"
+        }
+      },
+      "screenshot": "devnet/e2e-out/20261008T092115Z-mobile/shots/16-n-final-statuses.png"
+    }
+  ],
+  "ballots": {
+    "k1_yes": "0xaaa7cd132336d309f879c7cb451f2979cc2b378294ee4dca7930363517a2fe9b",
+    "b_no": "0x36dea23f1b51324d1896f1f074f699805a4906a0eb14738d725bab9f6d475253",
+    "b_yes": "0x42848b0d6d4267bd657651d2afe6c67e9c17e87a296abc95771e388180843fa6",
+    "k2_no": "0xb1fee09559933f37da44f6448edc224448b6a240a9e0a2e8b3f1b31267bb5b92",
+    "a_cancel": "0x779d339446352ff8578a7116f9cacc6cac317c11cfeeb24ea107f99ee5ce2ad2",
+    "b_no_failover": "0x920b092136d4b6c2cd740beddf2791e407478d973603f64b0905e45ee1a8b125"
+  },
+  "balances": [
+    {
+      "when": "before any action",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the votes",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after failover",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgdmk0wwwj82v6zfnze5jfhvc4xlmx2zgqu7l4wl",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgps7sdxjxwxujxu8shrr6q68ufge37f8sfqqt3puuu",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjs7sdxjxwxujxu8shrr6q68ufge37f8sfqq8zzsux",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqnlxqx5",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjjf0wk3xy3sdfaeptyc8tymakfadc6wsfqqlv9vxw",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqqze6gs",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "at the end",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjk0wx6xwsnz6mqm8nwfjg0z5vd5f75qk9qqv36kg2",
+      "ordinary_capacity_shannon": "0"
+    }
+  ],
+  "result": {
+    "server_result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+    "page_result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+    "rust_result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+    "ts_result_hash": "0x795f50aa3e693204640ec12d3d664e58e768954d170a201317b5b17cdce72951",
+    "completeness": "checked: every block equals your node (http://127.0.0.1:18114) and was re-reduced (43397 blocks)",
+    "outcome": "FAIL",
+    "yes_shannon": "0",
+    "no_shannon": "8000000000000",
+    "status": "AUDITABLE"
+  },
+  "page_errors": [],
+  "csp_violations": [],
+  "overflow": [],
+  "console_errors": [
+    {
+      "t_s": "47.3",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "61.5",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "418.0",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "440.0",
+      "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "t_s": "440.9",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "440.9",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "signatures": [
+    {
+      "n": 1,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "proposal",
+      "summary": "OMAVOTE PROPOSE #04a0e5fafb90f938 1000CKB",
+      "bytes": 754
+    },
+    {
+      "n": 2,
+      "by": "coordinator1",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE ADMIT #04a0e5fafb90f938 ADMITTED",
+      "bytes": 693
+    },
+    {
+      "n": 3,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "GRANT K1",
+      "summary": "OMAVOTE GRANT 0x925eEb44..5b8D3A09 TO 2026-11-07",
+      "bytes": 999
+    },
+    {
+      "n": 4,
+      "by": "K1",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE VOTE YES #04a0e5fafb90f938 1000CKB",
+      "bytes": 1083
+    },
+    {
+      "n": 5,
+      "by": "B",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE VOTE NO #04a0e5fafb90f938 1000CKB",
+      "bytes": 952
+    },
+    {
+      "n": 6,
+      "by": "B",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE VOTE YES #04a0e5fafb90f938 1000CKB",
+      "bytes": 955
+    },
+    {
+      "n": 7,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "GRANT+CANCEL K2",
+      "summary": "OMAVOTE GRANT+CANCEL 0xb3Dc6d19..13eA02C5 TO 2026-11-07",
+      "bytes": 1022
+    },
+    {
+      "n": 8,
+      "by": "K2",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE VOTE NO #04a0e5fafb90f938 1000CKB",
+      "bytes": 1080
+    },
+    {
+      "n": 9,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "A CANCEL",
+      "summary": "OMAVOTE VOTE CANCEL #04a0e5fafb90f938 1000CKB",
+      "bytes": 964
+    },
+    {
+      "n": 10,
+      "by": "B",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE VOTE NO #04a0e5fafb90f938 1000CKB",
+      "bytes": 952
+    },
+    {
+      "n": 11,
+      "by": "committee1",
+      "format": "ckb",
+      "purpose": "RESULT_ATTESTATION",
+      "summary": "OMAVOTE RESULT #04a0e5fafb90f938 FAIL",
+      "bytes": 775
+    },
+    {
+      "n": 12,
+      "by": "committee3",
+      "format": "ckb",
+      "purpose": "RESULT_ATTESTATION",
+      "summary": "OMAVOTE RESULT #04a0e5fafb90f938 FAIL",
+      "bytes": 775
+    }
+  ]
+}

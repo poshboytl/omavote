@@ -37,6 +37,7 @@
 | 独立 TypeScript 验证器（`verifier-ts/`） | 117 项测试通过；8 个向量文件的 125 项检查通过 |
 | 前端（`web/`） | 53 项测试通过；构建通过 |
 | 时钟交叉核对 | `omavote verify --check-clock` 对开发链每个区块比对 `get_block_median_time(parent)`，全部一致 |
+| 浏览器端到端（开发链，`deploy/devnet/run-e2e.sh`） | 桌面与手机（Pixel 7）各 16 步全部通过，见 §11 |
 | 格式与静态检查 | `cargo fmt --check` 与 `cargo clippy --workspace --all-targets -- -D warnings` 无警告 |
 | 依赖漏洞 | `cargo audit`（RustSec）无已知漏洞；`npm audit --omit=dev` 无中危及以上 |
 
@@ -82,6 +83,7 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 | `bundle.json` | 证据包；与向量一起通过 schema 校验，共 27 个对象 |
 | `verify-report.json` | 独立复算报告 |
 | `blocks.json.gz` | 开发链精简区块，用于两套实现的差分 |
+| `e2e/` | 浏览器端到端测试：两种模式的报告、两个复算器的输出、截图（§11） |
 
 **两套实现差分。** 对同一份开发链数据（6 个提案），独立 TypeScript 验证器与 Rust 回放的 `result_hash`、准入与结果确认视图全部一致。唯一差异是 TS 额外报告了 ZERO_FINAL_WEIGHT。这是 03 §11 列出的附加诊断，Rust 现在也在证据包与 `verify` 输出中报告（13 §4 第 20 条）。比对脚本：`scripts/diff-verifiers.sh`。
 
@@ -132,6 +134,7 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 - **浏览器验证**：
   - 无头 Chromium 在真实 CSP 下加载全部路由，没有控制台错误或 CSP 违规，手机宽度下没有布局溢出。
   - **真实端到端投票**：对开发链服务端，经 Neuron 路径准备选票。读出页面所示的确切字节，用 `omavote sign` 按 Neuron 格式签名（与 lumos 输出逐字节相同的签名方式）后粘贴提交。页面验证了中继回执，交易在区块 6472 收录，页面显示“已选中（计入）”，全程无控制台错误。脚本为 `web/scripts/e2e-neuron-vote.mjs`，截图与结果在 `evidence/devnet-2026-10-08/ui/`。
+  - **完整流程**（上午补充）：`deploy/devnet/run-e2e.sh` 在桌面与手机上用网页走完全部协议动作，见 §11。
 - **未做或需要真人**（详见 `web/NOTES.md`）：
   - **真机**：MetaMask 桌面与手机的全文显示和账户切换；Neuron（含 Ledger）的菜单文案、换行是否保留、签名格式。用「钱包检查」页记录。
   - **其余未做**：用 Neuron 持有的授权密钥投票、passkey 与 EIP-712、WalletConnect、选票列表分页。论坛导入与签名前的独立 tip 比对已在上午补上（§11）。
@@ -232,6 +235,7 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 | 运维与发布 | `omavote backup`（在线一致性复制，0600，完整性检查）；`omavote rebuild-index`（只清链索引，保留队列与回执，服务运行时拒绝）；`scripts/ci.sh` 加入 rustfmt、clippy `-D warnings`、RustSec 与 npm audit；GitHub Actions；`scripts/package.sh` 生成带 `SHA256SUMS` 与 `BUILD.txt` 的发布包 | 运行中备份成功；在备份副本上重建：清除 35,724 个区块，保留 110 条队列项；发布包校验通过 |
 | 证据包带链历史 | `GET /api/results/{id}/bundle?history=true` 附上缩减区块（含时间戳）与加速起点种子；`omavote verify-evidence` 离线重放，加 `--rpc` 时与自己的节点逐块比对并重新缩减，证明证据包完整；TS 验证器可直接重放同一文件；验证页说明用法 | 35,910 块、9.5 MB 的证据包：离线通过；`--rpc` 约 5 秒比对全部区块；TS 复算得到相同的 `0xf4487a5e…`。篡改一张选票后，离线报告结果哈希不同，`--rpc` 指出第 33,870 块的数据被遗漏或改动 |
 | 开发链辅助 | `omavote devnet identity/fund/deposit/balance`，拒绝在主网和测试网上运行 | 供浏览器端到端测试使用 |
+| 浏览器全流程测试 | `web/e2e/devnet-e2e.mjs` 与 `deploy/devnet/run-e2e.sh`（Playwright）。每轮自起主、备两个服务器，各用新数据库、新密钥和各自的赞助账户。全部动作经网页完成：<br>• 创建提案、协调者准入；<br>• Neuron 授权与代理投票；<br>• MetaMask 所有者改票；<br>• GRANT+CANCEL 换钥、所有者直接撤回；<br>• 签名后停掉主服务器，在「回执」页把同一信封原样交给备用中继；<br>• 委员会 2/3 确认结果；<br>• 页面下载带链历史的证据包，交给两个复算器。<br>签名前与节点比对最新区块；有页面错误、CSP 违规或横向溢出即失败。测试中发现并修复了前端两个问题：回执页重新提交后不刷新状态、不核对新回执；手机上长地址撑宽页面。CI 的开发链任务也会运行这个测试 | 桌面 873 秒、手机 906 秒，各 16 步、12 次签名全部通过：<br>• 结果哈希在服务端、页面、`verify-evidence --rpc`、TypeScript 复算器四处一致；<br>• 4 个测试身份共 7 个地址，35 次余额检查普通余额都是 0。<br>MetaMask 由注入的 EIP-1193 provider 模拟，Neuron 签名由 `omavote sign` 生成，真钱包仍待实测。证据在 `evidence/devnet-2026-10-08/e2e/` |
 | 文档 | [15 运维手册](15-operations.md)、[16 API 与命令行](16-api.md)、[17 外部验收模板](17-external-acceptance.md)、[18 切换提案草案](18-governance-switch-proposal.md) | 命令、字段与拒绝码逐项对照代码 |
 
 **没有搬的部分**：

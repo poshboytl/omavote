@@ -52,6 +52,7 @@ cargo test --workspace                # protocol core, server, WASM bindings
 scripts/ci.sh                         # every check that needs no node: format, clippy, tests, RustSec, both verifiers, frontend
 deploy/devnet/setup.sh                # local dev chain (downloads ckb v0.210.0)
 deploy/devnet/run-demo.sh             # end-to-end demo: deposits, authorization, votes, reorg, replay
+deploy/devnet/run-e2e.sh              # browser end-to-end tests on desktop and mobile (Playwright)
 ```
 
 ## Design documents
