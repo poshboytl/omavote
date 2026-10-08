@@ -40,12 +40,7 @@ export function placeholders(template: string): string[] {
   return [...out].sort();
 }
 
-export function detectLang(stored: string | null, navigatorLanguages: readonly string[] = []): Lang {
-  if (stored === "zh" || stored === "en") return stored;
-  for (const l of navigatorLanguages) {
-    const s = l.toLowerCase();
-    if (s.startsWith("zh")) return "zh";
-    if (s.startsWith("en")) return "en";
-  }
-  return "en";
+/** The language the visitor chose earlier; English until they switch. */
+export function detectLang(stored: string | null): Lang {
+  return stored === "zh" ? "zh" : "en";
 }

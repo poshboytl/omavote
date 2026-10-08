@@ -1,32 +1,69 @@
-# 可执行研究模型
+# Executable research model
 
-运行：
+Run:
 
 ```bash
 python -m unittest discover -s research -p 'test_*.py' -v
 ```
 
-只使用 Python 标准库，不联网、不签名、不读取用户钱包、不广播交易。
+The model uses only the Python standard library. It does not go online, sign anything, read user wallets or broadcast transactions.
 
-`model.py` 把完整、已验证的规范链历史和已认证的选票作为输入，检验推荐的**结束状态、精确 shannon、本金线性票权**模型。测试覆盖改票、重复广播、跨域、提款、截止、重组重算、阈值和随机守恒；不表示已经实现投票产品。
+`model.py` checks the recommended model: **the end state, exact shannon amounts and voting power linear in principal**. Its input is a complete, verified history of the canonical chain plus authenticated ballots.
 
-重要简化：
+The tests cover:
 
-* `VerifiedBallot` 是前置假设，不是真实密码学验签。不要直接从不可信 HTTP 请求构造这种对象用于生产计票。
-* `owner` 是预先规范化后的身份标签；没有实现 CKB 地址解析或任意 lock 认证。
-* `exact_dao_type` 假定上游已经做精确脚本匹配；模型只验证其与 8 字节 data 状态的组合。
-* `[start, end)` 是预先确定的区块区间，没有实现 MTP、epoch 分数或 UTC 映射。
-* 模拟交易不检查 DAO 180 epochs 提款成熟度、CKB-VM、capacity 最小存储要求或手续费，不能广播。转移案例是假设真实链已许可该状态变化，用来验证计票不会重复。
-* `complete=False` 检查错误传播，但模型自身不能发现调用者偷偷漏掉的链数据；生产 verifier 必须验证历史完备性。
-* 重组测试为替换规范历史后重算，不是节点 fork-choice 或增量索引回滚实现。
-* 模型没有实现旧平台小数截断策略；该政策仍须按研究文档确认。
+- vote changes and repeated broadcasts;
+- cross-scope messages, withdrawals and deadlines;
+- recounting after a reorg;
+- thresholds and randomized conservation checks.
 
-随机测试以固定种子生成 1,000 份抽象历史，每份检查本金守恒、重复广播幂等、读取顺序不影响结果。此类测试能发现实现和规范中的部分问题，不能证明整个系统安全。
+Passing them does not mean a voting product has been implemented.
 
-`sources.json` 记录本次取得的公共资料与固定仓库版本。论坛 snapshot SHA-256 是本次抓取文件的校验值，不代表未来 API 返回相同 bytes；完整第三方帖子与源码未复制进本项目。
+## Important simplifications
 
-## 与设计 v0.3 的关系
+- **Ballots:** `VerifiedBallot` is an assumption made before the model runs, not real cryptographic signature verification. Never build such objects from untrusted HTTP requests for production counting.
+- **Owners:** `owner` is an identity label normalized in advance. CKB address parsing and authentication of arbitrary locks are not implemented.
+- **DAO type:** `exact_dao_type` assumes an exact script match has already happened upstream. The model only checks it together with the 8-byte data state.
+- **Voting window:** `[start, end)` is a block interval fixed in advance. MTP, epoch fractions and the mapping to UTC are not implemented.
+- **Transactions:** simulated transactions skip these checks and cannot be broadcast:
+  - the 180-epoch maturity of DAO withdrawals;
+  - CKB-VM;
+  - the minimum capacity for storage;
+  - fees.
 
-[当前主协议](../docs/03-protocol.md) 与 [授权规范](../docs/11-authorization.md) 定义未部署的 V2 草案，包括直接/代理签名、按锚点排序的授权控制、撤回屏障、流程记录和恢复。本模型仍只接收抽象 VerifiedBallot，**没有实现这些新增状态，也没有 V2 编码、真实验签或钱包功能**。
+  Transfer cases assume the real chain allowed the state change. They exist to check that counting never double counts.
+- **Missing data:** `complete=False` checks that errors propagate. The model itself cannot notice chain data that a caller silently left out, so a production verifier must prove that the history is complete.
+- **Reorgs:** reorg tests recount after replacing the canonical history. They do not implement node fork choice or incremental index rollback.
+- **Decimals:** the old platform's decimal truncation is not implemented. That policy still has to be confirmed as the research documents describe.
 
-本轮文档修订没有修改或重跑研究模型。既有 39 项测试的历史记录不能用来声称新授权格式或状态机已通过；11 的场景表是未来测试预期，不是已执行测试。完整 schema、跨语言向量、状态机性质、密钥保管与真机/链上验收须按 [交付门槛](../docs/05-delivery.md) 完成。
+The randomized tests generate 1,000 abstract histories from a fixed seed. Each history is checked for three properties:
+
+- principal is conserved;
+- repeated broadcasts are idempotent;
+- reading order does not change the result.
+
+Tests like these find some problems in an implementation or a specification. They cannot prove that the whole system is secure.
+
+`sources.json` records the public material collected for this research and the pinned repository versions. The SHA-256 of each forum snapshot is the checksum of the file fetched here; a later API response is not guaranteed to return the same bytes. Full third-party posts and source code were not copied into this project.
+
+## Relation to design v0.3
+
+The [main protocol](../docs/03-protocol.md) and the [authorization specification](../docs/11-authorization.md) define the undeployed V2 draft, which adds:
+
+- direct and delegated signatures;
+- authorization controls ordered by anchor;
+- cancellation barriers;
+- process records;
+- recovery.
+
+This model still only takes abstract `VerifiedBallot` objects. **It implements none of these additions: no V2 encoding, no real signature verification and no wallet functions.**
+
+The model was not changed or rerun for the v0.3 revision, so the history of its 39 tests cannot be used to claim that the new authorization formats or state machine pass. Those are tested by the Rust implementation instead: `crates/omavote-core/tests/scenarios.rs` covers the scenario table in docs/11 §8 (see [docs/14](../docs/14-implementation-status.md)).
+
+These items still have to meet the [delivery gates](../docs/05-delivery.md):
+
+- the full schema;
+- cross-language vectors;
+- state machine properties;
+- key custody;
+- acceptance on real devices and on chain.

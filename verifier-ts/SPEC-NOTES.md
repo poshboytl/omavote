@@ -90,7 +90,7 @@ hashes and script args. I apply it to every hex field, including nonces,
 signatures, public keys and EVM addresses. A descriptor's EVM `address` must be
 lowercase, even though it is displayed in EIP-55 form.
 
-1.5 **Unknown keys (AMBIG; 03 §2 "未知关键字段…全部拒绝").** Any unknown key in
+1.5 **Unknown keys (AMBIG; 03 §2 "未知关键字段…全部拒绝", "unknown key fields … all rejected").** Any unknown key in
 any protocol object, envelope, proof or payload is rejected.
 `proposer_min_deposit_shannon` is now a regular rules_profile key (13 §4 item
 10), so no exception is left.
@@ -167,7 +167,7 @@ manifests.
 from {`omavote-readable-v2`, `omavote-webauthn-v2`}. No ordering is required.
 
 2.7 **auth_registry (13 §4 item 4, 03 §5.1).**
-- "按字典序去重" is enforced as strictly ascending input.
+- "按字典序去重" ("deduplicated in lexicographic order") is enforced as strictly ascending input.
 - `owner_adapters` ⊆ {`ckb-secp256k1-message-v1`, `evm-personal-message-v1`}.
 - `key_adapters` additionally allows `webauthn-es256-v2`.
 - An undefined ID gives `UNKNOWN_ADAPTER`.
@@ -177,7 +177,7 @@ from {`omavote-readable-v2`, `omavote-webauthn-v2`}. No ordering is required.
 - Proofs: exactly one per lock, in the same order, signed with an `owner_adapters` adapter.
 - Any failure rejects the publication. **b_m is the first valid inclusion**. A repeated valid publication gives `DUPLICATE`.
 
-2.9 **signing_title whitespace (AMBIG; 03 §5 rule 2).** "无首尾空白" uses the
+2.9 **signing_title whitespace (AMBIG; 03 §5 rule 2).** "无首尾空白" ("no leading or trailing whitespace") uses the
 Unicode `White_Space` property. Length is counted in Unicode scalar values.
 
 2.10 **LATE_MANIFEST (03 §3).** The test is `height(b_s) − height(b_m) <
@@ -213,11 +213,11 @@ template, with exactly that code_hash and hash_type, and
 - `WRONG_OWNER`: recovery worked but the identity does not control the owner lock, or a delegate ballot names another owner's grant.
 
 3.6 **Key descriptors (11 §4.1).**
-- A secp256k1 `public_key` must be a valid compressed point (SILENT: the docs say "33 字节压缩点").
+- A secp256k1 `public_key` must be a valid compressed point (SILENT: the docs say "33 字节压缩点", "33-byte compressed point").
 - An EVM address must be lowercase.
 - `webauthn_es256` is validated only structurally.
 
-3.7 **webauthn path not implemented (03 §5.1 "独立 PoC").** A delegate ballot
+3.7 **webauthn path not implemented (03 §5.1 "独立 PoC", "separate PoC").** A delegate ballot
 on that path that passes every other check is reported as `UNSUPPORTED_ADAPTER`,
 and the poll is marked `DATA_INCOMPLETE`. Mismatched format/key combinations
 give `FORMAT_NOT_ACCEPTED`.
@@ -236,7 +236,7 @@ give `FORMAT_NOT_ACCEPTED`.
 9. `DUPLICATE`
 10. stream update
 
-4.2 **"有效区间上界不含等号" (AMBIG; 11 §2).** Read as the grant's usable
+4.2 **"有效区间上界不含等号" ("the upper bound of the valid interval is exclusive"; AMBIG; 11 §2).** Read as the grant's usable
 interval: a ballot with clock equal to `expires_at_ms` is `GRANT_EXPIRED`.
 
 4.3 **Unknown control formats (11 §5).** An ID that was never defined is
@@ -380,7 +380,7 @@ unverified, is confirmed.
 
 8.4 **IDs.**
 - A selected CANCEL keeps its `ballot_id`; the vector confirms this for a direct CANCEL.
-- For a **delegate** CANCEL I also keep `authorization_id`. No vector covers that case yet (AMBIG, "选中的 CANCEL 保留该票 ID").
+- For a **delegate** CANCEL I also keep `authorization_id`. No vector covers that case yet (AMBIG, "选中的 CANCEL 保留该票 ID", "a selected CANCEL keeps that ballot's ID").
 - CONFLICT and CANCELLED_BY_CONTROL rows have null IDs (confirmed).
 
 8.5 **Amounts.**

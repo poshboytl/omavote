@@ -78,10 +78,11 @@ describe("translate", () => {
     expect(translate("zh", "pollStatus.OPEN")).toBe("投票中");
   });
 
-  it("detects the language from storage, then the browser", () => {
-    expect(detectLang("en", ["zh-CN"])).toBe("en");
-    expect(detectLang("", ["zh-TW", "en"])).toBe("zh");
-    expect(detectLang(null, ["fr-FR", "en-GB"])).toBe("en");
-    expect(detectLang(null, [])).toBe("en");
+  it("starts in English and keeps the visitor's choice", () => {
+    expect(detectLang(null)).toBe("en");
+    expect(detectLang("")).toBe("en");
+    expect(detectLang("zh")).toBe("zh");
+    expect(detectLang("en")).toBe("en");
+    expect(detectLang("fr")).toBe("en");
   });
 });

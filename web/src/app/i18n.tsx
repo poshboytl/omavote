@@ -17,9 +17,7 @@ interface I18nValue {
 const Ctx = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() =>
-    detectLang(readString(KEYS.lang, ""), typeof navigator !== "undefined" ? navigator.languages ?? [navigator.language] : []),
-  );
+  const [lang, setLangState] = useState<Lang>(() => detectLang(readString(KEYS.lang, "")));
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     writeString(KEYS.lang, l);

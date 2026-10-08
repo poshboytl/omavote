@@ -5,7 +5,7 @@
  * "authorization_policy", "process_roles"), "carrier" for framing failures
  * (id = transaction hash) or "owner" for tally notes (id = owner_id).
  *
- * Codes (docs/03 §11 recommends a list "等"; extra codes are ours, see SPEC-NOTES):
+ * Codes (docs/03 §11 recommends an open-ended list ("等", "etc."); extra codes are ours, see SPEC-NOTES):
  *   carrier:   CARRIER_MALFORMED UNSUPPORTED_VERSION UNKNOWN_KIND WITNESS_MISSING
  *              PAYLOAD_TOO_LARGE PAYLOAD_HASH_MISMATCH MALFORMED_PAYLOAD PAYLOAD_NOT_CANONICAL
  *              BATCH_TOO_LARGE EMPTY_BATCH
