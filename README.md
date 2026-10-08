@@ -1,52 +1,109 @@
-# Omavote：CKB Community Fund DAO 轻量投票工具设计
+# Omavote: lightweight voting for the CKB Community Fund DAO
 
-研究基准日：2026-10-07；本轮修订完成日：2026-10-08。状态：**v0.3 设计评审基线与研究模型，尚非可部署产品**。用户已选择以本套方案为基础，吸收 Claude/Fable 的适用部分。
+Voters sign readable ballots in their own wallets, open relays publish the signed ballots to CKB for free, and anyone can recompute the result from their own node.
 
-**交给同事 review：[评审入口与检查清单](docs/12-review-guide.md)。** 先看 [当前决策](docs/09-design-update.md) 与 [完整用户流程](docs/10-user-journey.md)，再联合审查 [主协议](docs/03-protocol.md) 和 [期限型授权](docs/11-authorization.md)。首版一次授权、多次使用，默认一年（365 链日）、最长 365 天；原“首版不做授权”的范围已被替换。
+Research baseline: 2026-10-07. This revision: 2026-10-08. Status: **v0.3 design review baseline and research model, with a working implementation on a local CKB dev chain. Not yet a deployable product.** The design documents are written in Chinese.
 
-主协议为未部署的 V2 草案。全文上链、中继代付、独立复算与金库人工执行保持不变；已有开发链上的实现，没有主网验收。Claude 第二轮评审的冻结阻塞项与两次同事复核的修正已写入规范（[决策记录 §9–11](docs/09-design-update.md)），尚待可执行测试验证。
+## How it works
 
-Neuron 用户的主流程已确定为：首次用 Neuron 授权第二个在线钱包，授权期内用该在线钱包签署每次投票，中继免费发布。存款留在原地址，在线钱包无需持有 CKB；网页生成的本机密钥保留为可选候选，不作为首版必做路径。
+The design baseline is **readable ballots signed in the voter's wallet, open relays that batch the complete signed ballots onto the chain, deterministic off-chain counting, and independent recomputation by anyone**. Voting power stays linear in existing Nervos DAO deposits. Deposits never move, and the voting result is not wired to automatic treasury payments.
 
-**阅读入口：[完整设计导读](docs/00-design-index.md)**，包含建议、约束对应、全部文件与验证边界。
+The latest requirements confirmed by the project owner:
 
-**实现（2026-10-08 起）：** 按 [技术方案与里程碑](docs/13-technical-plan.md) 实现了 Rust 协议核心（同时编译为 WASM）、服务端（同步与复算、中继、API）、`omavote verify`、前端和独立的 TypeScript 验证器，并在本地 CKB 开发链上端到端跑通。进度、测试证据与仍需真人完成的事项见 [实施进度](docs/14-implementation-status.md)。部署与运维见 [运维手册](docs/15-operations.md)，接口见 [HTTP API 与命令行](docs/16-api.md)；真机、真人与独立审计的验收方式见 [外部验收记录模板](docs/17-external-acceptance.md)，正式切换须经 [切换提案](docs/18-governance-switch-proposal.md) 走既有治理流程，在此之前部署默认处于影子模式。实现只在开发链运行过，**没有部署到测试网或主网**。
+- **Vote weight**: the calculation stays as it is.
+- **Wallets**: which wallets to support is open to discussion.
+- **Free voting**: voting stays free for users. Relays and operators pay the chain fees and the carrier capacity. Authorizing, renewing, voting, changing a vote, cancelling and recovering never require users to pay fees or hold ordinary CKB.
+- **Backend**: a trusted backend is acceptable only if it is verifiable. Running without one must not make the experience noticeably worse.
+
+The first release supports one authorization for many votes: one year (365 chain days) by default and at most 365 days. This replaces the earlier scope of "no authorization in the first release".
+
+The main flow for Neuron users:
+
+1. Use Neuron once to authorize a second, online wallet.
+2. During the authorization period, sign each vote with that online wallet.
+3. Relays publish the votes for free.
+
+The deposits stay at their original address, and the online wallet needs no CKB. A local key generated in the browser remains an optional candidate and is not required for the first release.
+
+## Implementation
+
+Since 2026-10-08 the [technical plan and milestones](docs/13-technical-plan.md) have been implemented and run end to end on a local CKB dev chain:
+
+- a Rust protocol core, also compiled to WASM;
+- a server for sync and replay, relaying and the API;
+- `omavote verify`;
+- a web frontend;
+- an independent TypeScript verifier.
+
+The implementation has only run on a dev chain. **It has not been deployed to testnet or mainnet.**
+
+| Document | Contents |
+|---|---|
+| [Implementation status](docs/14-implementation-status.md) | Progress, test evidence and the work that still needs people |
+| [Operations](docs/15-operations.md) | Deployment and day-to-day operation |
+| [HTTP API and CLI](docs/16-api.md) | Endpoints and command-line usage |
+| [External acceptance template](docs/17-external-acceptance.md) | How to record tests with real devices, real users and independent audits |
+| [Switch proposal](docs/18-governance-switch-proposal.md) | The official switch, which must go through the existing governance process |
+
+Until the switch is approved, deployments run in shadow mode and their results have no governance effect. A file map is in [docs/14 §10](docs/14-implementation-status.md).
 
 ```bash
-cargo test --workspace                # 协议核心、服务端、WASM 绑定
-scripts/ci.sh                         # 不需要节点的全部检查：格式、clippy、测试、RustSec、两套验证器、前端
-deploy/devnet/setup.sh                # 本地开发链（下载 ckb v0.210.0）
-deploy/devnet/run-demo.sh             # 端到端演示：存款、授权、投票、重组、复算
+cargo test --workspace                # protocol core, server, WASM bindings
+scripts/ci.sh                         # every check that needs no node: format, clippy, tests, RustSec, both verifiers, frontend
+deploy/devnet/setup.sh                # local dev chain (downloads ckb v0.210.0)
+deploy/devnet/run-demo.sh             # end-to-end demo: deposits, authorization, votes, reorg, replay
 ```
 
-设计基线采用 **钱包签署可读选票、开放中继批量发布完整选票到链上、链下确定性计票、任何人可独立复算**。继续使用现有 Nervos DAO 存款作为线性票权，不要求迁移本金，不把投票结果直接接到金库自动付款。
+## Design documents
 
-用户最新确认的约束：票权计算方式保持不变；钱包范围可讨论；用户投票保持免费，中继/运营方承担链费及载体周转容量。可信后台可以权衡，但有后台必须可验证，无后台不能导致明显的体验退步。授权、续期、投票、改票、撤回和恢复不要求用户支付链费或准备普通 CKB。
+**Start here: [design guide](docs/00-design-index.md).** It covers the recommendation, how it meets each requirement, every file and the limits of what has been verified.
 
-按以下顺序阅读：
+**For reviewers: [review guide and checklist](docs/12-review-guide.md).** Read in this order:
 
-1. [设计与方案选择](docs/02-design.md)：推荐什么、为什么、替代方案及取舍。
-2. [规则与研究发现](docs/01-research.md)：规则沿革、事故、社区意见、源码核对和兼容性边界。
-3. [协议草案](docs/03-protocol.md)：票权、签名、存证、改票、截止、重组、复算的具体语义。
-4. [安全分析](docs/04-security.md)：攻击路径、防护、不能解决的问题和验收要求。
-5. [产品与实施计划](docs/05-delivery.md)：钱包体验、系统边界、成本、迁移与发布门槛。
-6. [可执行模型说明](research/README.md)：用于检验核心计票不变量，**没有实现密码学、CKB 验证或钱包集成**。
-7. [关键分支的深入比较](docs/06-alternatives.md)：链下日志、链上存证、直接交易、合约/zkVM、挑战期与不同快照政策。
+1. The [current decisions](docs/09-design-update.md) and the [complete user journey](docs/10-user-journey.md).
+2. The [main protocol](docs/03-protocol.md) together with [term-limited authorization](docs/11-authorization.md).
 
-[来源清单](research/sources.json) 固定了本次研究的 14 个仓库版本，并登记了 28 个论坛主题。抓取的 637 条帖子用于检索与定向阅读，不表示逐帖审计。上游源码快照也不等于当前线上部署版本。
+The main protocol is an undeployed V2 draft. Four things are unchanged: complete ballots go on chain, relays pay for publishing, results are recomputed independently, and treasury payments stay manual. Two sets of changes are written into the specification ([decision log §9–11](docs/09-design-update.md)):
 
-最重要的待决事项不是技术栈，而是把现行规则中未定义的细节写清楚：统一的计票时点、phase-1 提款的票权、小数处理、67% 边界和截止时间。文档将事实、设计建议、需要治理确认的事项分开，没有把这些建议冒充已生效规则。
+- the freeze blockers from Claude's second review;
+- the fixes from two colleague reviews.
 
-运行研究模型：
+The implementation tests them against the scenarios in [docs/11 §8](docs/11-authorization.md). The wire format stays unfrozen until signatures from real wallets have been tested ([docs/14 §3](docs/14-implementation-status.md)).
+
+Suggested reading order:
+
+1. [Design and options](docs/02-design.md): what is recommended, why, the alternatives and the trade-offs.
+2. [Rules and research findings](docs/01-research.md): how the rules evolved, past incidents, community views, source checks and compatibility limits.
+3. [Protocol draft](docs/03-protocol.md): the exact semantics of voting power, signatures, evidence, vote changes, deadlines, reorgs and replay.
+4. [Security analysis](docs/04-security.md): attack paths, defences, what cannot be solved, and acceptance requirements.
+5. [Product and delivery plan](docs/05-delivery.md): wallet experience, system boundaries, costs, migration and release gates.
+6. [Executable model](research/README.md): checks the core counting invariants. It **does not implement cryptography, CKB validation or wallet integration**.
+7. [Deeper comparisons](docs/06-alternatives.md): off-chain logs, on-chain evidence, direct transactions, contracts and zkVM, challenge periods and other snapshot policies.
+
+The [source list](research/sources.json) pins the versions of the 14 repositories studied and registers 28 forum topics. The 637 fetched posts were used for search and targeted reading; they were not audited one by one. Upstream source snapshots are not necessarily the versions deployed today.
+
+The most important open items concern the rules, not the tech stack. The current rules leave these details undefined, and they need to be written down:
+
+- a single point in time for counting;
+- the voting power of phase-1 withdrawals;
+- decimal handling;
+- the 67% boundary;
+- the deadline.
+
+The documents keep facts, design recommendations and items that need governance confirmation apart, and never present a recommendation as a rule in force.
+
+Run the research model:
 
 ```bash
 python -m unittest discover -s research -p 'test_*.py' -v
 ```
 
-这里没有部署合约、广播交易、变更 DAO 规则或操作任何钱包、金库。
+Nothing in this repository has deployed a contract, changed DAO rules, or touched a real wallet or the treasury. All transactions so far ran on a local dev chain.
 
-初步设计的逐项完成证据见 [完成核验](docs/07-completion-audit.md)；容易被误用的技术推论及 ACP 反例见 [安全假设复核](docs/08-design-review.md)。早期的 Fable 草稿已于 2026-10-08 删除，`docs/` 是唯一设计基线。
+Item-by-item completion evidence for the initial design is in the [completion audit](docs/07-completion-audit.md). Technical inferences that are easy to misuse, and the ACP counterexample, are in the [security assumptions review](docs/08-design-review.md).
 
-## 许可证
+This design was chosen as the basis, and the applicable parts of the earlier Claude and Fable drafts were adopted into it. The Fable draft was deleted on 2026-10-08, and `docs/` is the single design baseline.
 
-MIT，见 [LICENSE](LICENSE)。
+## License
+
+MIT, see [LICENSE](LICENSE).
