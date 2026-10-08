@@ -2,8 +2,6 @@
 
 Voters sign readable ballots in their own wallets, open relays publish the signed ballots to CKB for free, and anyone can recompute the result from their own node.
 
-Research baseline: 2026-10-07. This revision: 2026-10-08. Status: **v0.3 design review baseline and research model, with a working implementation on a local CKB dev chain. Not yet a deployable product.** The design documents are written in Chinese.
-
 ## How it works
 
 The design baseline is **readable ballots signed in the voter's wallet, open relays that batch the complete signed ballots onto the chain, deterministic off-chain counting, and independent recomputation by anyone**. Voting power stays linear in existing Nervos DAO deposits. Deposits never move, and the voting result is not wired to automatic treasury payments.
