@@ -22,6 +22,12 @@ web_root = "/usr/local/share/omavote/web"
 receipt_key_file = "receipt.key"   # signs relay receipts; holds no funds
 cors_origins = []
 
+[sync]
+# 0 replays from genesis. On mainnet, set the deployment height H0 (no protocol object
+# at or below it) after checking it with `omavote verify --from-height H0 --compare`.
+start_height = 0
+anchor_blocks = 20000
+
 [relay]
 # true: the publisher runs inside `omavote serve` (simple setups, devnets).
 # false: run `omavote relay --config relay.toml` as a separate user (recommended).

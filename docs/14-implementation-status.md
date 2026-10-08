@@ -1,4 +1,4 @@
-# 实施进度（2026-10-08 夜间）
+# 实施进度（2026-10-08 夜间；上午补充 §11）
 
 实施者：Claude 单人（另有两个子 agent 分别编写前端与独立 TypeScript 验证器）。依据：[13 技术方案](13-technical-plan.md)。代码只在本地 CKB 开发链上运行过，**没有部署到测试网或主网，没有接触任何真实资金**。全部提交都是本地 git 提交，未推送。
 
@@ -32,13 +32,15 @@
 | 跨语言向量（`tests/vectors.rs`，含边界情形回放向量） | 7 通过 |
 | 外部向量（`tests/external.rs`） | 5 通过：Neuron 签名与 lumos 逐字节相同；EIP-191 与 eth-sig-util 相同；高 s 签名等价；WitnessArgs 与 CCC 相同 |
 | WASM 绑定 | 1 通过；`wasm32-unknown-unknown` release 构建成功 |
-| 服务端（同步、重组回滚、重启恢复、交易布局、中继准入与回执） | 5 通过 |
+| 服务端（同步、重组回滚、重启恢复、交易布局、中继准入与回执、论坛链接解析、配置样例） | 8 通过 |
 | JSON Schema（`schemas/`，ajv） | 向量与开发链证据包中的 27 个对象全部有效 |
 | 独立 TypeScript 验证器（`verifier-ts/`） | 117 项测试通过；8 个向量文件的 125 项检查通过 |
-| 前端（`web/`） | 48 项测试通过；构建通过 |
+| 前端（`web/`） | 53 项测试通过；构建通过 |
 | 时钟交叉核对 | `omavote verify --check-clock` 对开发链每个区块比对 `get_block_median_time(parent)`，全部一致 |
+| 格式与静态检查 | `cargo fmt --check` 与 `cargo clippy --workspace --all-targets -- -D warnings` 无警告 |
+| 依赖漏洞 | `cargo audit`（RustSec）无已知漏洞；`npm audit --omit=dev` 无中危及以上 |
 
-Rust 测试合计 86 项。一键运行全部（不需要节点）：`scripts/ci.sh`。
+Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci.sh`，GitHub Actions 另在开发链上跑演示与浏览器端到端（`.github/workflows/ci.yml`）。
 
 ### V2 冻结条件对照（[05 §8](05-delivery.md)）
 
@@ -119,20 +121,20 @@ Rust 测试合计 86 项。一键运行全部（不需要节点）：`scripts/ci
   - 核对回执签名，并核对回执承诺的正是所发送的信封。
   - 跟踪状态到 INCLUDED/CONFIRMED，再确认选票为 SELECTED。
   - 锚点成为孤块或中继失败时提示重签。
-- **测试**：48 项全部通过（vitest，在 Node 中加载真实 WASM），覆盖：
+- **测试**：53 项全部通过（vitest，在 Node 中加载真实 WASM），覆盖：
   - 模拟 EIP-1193 钱包与 Neuron 签名器；
   - 投票、授权与多成员流程记录；
   - 等待新块的锚点规则；
   - 回执签名校验；
-  - 中英文案键一致性。
+  - 中英文案键一致性；
+  - 签名前与独立来源比对 tip（§11）。
 - **构建**：`npm run build` 通过，产物约 0.8 MB（JS 435 KB、WASM 348 KB，gzip 后合计约 260 KB），满足服务端的严格 CSP。
 - **浏览器验证**：
   - 无头 Chromium 在真实 CSP 下加载全部路由，没有控制台错误或 CSP 违规，手机宽度下没有布局溢出。
   - **真实端到端投票**：对开发链服务端，经 Neuron 路径准备选票。读出页面所示的确切字节，用 `omavote sign` 按 Neuron 格式签名（与 lumos 输出逐字节相同的签名方式）后粘贴提交。页面验证了中继回执，交易在区块 6472 收录，页面显示“已选中（计入）”，全程无控制台错误。脚本为 `web/scripts/e2e-neuron-vote.mjs`，截图与结果在 `evidence/devnet-2026-10-08/ui/`。
 - **未做或需要真人**（详见 `web/NOTES.md`）：
   - **真机**：MetaMask 桌面与手机的全文显示和账户切换；Neuron（含 Ledger）的菜单文案、换行是否保留、签名格式。用「钱包检查」页记录。
-  - **论坛导入**：严格 CSP 下需要服务端接口。
-  - **其余未做**：与独立来源比对链 tip、用 Neuron 持有的授权密钥投票、passkey 与 EIP-712、WalletConnect、选票列表分页。
+  - **其余未做**：用 Neuron 持有的授权密钥投票、passkey 与 EIP-712、WalletConnect、选票列表分页。论坛导入与签名前的独立 tip 比对已在上午补上（§11）。
 
 ## 6. 独立 TypeScript 验证器（M6）
 
@@ -192,6 +194,8 @@ Rust 测试合计 86 项。一键运行全部（不需要节点）：`scripts/ci
 5. **体验测试**：8–12 人的实际使用测试；授权、投票、改票、撤回、恢复的免费路径演练。
 6. **影子运行（M7）**：在测试网或主网上与现行投票并行，比对结果后再提交切换提案。
 
+以上各项的操作步骤与记录格式见 [17：外部验收记录模板](17-external-acceptance.md)；切换提案的草案见 [18](18-governance-switch-proposal.md)，请既有治理逐项确认规则并补齐附件。
+
 ## 9. 已知限制
 
 - 中继每次只有一笔交易在途。高峰期吞吐量受出块间隔限制，需要多 UTXO 并发与限流政策。
@@ -206,11 +210,34 @@ Rust 测试合计 86 项。一键运行全部（不需要节点）：`scripts/ci
 |---|---|
 | `crates/omavote-core/` | 协议核心：JSON/JCS、哈希、Molecule、地址、消息与文本、adapter、载体、回放引擎、计票、测试工具 |
 | `crates/omavote-wasm/` | 浏览器绑定：JSON 进出的 `call(method, params)` |
-| `crates/omavote/` | 服务端二进制：`serve`、`relay`、`verify`、`network`、`keygen`、`sign`、`demo`、`demo-roles` |
+| `crates/omavote/` | 服务端二进制：`serve`、`relay`、`verify`、`verify-evidence`、`network`、`keygen`、`backup`、`rebuild-index`、`sign`、`demo`、`demo-roles`、`devnet`（命令说明见 [16 §5](16-api.md)） |
 | `web/` | 前端（React + Vite + WASM） |
 | `verifier-ts/` | 独立 TypeScript 验证器（CCC） |
 | `vectors/` | 跨语言测试向量；`external.json` 为外部钱包和 SDK 的输出 |
 | `schemas/` | JSON Schema 与校验脚本 |
 | `deploy/` | systemd、Caddyfile、配置样例、开发链脚本 |
-| `scripts/` | `ci.sh`（不需要节点的全部检查）、`diff-verifiers.sh`（两套实现差分） |
+| `scripts/` | `ci.sh`（不需要节点的全部检查）、`diff-verifiers.sh`（两套实现差分）、`package.sh`（带 SHA-256 的发布包） |
 | `evidence/` | 开发链演示、复算与浏览器端到端投票的证据 |
+
+## 11. 借鉴 Codex 工作树（2026-10-08 上午）
+
+用户决定以本仓库为主线，并请我审阅另一份独立实现（Codex，分支 `implementation-codex`，只读）。两边架构不同，所以没有复制代码。值得借鉴的做法都在本仓库的代码里重新实现，附带测试与文档。
+
+| 项目 | 本仓库的实现 | 验证 |
+|---|---|---|
+| 影子模式 | `[protocol] governance_confirmed` 默认 `false`；`/api/status` 与 `/api/network` 返回 `shadow_mode`；页面顶部横幅 | 配置样例解析测试要求默认处于影子模式 |
+| 签名前独立比对 tip（[11 §5](11-authorization.md)） | `web/src/lib/tipcheck.ts`：来源可以是另一家 Omavote 的 `/api/status` 或 CKB 节点 RPC，高度与哈希必须一致，短暂不一致时等待；主网与测试网必须配置；「设置」页可改，构建时可用 `VITE_TIP_SOURCE` 预置 | 5 项前端测试：两种来源、换网、等待后签名、持续分叉拒签、主网无来源拒签 |
+| 论坛导入 | `GET /api/forum/import`：只连 talk.nervos.org，拒绝跳转，15 秒超时，最大 2 MB；创建页「从 Nervos Talk 导入」，修订号填入 manifest，页面比对正文哈希与导入原文，改动后提示，文中地址只作收款人候选 | 链接解析测试；对真实主题 10090 实测 |
+| 服务端加固 | 数据库锁（`serve` 与发布者各一把）；`/api/anchor` 与节点实时核对，落后或分叉时返回 503；索引落后时拒收提交；请求体上限 64 KiB；他人已发布的信封标为 `ALREADY_ON_CHAIN`，被重组掉后自动接手；未知 API 路径返回 JSON 404；公开 GET 允许任意 origin | 第二个 `serve` 被拒；出块时连续请求锚点稳定；跨域 POST 预检只允许 GET |
+| 运维与发布 | `omavote backup`（在线一致性复制，0600，完整性检查）；`omavote rebuild-index`（只清链索引，保留队列与回执，服务运行时拒绝）；`scripts/ci.sh` 加入 rustfmt、clippy `-D warnings`、RustSec 与 npm audit；GitHub Actions；`scripts/package.sh` 生成带 `SHA256SUMS` 与 `BUILD.txt` 的发布包 | 运行中备份成功；在备份副本上重建：清除 35,724 个区块，保留 110 条队列项；发布包校验通过 |
+| 证据包带链历史 | `GET /api/results/{id}/bundle?history=true` 附上缩减区块（含时间戳）与加速起点种子；`omavote verify-evidence` 离线重放，加 `--rpc` 时与自己的节点逐块比对并重新缩减，证明证据包完整；TS 验证器可直接重放同一文件；验证页说明用法 | 35,910 块、9.5 MB 的证据包：离线通过；`--rpc` 约 5 秒比对全部区块；TS 复算得到相同的 `0xf4487a5e…`。篡改一张选票后，离线报告结果哈希不同，`--rpc` 指出第 33,870 块的数据被遗漏或改动 |
+| 开发链辅助 | `omavote devnet identity/fund/deposit/balance`，拒绝在主网和测试网上运行 | 供浏览器端到端测试使用 |
+| 文档 | [15 运维手册](15-operations.md)、[16 API 与命令行](16-api.md)、[17 外部验收模板](17-external-acceptance.md)、[18 切换提案草案](18-governance-switch-proposal.md) | 命令、字段与拒绝码逐项对照代码 |
+
+**没有搬的部分**：
+
+- **协议核心与单文件前端**：本仓库已有经向量、性质测试与两套实现差分验证的实现，替换会使现有证据失效。
+- **许可证**：Codex 加了 MIT LICENSE。许可证属于项目决策（[05 §10](05-delivery.md)），留给项目方决定。
+- **投票进度曲线与选票列表分页**：体验改进，不是验收门槛，留作后续。
+
+**两边都还没有的**：真机钱包、另一个人写的验证器、主网规模实测、治理确认。记录方式见 [17](17-external-acceptance.md)。

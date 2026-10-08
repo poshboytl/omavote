@@ -239,3 +239,20 @@ interval_ms = 3000
 confirmations = 24
 max_carriers_per_tx = 8
 "#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shipped_examples_parse_and_default_to_shadow_mode() {
+        for (name, text) in [
+            ("example-config", EXAMPLE),
+            ("deploy/omavote.example.toml", include_str!("../../../deploy/omavote.example.toml")),
+            ("deploy/relay.example.toml", include_str!("../../../deploy/relay.example.toml")),
+        ] {
+            let c: Config = toml::from_str(text).unwrap_or_else(|e| panic!("{name}: {e}"));
+            assert!(!c.protocol.governance_confirmed, "{name} must start in shadow mode");
+        }
+    }
+}

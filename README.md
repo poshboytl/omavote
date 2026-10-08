@@ -10,10 +10,11 @@ Neuron 用户的主流程已确定为：首次用 Neuron 授权第二个在线�
 
 **阅读入口：[完整设计导读](docs/00-design-index.md)**，包含建议、约束对应、全部文件与验证边界。
 
-**实现（2026-10-08 起）：** 按 [技术方案与里程碑](docs/13-technical-plan.md) 实现了 Rust 协议核心（同时编译为 WASM）、服务端（同步与复算、中继、API）、`omavote verify`、前端和独立的 TypeScript 验证器，并在本地 CKB 开发链上端到端跑通。进度、测试证据与仍需真人完成的事项见 [实施进度](docs/14-implementation-status.md)。实现只在开发链运行过，**没有部署到测试网或主网**。
+**实现（2026-10-08 起）：** 按 [技术方案与里程碑](docs/13-technical-plan.md) 实现了 Rust 协议核心（同时编译为 WASM）、服务端（同步与复算、中继、API）、`omavote verify`、前端和独立的 TypeScript 验证器，并在本地 CKB 开发链上端到端跑通。进度、测试证据与仍需真人完成的事项见 [实施进度](docs/14-implementation-status.md)。部署与运维见 [运维手册](docs/15-operations.md)，接口见 [HTTP API 与命令行](docs/16-api.md)；真机、真人与独立审计的验收方式见 [外部验收记录模板](docs/17-external-acceptance.md)，正式切换须经 [切换提案](docs/18-governance-switch-proposal.md) 走既有治理流程，在此之前部署默认处于影子模式。实现只在开发链运行过，**没有部署到测试网或主网**。
 
 ```bash
 cargo test --workspace                # 协议核心、服务端、WASM 绑定
+scripts/ci.sh                         # 不需要节点的全部检查：格式、clippy、测试、RustSec、两套验证器、前端
 deploy/devnet/setup.sh                # 本地开发链（下载 ckb v0.210.0）
 deploy/devnet/run-demo.sh             # 端到端演示：存款、授权、投票、重组、复算
 ```
