@@ -5,7 +5,7 @@ members = ["crates/omavote-core", "crates/omavote-wasm", "crates/omavote"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/nervosnetwork/omavote"
 
 [profile.release]

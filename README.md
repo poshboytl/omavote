@@ -46,3 +46,7 @@ python -m unittest discover -s research -p 'test_*.py' -v
 这里没有部署合约、广播交易、变更 DAO 规则或操作任何钱包、金库。
 
 初步设计的逐项完成证据见 [完成核验](docs/07-completion-audit.md)；容易被误用的技术推论及 ACP 反例见 [安全假设复核](docs/08-design-review.md)。早期的 Fable 草稿已于 2026-10-08 删除，`docs/` 是唯一设计基线。
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。

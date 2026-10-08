@@ -18,7 +18,7 @@ cp -r web/dist "$dst/web/dist"
 cp -r verifier-ts/dist verifier-ts/package.json verifier-ts/package-lock.json verifier-ts/README.md verifier-ts/SPEC-NOTES.md "$dst/verifier-ts/"
 cp -r docs schemas vectors deploy evidence "$dst/"
 rm -rf "$dst/schemas/node_modules"
-cp README.md Cargo.toml Cargo.lock rustfmt.toml "$dst/"
+cp README.md LICENSE Cargo.toml Cargo.lock rustfmt.toml "$dst/"
 {
   printf 'source_commit=%s\n' "$revision"
   git status --porcelain | sed 's/^/source_status=/'
