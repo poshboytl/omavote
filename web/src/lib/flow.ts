@@ -5,8 +5,10 @@
 // (BallotDraft, ControlDraft, RecordDraft, ManifestDraft); the core validates the
 // body, computes its ID and renders the exact text that the wallet signs.
 
-import type { Api } from "./api";
+import type { Api, FetchLike } from "./api";
 import { ApiError } from "./api";
+import { KEYS, readString } from "./storage";
+import { compareTips, fetchIndependentTip, sourceRequired, TipCheckError, type IndependentTip, type TipComparison } from "./tipcheck";
 import type { Core } from "./core";
 import type { Eip1193Provider } from "./eip1193";
 import { personalSign } from "./eip1193";
@@ -169,9 +171,35 @@ export function assessSync(
 // Anchors: the latest verified block, strictly newer than the previous signature
 // in the same sequence (docs/03 §6, docs/11 §2 and §6).
 
-/** `/api/anchor` is the newest indexed block; it is always used as-is, never an older one. */
-export async function fetchAnchor(api: Api): Promise<AnchorInfo> {
-  return (await api.anchor()).anchor;
+/**
+ * `/api/anchor` is the newest block of the server's node; it is always used as-is,
+ * never an older one. The server answers 503 while its index catches up: retry.
+ */
+export async function fetchAnchor(api: Api, opts: WaitOpts = {}): Promise<AnchorInfo> {
+  const w = waitParams({ intervalMs: 500, timeoutMs: 20_000, ...opts });
+  const deadline = w.now() + w.timeout;
+  for (;;) {
+    try {
+      return (await api.anchor()).anchor;
+    } catch (e) {
+      if (!(e instanceof ApiError) || e.status !== 503 || w.now() > deadline) throw e;
+      await w.sleep(w.interval, w.signal);
+    }
+  }
+}
+
+/** Independent tip source configured in Settings (or at build time); "" = not set. */
+export function configuredTipSource(): string {
+  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  return readString(KEYS.tipSource, env?.VITE_TIP_SOURCE ?? "");
+}
+
+export interface TipCheckOpts {
+  /** Independent source URL; undefined = configured value, null = skip the check. */
+  tipSource?: string | null;
+  fetchImpl?: FetchLike;
+  /** Reported while the server and the independent source disagree. */
+  onTipWait?: (comparison: TipComparison, tip: IndependentTip, anchor: AnchorInfo) => void;
 }
 
 /**
@@ -181,16 +209,41 @@ export async function fetchAnchor(api: Api): Promise<AnchorInfo> {
 export async function anchorAbove(
   api: Api,
   aboveHeight: bigint | null,
-  opts: WaitOpts & { onWait?: (current: AnchorInfo, floor: bigint) => void } = {},
+  opts: WaitOpts & TipCheckOpts & { onWait?: (current: AnchorInfo, floor: bigint) => void } = {},
 ): Promise<AnchorInfo> {
   const w = waitParams({ intervalMs: 2000, timeoutMs: 180_000, ...opts });
   const deadline = w.now() + w.timeout;
+  const source = opts.tipSource === undefined ? configuredTipSource() : opts.tipSource;
+  let network: { name: string; genesis_hash: string } | null = null;
   for (;;) {
-    const a = await fetchAnchor(api);
-    if (aboveHeight === null || big(a.number) > aboveHeight) return a;
-    opts.onWait?.(a, aboveHeight);
-    if (w.now() > deadline) throw new TimeoutError("a newer anchor block");
-    await w.sleep(w.interval, w.signal);
+    const a = await fetchAnchor(api, { sleep: w.sleep, now: w.now, signal: w.signal });
+    if (aboveHeight !== null && big(a.number) <= aboveHeight) {
+      opts.onWait?.(a, aboveHeight);
+      if (w.now() > deadline) throw new TimeoutError("a newer anchor block");
+      await w.sleep(w.interval, w.signal);
+      continue;
+    }
+    if (source === null) return a;
+    network ??= (await api.status()).network;
+    if (!source) {
+      if (sourceRequired(network.name)) throw new FlowError("tip.required");
+      return a;
+    }
+    let tip: IndependentTip;
+    try {
+      tip = await fetchIndependentTip(source, network.genesis_hash, opts.fetchImpl ?? api.fetchFn());
+    } catch (e) {
+      if (e instanceof TipCheckError) throw new FlowError("tip.sourceError", { code: e.code, detail: e.message });
+      throw e;
+    }
+    const cmp = compareTips(a, tip);
+    if (cmp === "match") return a;
+    opts.onTipWait?.(cmp, tip, a);
+    if (w.now() > deadline) {
+      throw new FlowError("tip.mismatch", { ours: `${a.number} ${a.hash.slice(0, 12)}`, theirs: `${tip.height} ${tip.hash.slice(0, 12)}` });
+    }
+    // Usually one side is a block ahead for a moment: compare again shortly.
+    await w.sleep(Math.min(w.interval, 700), w.signal);
   }
 }
 

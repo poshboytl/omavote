@@ -477,6 +477,31 @@ pub struct Publisher {
     pub net: NetworkParams,
     pub genesis: GenesisCells,
     pub cfg: RelayConfig,
+    /// Indexed chain state when the publisher runs inside `serve`: queued objects
+    /// that another relay already put on chain are not published again.
+    pub state: Option<Shared>,
+}
+
+/// Where an object already appears on the canonical chain: `(tx_hash, height)`.
+fn on_chain(engine: &Engine, item: &RelayItem) -> Option<(Option<Hash32>, u64)> {
+    let id = crate::util::hash_arg(&item.object_id).ok()?;
+    match item.message_kind.as_str() {
+        "ballot" => {
+            let poll = crate::util::hash_arg(&item.scope_id).ok()?;
+            engine.polls.get(&poll)?.ballots.iter().find(|b| b.ballot_id == id).map(|b| (Some(b.tx_hash), b.position.height))
+        }
+        "authorization_control" => engine
+            .streams
+            .values()
+            .flat_map(|s| s.history.iter())
+            .find(|e| e.authorization_id == id)
+            .map(|e| (Some(e.tx_hash), e.position.height)),
+        "process_record" => engine.records.iter().find(|r| r.record_id == id).map(|r| (Some(r.tx_hash), r.position.height)),
+        "manifest" => engine.polls.get(&id).map(|p| (Some(p.registered_tx), p.registered.height)),
+        "authorization_policy" => engine.policies.get(&id).map(|(_, at)| (None, at.height)),
+        "process_roles" => engine.roles_objects.get(&id).map(|(_, at)| (None, at.height)),
+        _ => None,
+    }
 }
 
 /// Carrier order inside one transaction: objects others depend on come first.
@@ -604,7 +629,41 @@ impl Publisher {
         Ok(())
     }
 
+    /// Any helper may publish the same envelope (docs/03 §12). Objects already on the
+    /// canonical chain are marked ALREADY_ON_CHAIN instead of being published twice,
+    /// and go back to the queue if a reorg removes them.
+    fn reconcile_foreign(&self) -> Result<()> {
+        let state = match &self.state {
+            Some(s) => s,
+            None => return Ok(()),
+        };
+        let items = self.store.relay_with_status(&["RECEIVED", "ALREADY_ON_CHAIN"])?;
+        let st = read(state);
+        for item in items {
+            match (on_chain(&st.engine, &item), item.status.as_str()) {
+                (Some((tx, height)), "RECEIVED") => {
+                    let block = st.hashes.get(&height).map(|h| to_hex(h));
+                    let tx = tx.map(|t| to_hex(&t));
+                    self.store.relay_set_status(
+                        &[item.id],
+                        "ALREADY_ON_CHAIN",
+                        tx.as_deref(),
+                        block.as_deref().map(|b| (height, b)),
+                        Some("published on chain by another relay or helper"),
+                    )?;
+                    tracing::info!(object = %item.object_id, "already on chain; not publishing again");
+                }
+                (None, "ALREADY_ON_CHAIN") => {
+                    self.store.relay_set_status(&[item.id], "RECEIVED", None, None, Some("left the canonical chain; queued again"))?;
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
     async fn publish(&self) -> Result<()> {
+        self.reconcile_foreign()?;
         let mut items = self.store.relay_with_status(&["RECEIVED"])?;
         if items.is_empty() {
             return Ok(());

@@ -67,6 +67,11 @@ export class Api {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
 
+  /** The transport used for this server (also used for independent tip checks). */
+  fetchFn(): FetchLike {
+    return this.fetchImpl;
+  }
+
   constructor(base = "", fetchImpl: FetchLike = defaultFetch, timeoutMs = 20_000) {
     this.base = base;
     this.fetchImpl = fetchImpl;

@@ -155,6 +155,18 @@ async fn shutdown_signal() {
     tracing::info!("shutting down");
 }
 
+/// Exclusive lock next to the database: one `serve` per database, one publisher per
+/// database (two publishers would race for the same queue and sponsor cells).
+fn lock_file(db: &std::path::Path, suffix: &str, what: &str) -> Result<std::fs::File> {
+    let path = std::path::PathBuf::from(format!("{}.{suffix}", db.display()));
+    let f = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(&path)?;
+    match f.try_lock() {
+        Ok(()) => Ok(f),
+        Err(std::fs::TryLockError::WouldBlock) => bail!("{what} is already running for {} (lock {})", db.display(), path.display()),
+        Err(std::fs::TryLockError::Error(e)) => Err(e.into()),
+    }
+}
+
 fn publisher(cfg: &config::Config, rpc: &rpc::Rpc, store: Arc<store::Store>, net: &omavote_core::network::NetworkParams, cells: &chain::GenesisCells) -> Result<relay::Publisher> {
     let key = cfg.relay.key_file.as_ref().ok_or_else(|| anyhow!("[relay] key_file is required"))?;
     let wallet = txbuilder::Wallet::from_key_file(&cfg.path(key), net)?;
@@ -164,6 +176,7 @@ fn publisher(cfg: &config::Config, rpc: &rpc::Rpc, store: Arc<store::Store>, net
         wallet,
         net: net.clone(),
         genesis: cells.clone(),
+        state: None,
         cfg: config::RelayConfig {
             embedded: cfg.relay.embedded,
             key_file: cfg.relay.key_file.clone(),
@@ -178,7 +191,9 @@ fn publisher(cfg: &config::Config, rpc: &rpc::Rpc, store: Arc<store::Store>, net
 async fn serve(cfg: config::Config) -> Result<()> {
     let rpc = rpc::Rpc::new(&cfg.node.rpc);
     let (net, cells) = discover(&rpc, &cfg.network).await?;
-    let store = Arc::new(store::Store::open(&cfg.path(&cfg.server.database))?);
+    let db_path = cfg.path(&cfg.server.database);
+    let _serve_lock = lock_file(&db_path, "lock", "another `omavote serve`")?;
+    let store = Arc::new(store::Store::open(&db_path)?);
     let mut ecfg = EngineConfig::new(net.clone());
     ecfg.initial_roles_hash = cfg.initial_roles_hash()?;
     ecfg.process_publication_delay_ms = cfg.protocol.process_publication_delay_ms;
@@ -230,8 +245,11 @@ async fn serve(cfg: config::Config) -> Result<()> {
         }
     };
     let mut relay_lock = None;
+    let mut _publisher_lock = None;
     if cfg.relay.embedded {
-        let p = publisher(&cfg, &rpc, store.clone(), &net, &cells)?;
+        _publisher_lock = Some(lock_file(&db_path, "relay.lock", "a relay publisher")?);
+        let mut p = publisher(&cfg, &rpc, store.clone(), &net, &cells)?;
+        p.state = Some(syncer.state.clone());
         relay_lock = Some(p.wallet.lock.clone());
         tokio::spawn(p.run());
     } else if let Some(k) = &cfg.relay.key_file {
@@ -243,7 +261,13 @@ async fn serve(cfg: config::Config) -> Result<()> {
         chain: syncer.state.clone(),
         store,
         intake,
-        info: Arc::new(api::ServerInfo { rpc, network: net, genesis: cells, relay_lock }),
+        info: Arc::new(api::ServerInfo {
+            rpc,
+            network: net,
+            genesis: cells,
+            relay_lock,
+            shadow_mode: !cfg.protocol.governance_confirmed,
+        }),
     };
     let web_root = cfg.server.web_root.as_ref().map(|p| cfg.path(p)).filter(|p| p.join("index.html").exists());
     if cfg.server.web_root.is_some() && web_root.is_none() {
@@ -262,7 +286,9 @@ async fn relay_only(cfg: config::Config) -> Result<()> {
     }
     let rpc = rpc::Rpc::new(&cfg.node.rpc);
     let (net, cells) = discover(&rpc, &cfg.network).await?;
-    let store = Arc::new(store::Store::open(&cfg.path(&cfg.server.database))?);
+    let db_path = cfg.path(&cfg.server.database);
+    let _publisher_lock = lock_file(&db_path, "relay.lock", "a relay publisher")?;
+    let store = Arc::new(store::Store::open(&db_path)?);
     let p = publisher(&cfg, &rpc, store, &net, &cells)?;
     tokio::select! {
         _ = p.run() => {}

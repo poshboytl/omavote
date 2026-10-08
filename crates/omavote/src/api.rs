@@ -36,6 +36,8 @@ pub struct ServerInfo {
     pub network: NetworkParams,
     pub genesis: GenesisCells,
     pub relay_lock: Option<Script>,
+    /// No governance effect yet (`governance_confirmed = false`).
+    pub shadow_mode: bool,
 }
 
 #[derive(Clone)]
@@ -94,7 +96,9 @@ pub fn router(state: AppState, web_root: Option<std::path::PathBuf>, cors_origin
         .route("/api/envelopes", post(envelopes))
         .route("/api/core/{method}", post(core_call))
         .route("/feed.atom", get(global_feed))
-        .with_state(state);
+        .with_state(state)
+        // Submissions are at most one 32 KiB payload; leave room for whitespace.
+        .layer(axum::extract::DefaultBodyLimit::max(64 * 1024));
     let mut app = match web_root {
         Some(root) => {
             let index = root.join("index.html");
@@ -107,12 +111,19 @@ pub fn router(state: AppState, web_root: Option<std::path::PathBuf>, cors_origin
         .layer(SetResponseHeaderLayer::overriding(
             header::CONTENT_SECURITY_POLICY,
             HeaderValue::from_static(
-                "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+                // connect-src allows HTTPS (and local) origins so that the page can compare
+                // the tip with an independent source before signing (docs/11 §5). The page
+                // holds no secrets; scripts stay same-origin.
+                "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://127.0.0.1:* http://localhost:*; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             ),
         ))
         .layer(SetResponseHeaderLayer::overriding(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff")))
         .layer(SetResponseHeaderLayer::overriding(header::REFERRER_POLICY, HeaderValue::from_static("no-referrer")));
-    if !cors_origins.is_empty() {
+    if cors_origins.is_empty() {
+        // Public read-only data: any page may read it (for example to use this server
+        // as an independent tip source). Submissions stay same-origin.
+        app = app.layer(CorsLayer::new().allow_origin(AllowOrigin::any()).allow_methods([axum::http::Method::GET]));
+    } else {
         let origins: Vec<HeaderValue> = cors_origins.iter().filter_map(|o| HeaderValue::from_str(o).ok()).collect();
         app = app.layer(
             CorsLayer::new()
@@ -145,6 +156,7 @@ async fn status(State(s): State<AppState>) -> Response {
                 "reorgs": {"count": st.reorgs.len().to_string(), "last": last_reorg},
                 "polls": st.engine.polls.len().to_string(),
                 "diagnostics": st.engine.diagnostics.len().to_string(),
+                "shadow_mode": s.info.shadow_mode,
             }),
             tip_n,
         )
@@ -217,6 +229,7 @@ async fn network(State(s): State<AppState>) -> Response {
             "process_publication_delay_ms": dec(e.cfg.process_publication_delay_ms),
             "max_control_publication_delay_ms": dec(MAX_CONTROL_PUBLICATION_DELAY_MS),
             "receipt_key": s.intake.as_ref().map(|i| i.receipt_public_key()),
+            "shadow_mode": s.info.shadow_mode,
         }),
     ))
 }
@@ -236,7 +249,31 @@ fn anchor_info(st: &ChainState) -> Option<Value> {
     }))
 }
 
+/// The anchor must be the newest block of the node, not just of this index: compare
+/// with the node right now and refuse while behind or on another branch.
 async fn anchor(State(s): State<AppState>) -> Response {
+    let node_tip = match s.info.rpc.tip_number().await {
+        Ok(n) => n,
+        Err(e) => return err(StatusCode::SERVICE_UNAVAILABLE, "NODE_UNAVAILABLE", e),
+    };
+    // A block that just arrived is usually indexed within a poll interval: wait briefly.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    let (tip_n, tip_h) = loop {
+        let t = read(&s.chain).tip().map(|(n, h, _)| (n, h));
+        match t {
+            Some((n, h)) if n >= node_tip => break (n, h),
+            _ if std::time::Instant::now() < deadline => tokio::time::sleep(std::time::Duration::from_millis(100)).await,
+            Some((n, _)) => {
+                return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", format!("index is {} block(s) behind the node; retry shortly", node_tip - n))
+            }
+            None => return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "no indexed blocks yet"),
+        }
+    };
+    match s.info.rpc.block_hash(tip_n).await {
+        Ok(Some(h)) if h == to_hex(&tip_h) => {}
+        Ok(_) => return err(StatusCode::SERVICE_UNAVAILABLE, "REORGANIZING", "the indexed tip is not on the node's canonical chain; retry shortly"),
+        Err(e) => return err(StatusCode::SERVICE_UNAVAILABLE, "NODE_UNAVAILABLE", e),
+    }
     let st = read(&s.chain);
     match anchor_info(&st) {
         Some(a) => ok(with_at(&st.engine, json!({"anchor": a}))),
@@ -542,6 +579,17 @@ async fn envelopes(State(s): State<AppState>, body: Bytes) -> Response {
         Some(i) => i.clone(),
         None => return err(StatusCode::SERVICE_UNAVAILABLE, "RELAY_DISABLED", "this server does not accept submissions"),
     };
+    // Pre-checks read the indexed state: refuse while it lags the node.
+    {
+        let st = read(&s.chain);
+        let lag = match (st.node_tip, st.tip()) {
+            (Some(n), Some((t, _, _))) => n.saturating_sub(t),
+            _ => u64::MAX,
+        };
+        if lag > 1 || st.last_error.is_some() {
+            return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "the server is catching up with its node; retry shortly");
+        }
+    }
     match tokio::task::spawn_blocking(move || intake.submit(&body)).await {
         Ok(Ok(SubmitOutcome::Accepted(v))) => ok(v),
         Ok(Ok(SubmitOutcome::Rejected(r))) => err(StatusCode::UNPROCESSABLE_ENTITY, r.code, r.detail),

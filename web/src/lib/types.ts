@@ -260,9 +260,12 @@ export interface StatusView {
   polls: Dec;
   diagnostics: Dec;
   lag_blocks: Dec | null;
+  /** True until governance approves the deployment: no governance effect. */
+  shadow_mode?: boolean;
   relay: {
     intake: boolean;
     receipt_key: Hex | null;
+  shadow_mode?: boolean;
     queue: Record<string, Dec>;
     address?: string | null;
     balance_shannon?: Dec | null;

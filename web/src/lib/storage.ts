@@ -55,6 +55,7 @@ export const KEYS = {
   anchors: "omavote.lastAnchors.v1",
   recordDraft: "omavote.recordDraft.v1",
   walletChecks: "omavote.walletChecks.v1",
+  tipSource: "omavote.tipSource",
 } as const;
 
 /** A signed envelope kept on this device until it is seen on chain. */

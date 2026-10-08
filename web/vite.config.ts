@@ -35,9 +35,12 @@ function cspMeta(): Plugin {
 
 /** The header the Omavote server sends with `web/dist` (crates/omavote/src/api.rs). */
 const SERVER_CSP =
-  "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+  "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://127.0.0.1:* http://localhost:*; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Signing flows compare the tip with an independent source; in tests the mock
+  // server answers that URL too (its /api/status), so the tips match.
+  define: mode === "test" ? { "import.meta.env.VITE_TIP_SOURCE": JSON.stringify("https://independent.test/api/status") } : {},
   // Relative asset URLs + HashRouter: the build works from any path on any static host.
   base: "./",
   plugins: [react(), cspMeta()],
@@ -57,4 +60,4 @@ export default defineConfig({
     include: ["test/**/*.test.ts"],
     testTimeout: 30_000,
   },
-});
+}));

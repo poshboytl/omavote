@@ -73,6 +73,10 @@ pub struct ProtocolConfig {
     pub initial_roles_file: Option<PathBuf>,
     #[serde(default = "default_process_delay")]
     pub process_publication_delay_ms: u64,
+    /// Shadow mode unless governance approved this deployment (roles, parameters,
+    /// switch boundary). Only a label: it never changes ballots or results.
+    #[serde(default)]
+    pub governance_confirmed: bool,
 }
 
 fn default_process_delay() -> u64 {
@@ -81,7 +85,12 @@ fn default_process_delay() -> u64 {
 
 impl Default for ProtocolConfig {
     fn default() -> Self {
-        ProtocolConfig { initial_roles_hash: None, initial_roles_file: None, process_publication_delay_ms: default_process_delay() }
+        ProtocolConfig {
+            initial_roles_hash: None,
+            initial_roles_file: None,
+            process_publication_delay_ms: default_process_delay(),
+            governance_confirmed: false,
+        }
     }
 }
 
@@ -211,6 +220,8 @@ poll_interval_ms = 1000
 # initial_roles_hash = "0x..."
 # initial_roles_file = "roles.json"
 process_publication_delay_ms = 259200000   # 72 hours (candidate value)
+# Shadow mode until the existing governance process approves this deployment.
+governance_confirmed = false
 
 [server]
 listen = "127.0.0.1:8080"

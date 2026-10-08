@@ -11,6 +11,9 @@ poll_interval_ms = 1000
 # initial_roles_hash = "0x..."
 # initial_roles_file = "roles.json"
 process_publication_delay_ms = 259200000   # 72 hours (candidate value, docs/09 §10)
+# Shadow mode (no governance effect) until the switch proposal is approved and the
+# roles, parameters and switch boundary above are the approved ones.
+governance_confirmed = false
 
 [server]
 listen = "127.0.0.1:8080"

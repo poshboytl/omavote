@@ -16,6 +16,18 @@ const NAV = [
   ["/wallet-check", "nav.walletCheck"],
 ] as const;
 
+/** Shadow mode until governance approves the deployment (`governance_confirmed`). */
+function ShadowBanner() {
+  const { t } = useI18n();
+  const { status } = useApp();
+  if (!status?.shadow_mode) return null;
+  return (
+    <Notice tone="info" title={t("banner.shadowTitle")}>
+      {t("banner.shadowText")}
+    </Notice>
+  );
+}
+
 function StatusBanner() {
   const { t, tk } = useI18n();
   const { status, statusError, statusFetchedAt, apiBase } = useApp();
@@ -77,6 +89,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </header>
       <div className="banner-wrap">
+        <ShadowBanner />
         <StatusBanner />
       </div>
       <main className="main">{children}</main>
