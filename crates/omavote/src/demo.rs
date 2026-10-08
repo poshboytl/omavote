@@ -634,6 +634,10 @@ pub async fn run(args: DemoArgs) -> Result<()> {
         let r = d.get(&format!("/api/receipts/{}", to_hex(&second_ids[0]))).await?;
         let n: u64 = r["items"][0]["block_number"].as_str().and_then(|x| x.parse().ok()).ok_or_else(|| anyhow!("no inclusion block"))?;
         let old_block = r["items"][0]["block_hash"].as_str().unwrap_or("").to_string();
+        // INCLUDED comes from the relay's view of the node, not from the server's index.
+        // If the server has not indexed the block yet when it is removed, it never sees
+        // a rollback, so wait for the index first.
+        d.server_caught_up(n).await?;
         // Truncate to just below the inclusion block. The ballots anchor at the newest
         // block before inclusion, so their anchors stay canonical.
         let target_n = n - 1;
