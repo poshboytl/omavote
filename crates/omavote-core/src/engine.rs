@@ -11,8 +11,8 @@ use crate::adapter;
 use crate::carrier::{self, Header, Payload};
 use crate::error::{Error, Result};
 use crate::messages::{
-    Action, Authority, BallotEnvelope, ControlAction, ControlEnvelope, KeyDescriptor, ManifestPayload, ProcessEnvelope,
-    ProcessRoles, RecordDetail, RecordType,
+    Action, Authority, BallotEnvelope, ControlAction, ControlEnvelope, KeyDescriptor, ManifestPayload, ProcessEnvelope, ProcessRoles,
+    RecordDetail, RecordType,
 };
 use crate::molecule::{OutPoint, Script};
 use crate::network::NetworkParams;
@@ -288,20 +288,24 @@ impl Engine {
     }
 
     pub fn owner_balance(&self, owner_id: &Hash32) -> u128 {
-        self.owner_cells
-            .get(owner_id)
-            .map(|set| set.iter().map(|op| self.dao_cells[op].capacity as u128).sum())
-            .unwrap_or(0)
+        self.owner_cells.get(owner_id).map(|set| set.iter().map(|op| self.dao_cells[op].capacity as u128).sum()).unwrap_or(0)
     }
 
     pub fn owner_deposits(&self, owner_id: &Hash32) -> Vec<(OutPoint, u64)> {
-        self.owner_cells
-            .get(owner_id)
-            .map(|set| set.iter().map(|op| (*op, self.dao_cells[op].capacity)).collect())
-            .unwrap_or_default()
+        self.owner_cells.get(owner_id).map(|set| set.iter().map(|op| (*op, self.dao_cells[op].capacity)).collect()).unwrap_or_default()
     }
 
-    fn diag(&mut self, ctx: &Ctx, kind: &'static str, id: Option<Hash32>, poll: Option<Hash32>, owner: Option<Hash32>, code: &'static str, detail: impl Into<String>) {
+    #[allow(clippy::too_many_arguments)]
+    fn diag(
+        &mut self,
+        ctx: &Ctx,
+        kind: &'static str,
+        id: Option<Hash32>,
+        poll: Option<Hash32>,
+        owner: Option<Hash32>,
+        code: &'static str,
+        detail: impl Into<String>,
+    ) {
         self.diag_obj(ctx, kind, id, poll, owner, code, detail, None)
     }
 
@@ -989,11 +993,8 @@ impl BlockInput {
                 h.finish()?;
                 outputs.push(OutputInput { index, capacity, lock, type_, data });
             }
-            let witnesses = g
-                .array("witnesses")?
-                .iter()
-                .map(|w| parse_hex(w.as_str().unwrap_or("x"), "witness"))
-                .collect::<Result<Vec<_>>>()?;
+            let witnesses =
+                g.array("witnesses")?.iter().map(|w| parse_hex(w.as_str().unwrap_or("x"), "witness")).collect::<Result<Vec<_>>>()?;
             g.finish()?;
             transactions.push(TxInput { hash, inputs, outputs, witnesses });
         }

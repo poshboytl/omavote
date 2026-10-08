@@ -75,10 +75,7 @@ pub fn address_candidates(raw: &str) -> Vec<String> {
 
 pub async fn import(input: &str) -> Result<Value> {
     let topic = forum_topic(input)?;
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(15))
-        .redirect(reqwest::redirect::Policy::none())
-        .build()?;
+    let client = reqwest::Client::builder().timeout(Duration::from_secs(15)).redirect(reqwest::redirect::Policy::none()).build()?;
     let topic_url = format!("https://{FORUM_HOST}/t/{topic}.json");
     let t = get_json(&client, &topic_url).await?;
     let first = t["post_stream"]["posts"].as_array().and_then(|p| p.first()).context("FORUM_FIRST_POST_UNAVAILABLE")?;

@@ -85,10 +85,7 @@ pub fn bech32m_decode(addr: &str) -> Result<(String, Vec<u8>)> {
     }
     let mut data = Vec::with_capacity(rest.len());
     for c in rest.bytes() {
-        let idx = CHARSET
-            .iter()
-            .position(|x| *x == c)
-            .ok_or_else(|| Error::format("invalid bech32 character"))?;
+        let idx = CHARSET.iter().position(|x| *x == c).ok_or_else(|| Error::format("invalid bech32 character"))?;
         data.push(idx as u8);
     }
     let mut values = hrp_expand(hrp);
@@ -150,10 +147,7 @@ mod tests {
             parse_hex("0xb39bbc0b3673c7d36450bc14cfcdad2d559c6c64", "t").unwrap(),
         );
         let addr = full_address("ckb", &script).unwrap();
-        assert_eq!(
-            addr,
-            "ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdnnw7qkdnnclfkg59uzn8umtfd2kwxceqxwquc4"
-        );
+        assert_eq!(addr, "ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdnnw7qkdnnclfkg59uzn8umtfd2kwxceqxwquc4");
         let (hrp, back) = parse_full_address(&addr).unwrap();
         assert_eq!(hrp, "ckb");
         assert_eq!(back, script);

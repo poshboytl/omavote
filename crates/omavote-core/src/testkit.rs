@@ -15,11 +15,8 @@ use crate::util::Hash32;
 pub const DAY: u64 = DAY_MS;
 
 pub fn test_network() -> NetworkParams {
-    let mut n = NetworkParams::devnet(
-        ckb_hash(b"omavote-testkit-genesis"),
-        NetworkParams::mainnet().secp256k1,
-        NetworkParams::mainnet().dao,
-    );
+    let mut n =
+        NetworkParams::devnet(ckb_hash(b"omavote-testkit-genesis"), NetworkParams::mainnet().secp256k1, NetworkParams::mainnet().dao);
     n.name = "testkit".into();
     n.omnilock = Some(ScriptId { code_hash: ckb_hash(b"testkit-omnilock"), hash_type: HashType::Type });
     n.pw_lock = Some(ScriptId { code_hash: ckb_hash(b"testkit-pw-lock"), hash_type: HashType::Type });
@@ -135,13 +132,8 @@ impl TestChain {
             counter: 0,
             blocks: Vec::new(),
         };
-        let genesis = BlockInput {
-            number: 0,
-            hash: c.net.genesis_hash,
-            parent_hash: [0; 32],
-            clock_ms: genesis_clock_ms,
-            transactions: Vec::new(),
-        };
+        let genesis =
+            BlockInput { number: 0, hash: c.net.genesis_hash, parent_hash: [0; 32], clock_ms: genesis_clock_ms, transactions: Vec::new() };
         c.engine.process_block(&genesis).unwrap();
         c.blocks.push(genesis);
         c.tip_hash = c.net.genesis_hash;
@@ -158,13 +150,7 @@ impl TestChain {
         assert!(clock_ms >= self.clock_ms, "clock must not decrease");
         let number = self.tip_number + 1;
         let hash = self.fresh_hash("block");
-        let block = BlockInput {
-            number,
-            hash,
-            parent_hash: self.tip_hash,
-            clock_ms,
-            transactions: std::mem::take(&mut self.pending),
-        };
+        let block = BlockInput { number, hash, parent_hash: self.tip_hash, clock_ms, transactions: std::mem::take(&mut self.pending) };
         self.engine.process_block(&block).unwrap();
         self.blocks.push(block);
         self.tip_number = number;
@@ -233,12 +219,7 @@ impl TestChain {
             outputs.push(OutputInput { index: i as u32, capacity: 139 * 100_000_000, lock: relay_lock.clone(), type_: None, data });
         }
         let funds = self.fresh_hash("relay-funds");
-        self.pending.push(TxInput {
-            hash: tx_hash,
-            inputs: vec![OutPoint { tx_hash: funds, index: 0 }],
-            outputs,
-            witnesses,
-        });
+        self.pending.push(TxInput { hash: tx_hash, inputs: vec![OutPoint { tx_hash: funds, index: 0 }], outputs, witnesses });
         tx_hash
     }
 
@@ -256,11 +237,7 @@ impl TestChain {
     }
 
     pub fn control_item(&self, envs: &[ControlEnvelope]) -> (Kind, Hash32, Vec<u8>) {
-        (
-            Kind::AuthorizationBatch,
-            self.policy.hash(),
-            crate::carrier::batch_payload(envs.iter().map(|e| e.to_json()).collect()),
-        )
+        (Kind::AuthorizationBatch, self.policy.hash(), crate::carrier::batch_payload(envs.iter().map(|e| e.to_json()).collect()))
     }
 
     pub fn ballot_item(poll_id: Hash32, envs: &[BallotEnvelope]) -> (Kind, Hash32, Vec<u8>) {
@@ -285,11 +262,7 @@ impl TestChain {
     }
 
     pub fn publish_records(&mut self, scope: Hash32, envs: &[ProcessEnvelope]) {
-        self.carriers(vec![(
-            Kind::ProcessBatch,
-            scope,
-            crate::carrier::batch_payload(envs.iter().map(|e| e.to_json()).collect()),
-        )]);
+        self.carriers(vec![(Kind::ProcessBatch, scope, crate::carrier::batch_payload(envs.iter().map(|e| e.to_json()).collect()))]);
     }
 
     pub fn anchor_clock(&self, anchor: &Hash32) -> u64 {
@@ -304,7 +277,14 @@ impl TestChain {
     }
 
     /// Signed grant-type manifest starting at `start_ms`.
-    pub fn manifest(&mut self, proposers: &[&TestOwner], start_ms: u64, registry: AuthRegistry, rules: RulesParams, budget_ckb: u128) -> ManifestPayload {
+    pub fn manifest(
+        &mut self,
+        proposers: &[&TestOwner],
+        start_ms: u64,
+        registry: AuthRegistry,
+        rules: RulesParams,
+        budget_ckb: u128,
+    ) -> ManifestPayload {
         let recipient = self.net.secp256k1.with_args(vec![0x42; 20]);
         let draft = ManifestDraft {
             genesis: self.net.genesis_hash,
@@ -358,7 +338,15 @@ impl TestChain {
         BallotEnvelope { proof: owner.sign(&text), body }
     }
 
-    pub fn delegate_ballot(&mut self, m: &Manifest, owner: &TestOwner, grant: &ControlEnvelope, key: &TestKey, action: Action, anchor: Hash32) -> BallotEnvelope {
+    pub fn delegate_ballot(
+        &mut self,
+        m: &Manifest,
+        owner: &TestOwner,
+        grant: &ControlEnvelope,
+        key: &TestKey,
+        action: Action,
+        anchor: Hash32,
+    ) -> BallotEnvelope {
         let body = BallotDraft {
             action,
             authority: Authority::Delegate,
@@ -378,7 +366,15 @@ impl TestChain {
         BallotEnvelope { proof: key.sign(&text), body }
     }
 
-    fn control(&mut self, owner: &TestOwner, action: ControlAction, key: Option<&TestKey>, term_ms: Option<u64>, mode: Option<RevokeMode>, anchor: Hash32) -> ControlEnvelope {
+    fn control(
+        &mut self,
+        owner: &TestOwner,
+        action: ControlAction,
+        key: Option<&TestKey>,
+        term_ms: Option<u64>,
+        mode: Option<RevokeMode>,
+        anchor: Hash32,
+    ) -> ControlEnvelope {
         let t_anchor = self.anchor_clock(&anchor);
         let body = ControlDraft {
             genesis: self.net.genesis_hash,
@@ -411,7 +407,15 @@ impl TestChain {
         self.control(owner, ControlAction::Revoke, None, None, Some(mode), anchor)
     }
 
-    pub fn record(&mut self, roles: &ProcessRoles, role: Role, signers: &[&TestKey], poll_id: Option<Hash32>, detail: RecordDetail, anchor: Hash32) -> ProcessEnvelope {
+    pub fn record(
+        &mut self,
+        roles: &ProcessRoles,
+        role: Role,
+        signers: &[&TestKey],
+        poll_id: Option<Hash32>,
+        detail: RecordDetail,
+        anchor: Hash32,
+    ) -> ProcessEnvelope {
         let t_anchor = self.anchor_clock(&anchor);
         let body = RecordDraft {
             genesis: self.net.genesis_hash,

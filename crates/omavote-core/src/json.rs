@@ -147,9 +147,7 @@ impl<'a> Parser<'a> {
             Some(b'n') => self.expect_lit("null").map(|_| Value::Null),
             Some(b't') => self.expect_lit("true").map(|_| Value::Bool(true)),
             Some(b'f') => self.expect_lit("false").map(|_| Value::Bool(false)),
-            Some(b'-') | Some(b'0'..=b'9') => Err(Error::format(
-                "JSON numbers are not allowed; integers must be decimal strings",
-            )),
+            Some(b'-') | Some(b'0'..=b'9') => Err(Error::format("JSON numbers are not allowed; integers must be decimal strings")),
             Some(_) => Err(Error::format("unexpected character in JSON")),
             None => Err(Error::format("unexpected end of JSON")),
         }
@@ -364,9 +362,7 @@ pub struct Fields<'a> {
 
 impl<'a> Fields<'a> {
     pub fn new(v: &'a Value, what: &'static str) -> Result<Self> {
-        let obj = v
-            .as_object()
-            .ok_or_else(|| Error::format(format!("{what}: expected JSON object")))?;
+        let obj = v.as_object().ok_or_else(|| Error::format(format!("{what}: expected JSON object")))?;
         Ok(Fields { obj, used: Vec::new(), what })
     }
 
@@ -381,15 +377,12 @@ impl<'a> Fields<'a> {
     }
 
     pub fn value(&mut self, key: &str) -> Result<&'a Value> {
-        self.mark(key)
-            .ok_or_else(|| Error::format(format!("{}: missing field {key}", self.what)))
+        self.mark(key).ok_or_else(|| Error::format(format!("{}: missing field {key}", self.what)))
     }
 
     pub fn str(&mut self, key: &str) -> Result<&'a str> {
         let what = self.what;
-        self.value(key)?
-            .as_str()
-            .ok_or_else(|| Error::format(format!("{what}: field {key} must be a string")))
+        self.value(key)?.as_str().ok_or_else(|| Error::format(format!("{what}: field {key} must be a string")))
     }
 
     /// Field must be present; null maps to None.
@@ -404,9 +397,7 @@ impl<'a> Fields<'a> {
 
     pub fn array(&mut self, key: &str) -> Result<&'a Vec<Value>> {
         let what = self.what;
-        self.value(key)?
-            .as_array()
-            .ok_or_else(|| Error::format(format!("{what}: field {key} must be an array")))
+        self.value(key)?.as_array().ok_or_else(|| Error::format(format!("{what}: field {key} must be an array")))
     }
 
     pub fn literal(&mut self, key: &str, expected: &str) -> Result<()> {

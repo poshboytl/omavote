@@ -85,7 +85,7 @@ const YEAR: u64 = 365 * DAY;
 fn grant_now(s: &mut S, owner: &TestOwner, key: &TestKey) -> ControlEnvelope {
     let anchor = s.c.tip_hash;
     let g = s.c.grant(owner, key, YEAR, anchor);
-    s.c.publish_controls(&[g.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&g));
     s.c.mine(HOUR);
     g
 }
@@ -259,14 +259,15 @@ fn s07_same_anchor_conflict_then_recovery() {
     s.c.publish_ballots(m.poll_id(), &[x, y]);
     s.c.mine(HOUR);
     let mut early = s.c.engine.clone();
-    early.process_block(&omavote_core::engine::BlockInput {
-        number: s.c.tip_number + 1,
-        hash: [9; 32],
-        parent_hash: s.c.tip_hash,
-        clock_ms: m.end_ms + 1,
-        transactions: vec![],
-    })
-    .unwrap();
+    early
+        .process_block(&omavote_core::engine::BlockInput {
+            number: s.c.tip_number + 1,
+            hash: [9; 32],
+            parent_hash: s.c.tip_hash,
+            clock_ms: m.end_ms + 1,
+            transactions: vec![],
+        })
+        .unwrap();
     let conflicted = tally::result_core(&early, &m.poll_id()).unwrap().unwrap();
     assert_eq!(status(&conflicted, &a), FinalStatus::Conflict);
     assert_eq!(conflicted.tally.yes + conflicted.tally.no, 0);
@@ -289,7 +290,10 @@ fn s08_narrow_registry_cannot_revive_revoked_grant() {
     let r = s.c.revoke(&a, RevokeMode::StopOnly, anchor);
     s.c.publish_controls(&[r]);
     s.c.mine(HOUR);
-    let narrow = AuthRegistry::new(vec![omavote_core::adapter::EVM_PERSONAL_MESSAGE_V1.into()], vec![omavote_core::adapter::EVM_PERSONAL_MESSAGE_V1.into()]);
+    let narrow = AuthRegistry::new(
+        vec![omavote_core::adapter::EVM_PERSONAL_MESSAGE_V1.into()],
+        vec![omavote_core::adapter::EVM_PERSONAL_MESSAGE_V1.into()],
+    );
     // The proposer must use an adapter the poll accepts, so an EVM owner proposes.
     let proposer = TestOwner::evm_omnilock("evm-proposer", &s.c.net);
     let start = s.c.clock_ms + 5 * HOUR;
@@ -301,7 +305,7 @@ fn s08_narrow_registry_cannot_revive_revoked_grant() {
     open(&mut s, &m);
     let anchor = s.c.tip_hash;
     let v = s.c.delegate_ballot(&m, &a, &g, &k, Action::Yes, anchor);
-    s.c.publish_ballots(m.poll_id(), &[v.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&v));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&v)).contains(&"NO_ACTIVE_GRANT"));
     assert!(s.c.engine.current_grant(&s.c.policy.hash(), &a.id()).is_none());
@@ -317,10 +321,10 @@ fn s09_lagging_revoke_is_stale_until_resigned() {
     s.c.mine(HOUR);
     let att_anchor = s.c.tip_hash;
     let phished = s.c.grant(&a, &attacker, YEAR, att_anchor);
-    s.c.publish_controls(&[phished.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&phished));
     s.c.mine(HOUR);
     let stale = s.c.revoke(&a, RevokeMode::StopAndCancelOpen, lagging_anchor);
-    s.c.publish_controls(&[stale.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&stale));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&stale)).contains(&"STALE_AUTHORIZATION"));
     assert_eq!(s.c.engine.current_grant(&s.c.policy.hash(), &a.id()).map(|g| g.key_id), Some(attacker.id()));
@@ -341,7 +345,7 @@ fn s10_withheld_phished_grant_is_stale() {
     let phished = s.c.grant(&a, &attacker, YEAR, anchor);
     s.c.mine(HOUR);
     let honest = grant_now(&mut s, &a, &k);
-    s.c.publish_controls(&[phished.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&phished));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&phished)).contains(&"STALE_AUTHORIZATION"));
     assert_eq!(s.c.engine.current_grant(&s.c.policy.hash(), &a.id()).map(|g| g.authorization_id), Some(auth_id(&honest)));
@@ -367,7 +371,7 @@ fn s11_revoke_then_grant_out_of_order_keeps_old_votes() {
     let g2 = s.c.grant(&a, &k2, YEAR, anchor_g);
     s.c.publish_controls(&[g2]);
     s.c.mine(HOUR);
-    s.c.publish_controls(&[revoke.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&revoke));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&revoke)).contains(&"STALE_AUTHORIZATION"));
     close(&mut s, &m);
@@ -391,10 +395,17 @@ fn s12_grant_cancel_replaces_key_and_cancels_open_votes() {
     s.c.mine(HOUR);
     let anchor = s.c.tip_hash;
     let g2 = s.c.grant_cancel(&a, &k2, YEAR, anchor);
-    s.c.publish_controls(&[g2.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&g2));
     s.c.mine(HOUR);
     let mut snap = s.c.engine.clone();
-    snap.process_block(&omavote_core::engine::BlockInput { number: s.c.tip_number + 1, hash: [8; 32], parent_hash: s.c.tip_hash, clock_ms: m.end_ms, transactions: vec![] }).unwrap();
+    snap.process_block(&omavote_core::engine::BlockInput {
+        number: s.c.tip_number + 1,
+        hash: [8; 32],
+        parent_hash: s.c.tip_hash,
+        clock_ms: m.end_ms,
+        transactions: vec![],
+    })
+    .unwrap();
     let rc = tally::result_core(&snap, &m.poll_id()).unwrap().unwrap();
     assert_eq!(status(&rc, &a), FinalStatus::CancelledByControl);
     assert_eq!(status(&rc, &b), FinalStatus::Yes, "barriers are per owner");
@@ -421,7 +432,14 @@ fn s13_new_key_overrides_only_after_it_votes() {
     s.c.mine(HOUR);
     let g2 = grant_now(&mut s, &a, &k2);
     let mut snap = s.c.engine.clone();
-    snap.process_block(&omavote_core::engine::BlockInput { number: s.c.tip_number + 1, hash: [7; 32], parent_hash: s.c.tip_hash, clock_ms: m.end_ms, transactions: vec![] }).unwrap();
+    snap.process_block(&omavote_core::engine::BlockInput {
+        number: s.c.tip_number + 1,
+        hash: [7; 32],
+        parent_hash: s.c.tip_hash,
+        clock_ms: m.end_ms,
+        transactions: vec![],
+    })
+    .unwrap();
     assert_eq!(status(&tally::result_core(&snap, &m.poll_id()).unwrap().unwrap(), &a), FinalStatus::Yes);
     // The new grant's ballot ranks higher even though its ballot anchor is older than nothing else.
     let anchor = s.c.tip_hash;
@@ -444,7 +462,7 @@ fn s14_older_grant_after_newer_revoke() {
     let r = s.c.revoke(&a, RevokeMode::StopOnly, anchor);
     s.c.publish_controls(&[r]);
     s.c.mine(HOUR);
-    s.c.publish_controls(&[g.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&g));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&g)).contains(&"STALE_AUTHORIZATION"));
     assert!(s.c.engine.current_grant(&s.c.policy.hash(), &a.id()).is_none());
@@ -484,7 +502,7 @@ fn s16_withheld_grant_after_revoke() {
     let r = s.c.revoke(&a, RevokeMode::StopAndCancelOpen, anchor);
     s.c.publish_controls(&[r]);
     s.c.mine(HOUR);
-    s.c.publish_controls(&[withheld.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&withheld));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&withheld)).contains(&"STALE_AUTHORIZATION"));
 }
@@ -497,7 +515,7 @@ fn s17_expiry_and_stop_only_keep_votes() {
         let (a, k) = (s.a.clone(), s.k.clone());
         let anchor = s.c.tip_hash;
         let g = s.c.grant(&a, &k, 2 * DAY, anchor);
-        s.c.publish_controls(&[g.clone()]);
+        s.c.publish_controls(std::slice::from_ref(&g));
         s.c.mine(HOUR);
         let m = poll(&mut s);
         open(&mut s, &m);
@@ -515,7 +533,7 @@ fn s17_expiry_and_stop_only_keep_votes() {
         }
         let anchor = s.c.tip_hash;
         let late = s.c.delegate_ballot(&m, &a, &g, &k, Action::No, anchor);
-        s.c.publish_ballots(m.poll_id(), &[late.clone()]);
+        s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&late));
         s.c.mine(HOUR);
         close(&mut s, &m);
         assert_eq!(status(&result(&s, &m), &a), FinalStatus::Yes);
@@ -575,7 +593,7 @@ fn s19_safe_revoke_after_window() {
     open(&mut s, &m2);
     let anchor = s.c.tip_hash;
     let v2 = s.c.delegate_ballot(&m2, &a, &g, &k, Action::Yes, anchor);
-    s.c.publish_ballots(m2.poll_id(), &[v2.clone()]);
+    s.c.publish_ballots(m2.poll_id(), std::slice::from_ref(&v2));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&v2)).contains(&"NO_ACTIVE_GRANT"));
 }
@@ -681,14 +699,14 @@ fn s24_same_transaction_order() {
         let anchor = s.c.tip_hash;
         let g = s.c.grant(&a, &k, YEAR, anchor);
         let v = s.c.delegate_ballot(&m, &a, &g, &k, Action::Yes, anchor);
-        let gi = s.c.control_item(&[g.clone()]);
-        let vi = TestChain::ballot_item(m.poll_id(), &[v.clone()]);
+        let gi = s.c.control_item(std::slice::from_ref(&g));
+        let vi = TestChain::ballot_item(m.poll_id(), std::slice::from_ref(&v));
         s.c.carriers(if grant_first { vec![gi, vi] } else { vec![vi, gi] });
         s.c.mine(HOUR);
         if !grant_first {
             assert!(codes(&s, &ballot_id(&v)).contains(&"NO_ACTIVE_GRANT"));
             // The rejected appearance did not occupy the ballot id: republishing counts.
-            s.c.publish_ballots(m.poll_id(), &[v.clone()]);
+            s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&v));
             s.c.mine(HOUR);
         }
         close(&mut s, &m);
@@ -704,7 +722,7 @@ fn s25_rejections_do_not_occupy() {
     let anchor = s.c.tip_hash;
     let late_grant = s.c.grant(&a, &k, YEAR, anchor);
     s.c.mine(DAY + HOUR);
-    s.c.publish_controls(&[late_grant.clone()]);
+    s.c.publish_controls(std::slice::from_ref(&late_grant));
     s.c.mine(HOUR);
     assert!(codes(&s, &auth_id(&late_grant)).contains(&"PUBLICATION_EXPIRED"));
 
@@ -713,13 +731,13 @@ fn s25_rejections_do_not_occupy() {
     // Before the window opens.
     let anchor = s.c.tip_hash;
     let early = s.c.delegate_ballot(&m, &a, &g, &k, Action::Yes, anchor);
-    s.c.publish_ballots(m.poll_id(), &[early.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&early));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&early)).contains(&"OUT_OF_WINDOW"));
     open(&mut s, &m);
     // Unknown (non-canonical) anchor.
     let orphan = s.c.direct_ballot(&m, &a, Action::No, [0x55; 32]);
-    s.c.publish_ballots(m.poll_id(), &[orphan.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&orphan));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&orphan)).contains(&"ANCHOR_INVALID"));
     // The early ballot can be republished inside the window and then counts.
@@ -730,7 +748,7 @@ fn s25_rejections_do_not_occupy() {
     // After the window.
     let anchor = s.c.tip_hash;
     let after = s.c.direct_ballot(&m, &a, Action::No, anchor);
-    s.c.publish_ballots(m.poll_id(), &[after.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&after));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&after)).contains(&"OUT_OF_WINDOW"));
 }
@@ -771,7 +789,7 @@ fn s27_no_second_level_delegation() {
     open(&mut s, &m);
     let anchor = s.c.tip_hash;
     let wrong = s.c.delegate_ballot(&m, &b, &g, &k, Action::Yes, anchor);
-    s.c.publish_ballots(m.poll_id(), &[wrong.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&wrong));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&wrong)).contains(&"WRONG_OWNER"));
     // A control for an unpublished policy.
@@ -846,7 +864,7 @@ fn s30_new_key_adapter_without_regrant() {
     let anchor = s.c.tip_hash;
     let v1 = s.c.delegate_ballot(&m1, &a, &g, &k, Action::Yes, anchor);
     let v2 = s.c.delegate_ballot(&m2, &a, &g, &k, Action::Yes, anchor);
-    s.c.publish_ballots(m1.poll_id(), &[v1.clone()]);
+    s.c.publish_ballots(m1.poll_id(), std::slice::from_ref(&v1));
     s.c.publish_ballots(m2.poll_id(), &[v2]);
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&v1)).contains(&"ADAPTER_NOT_ACCEPTED"));
@@ -885,7 +903,7 @@ fn e01_late_manifest_has_no_result() {
     open(&mut s, &m);
     let anchor = s.c.tip_hash;
     let v = s.c.direct_ballot(&m, &a, Action::Yes, anchor);
-    s.c.publish_ballots(m.poll_id(), &[v.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&v));
     s.c.mine(HOUR);
     assert!(s.c.engine.polls[&m.poll_id()].late_manifest);
     assert!(codes(&s, &ballot_id(&v)).contains(&"LATE_MANIFEST"));
@@ -915,7 +933,7 @@ fn e03_deposit_rules() {
     let anchor = s.c.tip_hash;
     let no_deposit = s.c.direct_ballot(&m, &carol, Action::Yes, anchor);
     let cancel_ok = s.c.direct_ballot(&m, &carol, Action::Cancel, anchor);
-    s.c.publish_ballots(m.poll_id(), &[no_deposit.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&no_deposit));
     s.c.mine(HOUR);
     s.c.publish_ballots(m.poll_id(), &[cancel_ok]);
     s.c.mine(HOUR);
@@ -980,7 +998,7 @@ fn e05_duplicate_publication_is_idempotent() {
     let v = s.c.direct_ballot(&m, &a, Action::Yes, anchor);
     s.c.publish_ballots(m.poll_id(), &[v.clone(), v.clone()]);
     s.c.mine(HOUR);
-    s.c.publish_ballots(m.poll_id(), &[v.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&v));
     s.c.mine(HOUR);
     close(&mut s, &m);
     let rc = result(&s, &m);
@@ -997,7 +1015,7 @@ fn e06_ballot_anchor_must_not_predate_manifest() {
     let m = poll(&mut s);
     open(&mut s, &m);
     let v = s.c.direct_ballot(&m, &a, Action::Yes, old_anchor);
-    s.c.publish_ballots(m.poll_id(), &[v.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&v));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&v)).contains(&"ANCHOR_INVALID"));
 }
@@ -1015,7 +1033,7 @@ fn e07_delegate_cutoff() {
     let anchor = s.c.tip_hash;
     let delegate = s.c.delegate_ballot(&m, &a, &g, &k, Action::Yes, anchor);
     let direct = s.c.direct_ballot(&m, &a, Action::No, anchor);
-    s.c.publish_ballots(m.poll_id(), &[delegate.clone()]);
+    s.c.publish_ballots(m.poll_id(), std::slice::from_ref(&delegate));
     s.c.mine(HOUR);
     assert!(codes(&s, &ballot_id(&delegate)).contains(&"OUT_OF_WINDOW"));
     s.c.publish_ballots(m.poll_id(), &[direct]);
@@ -1062,7 +1080,14 @@ fn e08_admission_timing_and_conflicts() {
     let (mut s, gov) = gov_setup();
     let m = poll_with(&mut s, 10 * HOUR, rules(), TestChain::default_registry());
     let anchor = s.c.tip_hash;
-    let admit = s.c.record(&gov.roles, Role::Coordinator, &[&gov.coordinator], Some(m.poll_id()), RecordDetail::Admission { admitted: true }, anchor);
+    let admit = s.c.record(
+        &gov.roles,
+        Role::Coordinator,
+        &[&gov.coordinator],
+        Some(m.poll_id()),
+        RecordDetail::Admission { admitted: true },
+        anchor,
+    );
     s.c.publish_records(m.poll_id(), &[admit]);
     s.c.mine(HOUR);
     open(&mut s, &m);
@@ -1074,7 +1099,14 @@ fn e08_admission_timing_and_conflicts() {
     let m2 = poll_with(&mut s, 3 * HOUR, rules(), TestChain::default_registry());
     s.c.mine(HOUR);
     let anchor = s.c.tip_hash;
-    let admit2 = s.c.record(&gov.roles, Role::Coordinator, &[&gov.coordinator], Some(m2.poll_id()), RecordDetail::Admission { admitted: true }, anchor);
+    let admit2 = s.c.record(
+        &gov.roles,
+        Role::Coordinator,
+        &[&gov.coordinator],
+        Some(m2.poll_id()),
+        RecordDetail::Admission { admitted: true },
+        anchor,
+    );
     s.c.publish_records(m2.poll_id(), &[admit2]);
     s.c.mine(HOUR);
     open(&mut s, &m2);
@@ -1087,25 +1119,53 @@ fn e09_old_records_cannot_override_new_status() {
     let m = poll(&mut s);
     let c = &gov.committee;
     let anchor_old = s.c.tip_hash;
-    let cleared = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[1]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::Cleared }, anchor_old);
-    let withheld_cleared = s.c.record(&gov.roles, Role::Committee, &[&c[1], &c[2]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::Cleared }, anchor_old);
-    s.c.publish_records(m.poll_id(), &[cleared.clone()]);
+    let cleared = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[1]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::Cleared },
+        anchor_old,
+    );
+    let withheld_cleared = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[1], &c[2]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::Cleared },
+        anchor_old,
+    );
+    s.c.publish_records(m.poll_id(), std::slice::from_ref(&cleared));
     s.c.mine(HOUR);
     let anchor = s.c.tip_hash;
-    let hold = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[2]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution }, anchor);
+    let hold = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[2]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution },
+        anchor,
+    );
     s.c.publish_records(m.poll_id(), &[hold]);
     s.c.mine(HOUR);
     // Replay of the old CLEARED, and first publication of a withheld older CLEARED.
-    s.c.publish_records(m.poll_id(), &[cleared.clone()]);
+    s.c.publish_records(m.poll_id(), std::slice::from_ref(&cleared));
     s.c.publish_records(m.poll_id(), &[withheld_cleared]);
     s.c.mine(HOUR);
     assert!(matches!(tally::governance(&s.c.engine, &m.poll_id()), GovernanceView::Status(GovStatus::HoldExecution, _)));
     assert!(codes(&s, &cleared.body.record_id()).contains(&"DUPLICATE"));
     // Below threshold and expired records are rejected.
     let anchor = s.c.tip_hash;
-    let weak = s.c.record(&gov.roles, Role::Committee, &[&c[0]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::Cleared }, anchor);
+    let weak = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::Cleared },
+        anchor,
+    );
     s.c.mine(4 * DAY);
-    s.c.publish_records(m.poll_id(), &[weak.clone()]);
+    s.c.publish_records(m.poll_id(), std::slice::from_ref(&weak));
     s.c.mine(HOUR);
     let wc = codes(&s, &weak.body.record_id());
     assert!(wc.contains(&"INVALID_SIGNATURE") || wc.contains(&"PUBLICATION_EXPIRED"), "{wc:?}");
@@ -1126,12 +1186,26 @@ fn e10_result_attestation_checks_hash_and_outcome() {
     assert!(rc.tally.passed);
     let c = &gov.committee;
     let anchor = s.c.tip_hash;
-    let wrong = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[1]], Some(m.poll_id()), RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: false }, anchor);
+    let wrong = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[1]],
+        Some(m.poll_id()),
+        RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: false },
+        anchor,
+    );
     s.c.publish_records(m.poll_id(), &[wrong]);
     s.c.mine(HOUR);
     assert!(matches!(tally::attestation(&s.c.engine, &m.poll_id(), Some(&rc)), AttestationView::Disputed(_)));
     let anchor = s.c.tip_hash;
-    let right = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[1]], Some(m.poll_id()), RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: true }, anchor);
+    let right = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[1]],
+        Some(m.poll_id()),
+        RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: true },
+        anchor,
+    );
     s.c.publish_records(m.poll_id(), &[right]);
     s.c.mine(HOUR);
     assert!(matches!(tally::attestation(&s.c.engine, &m.poll_id(), Some(&rc)), AttestationView::Confirmed(_)));
@@ -1153,18 +1227,39 @@ fn e11_roles_update_chain() {
     s.c.publish_roles(&new_roles);
     s.c.mine(HOUR);
     let anchor = s.c.tip_hash;
-    let upd = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[2]], None, RecordDetail::RolesUpdate { new_roles_hash: new_roles.roles_hash() }, anchor);
+    let upd = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[2]],
+        None,
+        RecordDetail::RolesUpdate { new_roles_hash: new_roles.roles_hash() },
+        anchor,
+    );
     s.c.publish_records(new_roles.roles_hash(), &[upd]);
     s.c.mine(HOUR);
     assert_eq!(s.c.engine.current_roles, Some(new_roles.roles_hash()));
     // Records signed under the superseded roles are rejected.
     let m = poll(&mut s);
     let anchor = s.c.tip_hash;
-    let stale = s.c.record(&gov.roles, Role::Committee, &[&c[0], &c[1]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution }, anchor);
-    s.c.publish_records(m.poll_id(), &[stale.clone()]);
+    let stale = s.c.record(
+        &gov.roles,
+        Role::Committee,
+        &[&c[0], &c[1]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution },
+        anchor,
+    );
+    s.c.publish_records(m.poll_id(), std::slice::from_ref(&stale));
     s.c.mine(HOUR);
     assert!(codes(&s, &stale.body.record_id()).contains(&"ROLES_MISMATCH"));
-    let fresh = s.c.record(&new_roles, Role::Committee, &[&new_member, &c[1]], Some(m.poll_id()), RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution }, anchor);
+    let fresh = s.c.record(
+        &new_roles,
+        Role::Committee,
+        &[&new_member, &c[1]],
+        Some(m.poll_id()),
+        RecordDetail::GovernanceStatus { status: GovStatus::HoldExecution },
+        anchor,
+    );
     s.c.publish_records(m.poll_id(), &[fresh]);
     s.c.mine(HOUR);
     assert!(matches!(tally::governance(&s.c.engine, &m.poll_id()), GovernanceView::Status(GovStatus::HoldExecution, _)));

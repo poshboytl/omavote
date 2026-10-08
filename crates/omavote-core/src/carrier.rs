@@ -208,9 +208,7 @@ pub fn decode_payload(header: &Header, witness: &[u8]) -> Result<Payload> {
 /// Build a batch payload (relay side).
 pub fn batch_payload(envelopes: Vec<Value>) -> Vec<u8> {
     jcs_bytes(&Value::Object(
-        Object::new()
-            .with("protocol_version", Value::str(PROTOCOL_VERSION))
-            .with("envelopes", Value::Array(envelopes)),
+        Object::new().with("protocol_version", Value::str(PROTOCOL_VERSION)).with("envelopes", Value::Array(envelopes)),
     ))
 }
 

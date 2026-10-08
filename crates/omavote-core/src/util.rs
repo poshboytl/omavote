@@ -23,9 +23,7 @@ pub fn to_hex_bare(bytes: &[u8]) -> String {
 
 /// Parse canonical hex: `0x` prefix, lowercase digits, even length.
 pub fn parse_hex(s: &str, what: &str) -> Result<Vec<u8>> {
-    let body = s
-        .strip_prefix("0x")
-        .ok_or_else(|| Error::format(format!("{what}: hex must start with 0x")))?;
+    let body = s.strip_prefix("0x").ok_or_else(|| Error::format(format!("{what}: hex must start with 0x")))?;
     if body.len() % 2 != 0 {
         return Err(Error::format(format!("{what}: odd hex length")));
     }
@@ -72,8 +70,7 @@ pub fn parse_dec_u128(s: &str, what: &str) -> Result<u128> {
     if s.len() > 1 && s.starts_with('0') {
         return Err(Error::format(format!("{what}: leading zero")));
     }
-    s.parse::<u128>()
-        .map_err(|_| Error::format(format!("{what}: decimal out of range")))
+    s.parse::<u128>().map_err(|_| Error::format(format!("{what}: decimal out of range")))
 }
 
 pub fn parse_dec_u64(s: &str, what: &str) -> Result<u64> {
@@ -90,14 +87,7 @@ pub fn utc_ms(ms: u64) -> Result<String> {
     let (date, rem) = civil_from_ms(ms)?;
     let secs = rem / 1000;
     let millis = rem % 1000;
-    Ok(format!(
-        "{}T{:02}:{:02}:{:02}.{:03}Z",
-        date,
-        secs / 3600,
-        (secs % 3600) / 60,
-        secs % 60,
-        millis
-    ))
+    Ok(format!("{}T{:02}:{:02}:{:02}.{:03}Z", date, secs / 3600, (secs % 3600) / 60, secs % 60, millis))
 }
 
 /// Render the UTC calendar date `YYYY-MM-DD` of a millisecond timestamp.
@@ -122,7 +112,7 @@ fn civil_from_ms(ms: u64) -> Result<(String, u64)> {
     if !(1..=9999).contains(&y) {
         return Err(Error::format("timestamp outside year range 0001-9999"));
     }
-    Ok((format!("{:04}-{:02}-{:02}", y, m, d), rem as u64))
+    Ok((format!("{:04}-{:02}-{:02}", y, m, d), rem))
 }
 
 #[cfg(test)]

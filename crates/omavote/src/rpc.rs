@@ -99,10 +99,7 @@ impl Rpc {
     pub async fn tx_status(&self, tx_hash: &str) -> Result<(String, Option<String>)> {
         let v = self.call("get_transaction", json!([tx_hash])).await?;
         let st = &v["tx_status"];
-        Ok((
-            st["status"].as_str().unwrap_or("unknown").to_string(),
-            st["block_hash"].as_str().map(str::to_string),
-        ))
+        Ok((st["status"].as_str().unwrap_or("unknown").to_string(), st["block_hash"].as_str().map(str::to_string)))
     }
 
     /// Indexer cell search by lock script (plain cells only when `plain` is set).
@@ -117,5 +114,4 @@ impl Rpc {
         let cursor = v["last_cursor"].as_str().map(str::to_string);
         Ok((objects, cursor))
     }
-
 }

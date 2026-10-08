@@ -345,7 +345,15 @@ fn control(
     ControlEnvelope { proof: owner.sign(&t), body }
 }
 
-fn record(net: &NetworkParams, roles: &ProcessRoles, role: Role, signers: &[&TestKey], poll: Option<Hash32>, detail: RecordDetail, a: &Anchor) -> ProcessEnvelope {
+fn record(
+    net: &NetworkParams,
+    roles: &ProcessRoles,
+    role: Role,
+    signers: &[&TestKey],
+    poll: Option<Hash32>,
+    detail: RecordDetail,
+    a: &Anchor,
+) -> ProcessEnvelope {
     let body = RecordDraft {
         genesis: net.genesis_hash,
         roles_hash: roles.roles_hash(),
@@ -437,11 +445,7 @@ pub async fn run(args: DemoArgs) -> Result<()> {
     } else {
         d.say("no Omnilock identity declared for this devnet: skipping the EVM owner");
     }
-    let plan = TxPlan {
-        cell_deps: vec![d.cells.secp_dep_group.clone(), d.cells.dao_code.clone()],
-        outputs,
-        ..Default::default()
-    };
+    let plan = TxPlan { cell_deps: vec![d.cells.secp_dep_group.clone(), d.cells.dao_code.clone()], outputs, ..Default::default() };
     let (deposit_tx, deposit_block, _) = d.send(plan, &[], "Nervos DAO deposits for five owners").await?;
 
     // --- Policy and process roles ----------------------------------------------
@@ -503,11 +507,20 @@ pub async fn run(args: DemoArgs) -> Result<()> {
     let proposal_text = text::proposal_text(&manifest, &alice.lock, &net).unwrap();
     let payload = ManifestPayload {
         manifest: manifest.clone(),
-        proposer_proofs: vec![ProposerProof { owner_lock: alice.lock.clone(), auth_adapter: alice.adapter.into(), proof: alice.sign(&proposal_text) }],
+        proposer_proofs: vec![ProposerProof {
+            owner_lock: alice.lock.clone(),
+            auth_adapter: alice.adapter.into(),
+            proof: alice.sign(&proposal_text),
+        }],
     };
     let poll_id = manifest.poll_id();
     d.submit(&payload.to_json()).await?;
-    d.say(format!("proposal #{} submitted; voting {}s from chain clock {}", omavote_core::messages::short_id(&poll_id), args.period_secs, start_ms));
+    d.say(format!(
+        "proposal #{} submitted; voting {}s from chain clock {}",
+        omavote_core::messages::short_id(&poll_id),
+        args.period_secs,
+        start_ms
+    ));
     d.wait_relay(&[poll_id], &["INCLUDED", "CONFIRMED"], "manifest").await?;
 
     // Admission by the coordinator, early enough for the opening confirmations.
@@ -670,8 +683,13 @@ pub async fn run(args: DemoArgs) -> Result<()> {
         let wanted: Vec<String> = second_ids[..second.len()].iter().map(|h| to_hex(h)).collect();
         d.wait("the replayed ballots to reappear", 60, || async {
             let ballots = d.get(&format!("/api/proposals/{}/ballots", to_hex(&poll_id))).await?;
-            let seen: Vec<String> =
-                ballots["ballots"].as_array().cloned().unwrap_or_default().iter().filter_map(|b| b["ballot_id"].as_str().map(str::to_string)).collect();
+            let seen: Vec<String> = ballots["ballots"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|b| b["ballot_id"].as_str().map(str::to_string))
+                .collect();
             Ok(if wanted.iter().all(|w| seen.contains(w)) { Some(()) } else { None })
         })
         .await?;
@@ -699,7 +717,10 @@ pub async fn run(args: DemoArgs) -> Result<()> {
     expect(row(&erin)?["final_status"] == "CANCELLED_BY_CONTROL", "Erin's REVOKE STOP+CANCEL-OPEN cancels the delegate ballot")?;
     let mut yes = 210_000u64;
     if let Some(c) = &carol {
-        expect(row(c)?["final_status"] == "YES" && row(c)?["counted_weight_shannon"] == ckb(80_000), "Carol's direct YES overrides her delegate's NO")?;
+        expect(
+            row(c)?["final_status"] == "YES" && row(c)?["counted_weight_shannon"] == ckb(80_000),
+            "Carol's direct YES overrides her delegate's NO",
+        )?;
         yes += 80_000;
     }
     expect(rc["yes_shannon"] == ckb(yes) && rc["no_shannon"] == "0" && rc["outcome"] == "PASS", "tally and outcome")?;

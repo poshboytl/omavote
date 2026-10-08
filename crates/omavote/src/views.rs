@@ -7,8 +7,8 @@ use anyhow::{anyhow, Result};
 use omavote_core::engine::{BallotAppearance, Diagnostic, Engine, GrantInfo, PollState, Position, RecordAppearance};
 use omavote_core::messages::{short_id, Authority, ControlAction};
 use omavote_core::tally::{
-    self, admission, attestation, governance, proposer_eligible, AdmissionView, AttestationView, FinalStatus, GovernanceView,
-    ResultCore, Selection,
+    self, admission, attestation, governance, proposer_eligible, AdmissionView, AttestationView, FinalStatus, GovernanceView, ResultCore,
+    Selection,
 };
 use omavote_core::util::{to_hex, Hash32};
 use serde_json::{json, Value};
@@ -87,11 +87,7 @@ pub fn poll_status(engine: &Engine, poll: &PollState, rc: Option<&ResultCore>) -
         (Some(_), Some(c)) => c,
     };
     let poll_id = poll.manifest.poll_id();
-    if engine
-        .records
-        .iter()
-        .any(|r| r.poll_id == Some(poll_id) && r.record_type == omavote_core::messages::RecordType::Execution)
-    {
+    if engine.records.iter().any(|r| r.poll_id == Some(poll_id) && r.record_type == omavote_core::messages::RecordType::Execution) {
         return "EXECUTED";
     }
     if let AttestationView::Disputed(_) | AttestationView::Conflict = attestation(engine, &poll_id, rc) {
@@ -134,9 +130,7 @@ fn ballot_status(engine: &Engine, poll: &PollState, b: &BallotAppearance, sel: O
                     .streams
                     .get(&(m.auth_policy_hash(), b.owner_id))
                     .map(|s| {
-                        s.barriers
-                            .iter()
-                            .any(|bar| bar.clock_ms >= m.start_ms && bar.clock_ms < m.end_ms && b.position <= bar.position)
+                        s.barriers.iter().any(|bar| bar.clock_ms >= m.start_ms && bar.clock_ms < m.end_ms && b.position <= bar.position)
                     })
                     .unwrap_or(false);
                 if barred {

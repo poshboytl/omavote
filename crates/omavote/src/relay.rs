@@ -14,7 +14,9 @@ use omavote_core::carrier::{self, Kind};
 use omavote_core::engine::Engine;
 use omavote_core::hash::{ckb_hash, domain, domain_hash};
 use omavote_core::json::{self as cj, jcs_bytes, parse, Object};
-use omavote_core::messages::{Action, Authority, BallotEnvelope, ControlAction, ControlEnvelope, KeyDescriptor, ManifestPayload, ProcessEnvelope, ProcessRoles};
+use omavote_core::messages::{
+    Action, Authority, BallotEnvelope, ControlAction, ControlEnvelope, KeyDescriptor, ManifestPayload, ProcessEnvelope, ProcessRoles,
+};
 use omavote_core::molecule::OutPoint;
 use omavote_core::network::NetworkParams;
 use omavote_core::text;
@@ -543,7 +545,12 @@ fn plan_carriers(items: &[RelayItem]) -> Result<Vec<PlannedCarrier>> {
                     trial.push(env.clone());
                     let too_big = carrier::batch_payload(trial).len() > carrier::MAX_WITNESS_BYTES;
                     if !batch.is_empty() && (batch.len() >= carrier::MAX_ENVELOPES || too_big) {
-                        out.push(PlannedCarrier { kind, scope, payload: carrier::batch_payload(std::mem::take(&mut batch)), item_ids: std::mem::take(&mut ids) });
+                        out.push(PlannedCarrier {
+                            kind,
+                            scope,
+                            payload: carrier::batch_payload(std::mem::take(&mut batch)),
+                            item_ids: std::mem::take(&mut ids),
+                        });
                     }
                     batch.push(env);
                     ids.push(item.id);
@@ -683,12 +690,8 @@ impl Publisher {
         }
         let mut carriers = plan_carriers(&live)?;
         carriers.truncate(self.cfg.max_carriers_per_tx.max(1));
-        let busy: HashSet<String> = self
-            .store
-            .relay_txs_with_status(&["BROADCAST", "INCLUDED"])?
-            .into_iter()
-            .flat_map(|t| t.inputs)
-            .collect();
+        let busy: HashSet<String> =
+            self.store.relay_txs_with_status(&["BROADCAST", "INCLUDED"])?.into_iter().flat_map(|t| t.inputs).collect();
         let cells: Vec<LiveCell> = txbuilder::live_cells(&self.rpc, &self.wallet.lock)
             .await?
             .into_iter()
@@ -720,7 +723,6 @@ impl Publisher {
         tracing::info!(tx = %hash, carriers = carriers.len(), items = item_ids.len(), fee = built.fee, "relay transaction broadcast");
         Ok(())
     }
-
 }
 
 fn op_key(op: &OutPoint) -> String {
@@ -731,15 +733,15 @@ fn op_key(op: &OutPoint) -> String {
 mod tests {
     use super::*;
 
-/// Verify a receipt signature and return the signer's compressed public key.
-fn verify_receipt(receipt: &Value) -> Result<String> {
-    let body = crate::util::from_serde(&receipt["body"])?;
-    let sig = omavote_core::util::parse_hex_fixed::<65>(receipt["signature"].as_str().unwrap_or(""), "signature")
-        .map_err(|e| anyhow!("{e}"))?;
-    let digest = domain_hash(domain::RELAY_RECEIPT, &jcs_bytes(&body));
-    let pk = adapter::recover_digest(&digest, &sig).map_err(|e| anyhow!("{e}"))?;
-    Ok(to_hex(&pk))
-}
+    /// Verify a receipt signature and return the signer's compressed public key.
+    fn verify_receipt(receipt: &Value) -> Result<String> {
+        let body = crate::util::from_serde(&receipt["body"])?;
+        let sig = omavote_core::util::parse_hex_fixed::<65>(receipt["signature"].as_str().unwrap_or(""), "signature")
+            .map_err(|e| anyhow!("{e}"))?;
+        let digest = domain_hash(domain::RELAY_RECEIPT, &jcs_bytes(&body));
+        let pk = adapter::recover_digest(&digest, &sig).map_err(|e| anyhow!("{e}"))?;
+        Ok(to_hex(&pk))
+    }
 
     use omavote_core::testkit::{TestChain, TestKey, TestOwner};
     use omavote_core::types::RulesParams;

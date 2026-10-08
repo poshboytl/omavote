@@ -105,12 +105,8 @@ impl RawTx {
                 })
             })
             .collect::<Result<Vec<_>>>()?;
-        let witnesses = field(t, "witnesses")?
-            .as_array()
-            .ok_or_else(|| anyhow!("witnesses"))?
-            .iter()
-            .map(hex_bytes)
-            .collect::<Result<Vec<_>>>()?;
+        let witnesses =
+            field(t, "witnesses")?.as_array().ok_or_else(|| anyhow!("witnesses"))?.iter().map(hex_bytes).collect::<Result<Vec<_>>>()?;
         Ok(RawTx { hash, inputs, outputs, witnesses })
     }
 }
@@ -273,11 +269,8 @@ pub fn discover_network(genesis: &RawBlock, overrides: &NetworkOverrides) -> Res
         return Ok((known, cells));
     }
     let type_hash = |i: usize, what: &str| -> Result<ScriptId> {
-        let t = tx0
-            .outputs
-            .get(i)
-            .and_then(|o| o.type_.as_ref())
-            .ok_or_else(|| anyhow!("genesis output {i} ({what}) has no type script"))?;
+        let t =
+            tx0.outputs.get(i).and_then(|o| o.type_.as_ref()).ok_or_else(|| anyhow!("genesis output {i} ({what}) has no type script"))?;
         Ok(ScriptId { code_hash: t.hash(), hash_type: HashType::Type })
     };
     let mut net = NetworkParams::devnet(genesis.hash, type_hash(1, "secp256k1")?, type_hash(2, "dao")?);

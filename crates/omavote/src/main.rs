@@ -146,7 +146,10 @@ async fn main() -> Result<()> {
     }
 }
 
-async fn discover(rpc: &rpc::Rpc, overrides: &chain::NetworkOverrides) -> Result<(omavote_core::network::NetworkParams, chain::GenesisCells)> {
+async fn discover(
+    rpc: &rpc::Rpc,
+    overrides: &chain::NetworkOverrides,
+) -> Result<(omavote_core::network::NetworkParams, chain::GenesisCells)> {
     let g = rpc.block_by_number(0).await.context("connect to the node")?.ok_or_else(|| anyhow!("node has no genesis block"))?;
     chain::discover_network(&chain::RawBlock::from_rpc(&g)?, overrides)
 }
@@ -168,7 +171,13 @@ fn lock_file(db: &std::path::Path, suffix: &str, what: &str) -> Result<std::fs::
     }
 }
 
-fn publisher(cfg: &config::Config, rpc: &rpc::Rpc, store: Arc<store::Store>, net: &omavote_core::network::NetworkParams, cells: &chain::GenesisCells) -> Result<relay::Publisher> {
+fn publisher(
+    cfg: &config::Config,
+    rpc: &rpc::Rpc,
+    store: Arc<store::Store>,
+    net: &omavote_core::network::NetworkParams,
+    cells: &chain::GenesisCells,
+) -> Result<relay::Publisher> {
     let key = cfg.relay.key_file.as_ref().ok_or_else(|| anyhow!("[relay] key_file is required"))?;
     let wallet = txbuilder::Wallet::from_key_file(&cfg.path(key), net)?;
     Ok(relay::Publisher {
@@ -262,13 +271,7 @@ async fn serve(cfg: config::Config) -> Result<()> {
         chain: syncer.state.clone(),
         store,
         intake,
-        info: Arc::new(api::ServerInfo {
-            rpc,
-            network: net,
-            genesis: cells,
-            relay_lock,
-            shadow_mode: !cfg.protocol.governance_confirmed,
-        }),
+        info: Arc::new(api::ServerInfo { rpc, network: net, genesis: cells, relay_lock, shadow_mode: !cfg.protocol.governance_confirmed }),
     };
     let web_root = cfg.server.web_root.as_ref().map(|p| cfg.path(p)).filter(|p| p.join("index.html").exists());
     if cfg.server.web_root.is_some() && web_root.is_none() {

@@ -59,18 +59,10 @@ pub fn select(engine: &Engine, poll: &PollState) -> Vec<Selection> {
             let barriers: Vec<_> = engine
                 .streams
                 .get(&(policy, owner_id))
-                .map(|s| {
-                    s.barriers
-                        .iter()
-                        .filter(|bar| bar.clock_ms >= m.start_ms && bar.clock_ms < m.end_ms)
-                        .copied()
-                        .collect()
-                })
+                .map(|s| s.barriers.iter().filter(|bar| bar.clock_ms >= m.start_ms && bar.clock_ms < m.end_ms).copied().collect())
                 .unwrap_or_default();
-            let remaining: Vec<&&BallotAppearance> = ballots
-                .iter()
-                .filter(|b| !barriers.iter().any(|bar: &crate::engine::Barrier| b.position <= bar.position))
-                .collect();
+            let remaining: Vec<&&BallotAppearance> =
+                ballots.iter().filter(|b| !barriers.iter().any(|bar: &crate::engine::Barrier| b.position <= bar.position)).collect();
             if remaining.is_empty() {
                 Selection {
                     owner_id,
@@ -93,7 +85,13 @@ fn pick(owner_id: Hash32, ballots: Vec<((u64, u64), &BallotAppearance)>) -> Sele
     let top: Vec<&BallotAppearance> = ballots.iter().filter(|(k, _)| *k == max).map(|(_, b)| *b).collect();
     let first = top[0];
     if top.iter().any(|b| b.ballot_id != first.ballot_id) {
-        return Selection { owner_id, status: FinalStatus::Conflict, ballot_id: None, authorization_id: None, authority: Some(first.authority) };
+        return Selection {
+            owner_id,
+            status: FinalStatus::Conflict,
+            ballot_id: None,
+            authorization_id: None,
+            authority: Some(first.authority),
+        };
     }
     let status = match first.action {
         Action::Yes => FinalStatus::Yes,
@@ -127,11 +125,7 @@ pub struct Tally {
 }
 
 /// Tally with the given deposit view (close snapshot or current state for previews).
-pub fn tally_with(
-    engine: &Engine,
-    poll: &PollState,
-    deposits: &dyn Fn(&Hash32) -> Vec<(OutPoint, u64)>,
-) -> Tally {
+pub fn tally_with(engine: &Engine, poll: &PollState, deposits: &dyn Fn(&Hash32) -> Vec<(OutPoint, u64)>) -> Tally {
     let m = &poll.manifest;
     let mut rows = Vec::new();
     let mut counted_cells = Vec::new();
@@ -159,11 +153,8 @@ pub fn tally_with(
     let q = yes + no;
     let quorum_required = m.quorum_required();
     let r = m.approval();
-    let approval_ok = if m.rules.threshold_inclusive {
-        yes * r.denominator >= r.numerator * q
-    } else {
-        yes * r.denominator > r.numerator * q
-    };
+    let approval_ok =
+        if m.rules.threshold_inclusive { yes * r.denominator >= r.numerator * q } else { yes * r.denominator > r.numerator * q };
     let passed = q > 0 && q >= quorum_required && approval_ok;
     Tally { rows, counted_cells, yes, no, quorum_required, passed }
 }
@@ -244,10 +235,7 @@ pub fn result_core(engine: &Engine, poll_id: &Hash32) -> Result<Option<ResultCor
             .with("quorum_required_shannon", Value::str(dec(t.quorum_required)))
             .with("approval_numerator", Value::str(dec(r.numerator)))
             .with("approval_denominator", Value::str(dec(r.denominator)))
-            .with(
-                "threshold_comparison",
-                Value::str(if m.rules.threshold_inclusive { "inclusive" } else { "strict" }),
-            )
+            .with("threshold_comparison", Value::str(if m.rules.threshold_inclusive { "inclusive" } else { "strict" }))
             .with("outcome", Value::str(if t.passed { "PASS" } else { "FAIL" })),
     );
     Ok(Some(ResultCore { value, tally: t }))

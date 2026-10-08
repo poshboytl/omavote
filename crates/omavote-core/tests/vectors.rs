@@ -65,10 +65,8 @@ fn pretty(v: &Value, indent: usize) -> String {
             format!("[\n{}\n{end}]", inner.join(",\n"))
         }
         Value::Object(o) if !o.is_empty() => {
-            let inner: Vec<String> = o
-                .iter()
-                .map(|(k, val)| format!("{pad}{}: {}", to_jcs(&Value::str(k.clone())), pretty(val, indent + 1)))
-                .collect();
+            let inner: Vec<String> =
+                o.iter().map(|(k, val)| format!("{pad}{}: {}", to_jcs(&Value::str(k.clone())), pretty(val, indent + 1))).collect();
             format!("{{\n{}\n{end}}}", inner.join(",\n"))
         }
         other => to_jcs(other),
@@ -107,7 +105,11 @@ fn block_json(b: &BlockInput) -> Value {
                         ("hash", s(to_hex(&t.hash))),
                         (
                             "inputs",
-                            arr(t.inputs.iter().map(|i| obj(vec![("tx_hash", s(to_hex(&i.tx_hash))), ("index", s(dec(i.index)))])).collect()),
+                            arr(t
+                                .inputs
+                                .iter()
+                                .map(|i| obj(vec![("tx_hash", s(to_hex(&i.tx_hash))), ("index", s(dec(i.index)))]))
+                                .collect()),
                         ),
                         (
                             "outputs",
@@ -141,28 +143,13 @@ fn jcs_and_hash_vectors() {
         r#"{"esc":"\u0001\b\f\n\r\t\"\\/","uni":"é中"}"#,
         r#"[ ]"#,
     ];
-    let invalid = [
-        r#"{"a":1}"#,
-        r#"{"a":"1","a":"2"}"#,
-        r#""\ud800""#,
-        "\"a\u{1}\"",
-        r#"{"a":"1"} trailing"#,
-    ];
+    let invalid = [r#"{"a":1}"#, r#"{"a":"1","a":"2"}"#, r#""\ud800""#, "\"a\u{1}\"", r#"{"a":"1"} trailing"#];
     let v = obj(vec![
-        (
-            "jcs",
-            arr(valid
-                .iter()
-                .map(|i| obj(vec![("input", s(*i)), ("canonical", s(to_jcs(&parse(i.as_bytes()).unwrap())))]))
-                .collect()),
-        ),
+        ("jcs", arr(valid.iter().map(|i| obj(vec![("input", s(*i)), ("canonical", s(to_jcs(&parse(i.as_bytes()).unwrap())))])).collect())),
         ("reject", arr(invalid.iter().map(|i| s(*i)).collect())),
         (
             "ckb_hash",
-            arr(["", "abc", "OMAVOTE"]
-                .iter()
-                .map(|i| obj(vec![("utf8", s(*i)), ("hash", s(to_hex(&ckb_hash(i.as_bytes()))))]))
-                .collect()),
+            arr(["", "abc", "OMAVOTE"].iter().map(|i| obj(vec![("utf8", s(*i)), ("hash", s(to_hex(&ckb_hash(i.as_bytes()))))])).collect()),
         ),
         (
             "domain_hash",
@@ -266,19 +253,20 @@ fn scenario() -> Scenario {
     messages.push(("grant".into(), ga.to_json(), to_hex(&ga.body.authorization_id()), text::control_text(&ga.body, &c.net).unwrap()));
 
     let start = c.clock_ms + 6 * HOUR;
-    let payload = c.manifest(&[&alice], start, TestChain::default_registry(), RulesParams { opening_confirmations: 2, ..RulesParams::default() }, 25_000);
+    let payload = c.manifest(
+        &[&alice],
+        start,
+        TestChain::default_registry(),
+        RulesParams { opening_confirmations: 2, ..RulesParams::default() },
+        25_000,
+    );
     let m = payload.manifest.clone();
     c.publish_manifest(&payload);
     c.mine(HOUR);
-    messages.push((
-        "proposal".into(),
-        payload.to_json(),
-        to_hex(&m.poll_id()),
-        text::proposal_text(&m, &alice.lock, &c.net).unwrap(),
-    ));
+    messages.push(("proposal".into(), payload.to_json(), to_hex(&m.poll_id()), text::proposal_text(&m, &alice.lock, &c.net).unwrap()));
     let anchor = c.tip_hash;
     let admit = c.record(&roles, Role::Coordinator, &[&coordinator], Some(m.poll_id()), RecordDetail::Admission { admitted: true }, anchor);
-    c.publish_records(m.poll_id(), &[admit.clone()]);
+    c.publish_records(m.poll_id(), std::slice::from_ref(&admit));
     c.mine(HOUR);
     messages.push(("admission".into(), admit.to_json(), to_hex(&admit.body.record_id()), text::process_text(&admit.body).unwrap()));
     while c.clock_ms < m.start_ms {
@@ -296,9 +284,14 @@ fn scenario() -> Scenario {
     // Bob swaps keys after suspecting a leak: GRANT+CANCEL, then votes No with the new key.
     let anchor = c.tip_hash;
     let gb2 = c.grant_cancel(&bob, &key2, 30 * DAY, anchor);
-    c.publish_controls(&[gb2.clone()]);
+    c.publish_controls(std::slice::from_ref(&gb2));
     c.mine(HOUR);
-    messages.push(("grant_cancel".into(), gb2.to_json(), to_hex(&gb2.body.authorization_id()), text::control_text(&gb2.body, &c.net).unwrap()));
+    messages.push((
+        "grant_cancel".into(),
+        gb2.to_json(),
+        to_hex(&gb2.body.authorization_id()),
+        text::control_text(&gb2.body, &c.net).unwrap(),
+    ));
     let anchor = c.tip_hash;
     let vb2 = c.delegate_ballot(&m, &bob, &gb2, &key2, Action::No, anchor);
     c.publish_ballots(m.poll_id(), &[vb2]);
@@ -306,7 +299,7 @@ fn scenario() -> Scenario {
     // Alice revokes STOP_ONLY: her earlier Yes is kept.
     let anchor = c.tip_hash;
     let ra = c.revoke(&alice, RevokeMode::StopOnly, anchor);
-    c.publish_controls(&[ra.clone()]);
+    c.publish_controls(std::slice::from_ref(&ra));
     c.mine(HOUR);
     messages.push(("revoke".into(), ra.to_json(), to_hex(&ra.body.authorization_id()), text::control_text(&ra.body, &c.net).unwrap()));
     // A rejected late delegate ballot for alice (no active grant).
@@ -319,8 +312,15 @@ fn scenario() -> Scenario {
     }
     let rc = tally::result_core(&c.engine, &m.poll_id()).unwrap().unwrap();
     let anchor = c.tip_hash;
-    let att = c.record(&roles, Role::Committee, &[&committee[0], &committee[2]], Some(m.poll_id()), RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: rc.tally.passed }, anchor);
-    c.publish_records(m.poll_id(), &[att.clone()]);
+    let att = c.record(
+        &roles,
+        Role::Committee,
+        &[&committee[0], &committee[2]],
+        Some(m.poll_id()),
+        RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: rc.tally.passed },
+        anchor,
+    );
+    c.publish_records(m.poll_id(), std::slice::from_ref(&att));
     c.mine(HOUR);
     messages.push(("result_attestation".into(), att.to_json(), to_hex(&att.body.record_id()), text::process_text(&att.body).unwrap()));
     Scenario { chain: c, manifest: m, payload, roles, messages }
@@ -341,7 +341,12 @@ fn message_vectors() {
         ]),
     ];
     for (name, json, id, signed_text) in &sc.messages {
-        items.push(obj(vec![("name", s(name.clone())), ("envelope", json.clone()), ("id", s(id.clone())), ("signed_text", s(signed_text.clone()))]));
+        items.push(obj(vec![
+            ("name", s(name.clone())),
+            ("envelope", json.clone()),
+            ("id", s(id.clone())),
+            ("signed_text", s(signed_text.clone())),
+        ]));
     }
     let key = TestKey::evm("voting-key");
     items.push(obj(vec![
@@ -357,7 +362,12 @@ fn message_vectors() {
 #[test]
 fn carrier_vectors() {
     let payload = carrier::batch_payload(vec![obj(vec![("body", obj(vec![])), ("proof", obj(vec![]))])]);
-    let h = carrier::Header { kind: Kind::BallotBatch, scope_id: [0x5a; 32], payload_hash: carrier::payload_hash(Kind::BallotBatch, &payload), witness_index: 1 };
+    let h = carrier::Header {
+        kind: Kind::BallotBatch,
+        scope_id: [0x5a; 32],
+        payload_hash: carrier::payload_hash(Kind::BallotBatch, &payload),
+        witness_index: 1,
+    };
     let v = obj(vec![
         ("kind", s("2")),
         ("scope_id", s(to_hex(&h.scope_id))),
@@ -445,7 +455,6 @@ fn replay_vectors() {
     check_or_write("replay.json", &v);
 }
 
-
 /// Edge cases for cross-implementation checks: a selected CANCEL, a same-anchor
 /// CONFLICT, CANCELLED_BY_CONTROL, an Omnilock 0x12 owner (also the proposer) and a
 /// selected YES whose deposit was withdrawn before the close (ZERO_FINAL_WEIGHT).
@@ -482,10 +491,16 @@ fn replay_edge_vectors() {
     c.mine(HOUR);
     let anchor = c.tip_hash;
     let gf = c.grant(&fay, &kf, 30 * DAY, anchor);
-    c.publish_controls(&[gf.clone()]);
+    c.publish_controls(std::slice::from_ref(&gf));
     c.mine(HOUR);
     let start = c.clock_ms + 6 * HOUR;
-    let payload = c.manifest(&[&gus], start, TestChain::default_registry(), RulesParams { opening_confirmations: 2, ..RulesParams::default() }, 10_000);
+    let payload = c.manifest(
+        &[&gus],
+        start,
+        TestChain::default_registry(),
+        RulesParams { opening_confirmations: 2, ..RulesParams::default() },
+        10_000,
+    );
     let m = payload.manifest.clone();
     c.publish_manifest(&payload);
     c.mine(HOUR);
@@ -528,7 +543,14 @@ fn replay_edge_vectors() {
     assert_eq!(tally::zero_final_weight_owners(&rc), vec![hal.id()]);
     assert!(rc.tally.passed);
     let anchor = c.tip_hash;
-    let att = c.record(&roles, Role::Committee, &[&committee[1], &committee[2]], Some(m.poll_id()), RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: true }, anchor);
+    let att = c.record(
+        &roles,
+        Role::Committee,
+        &[&committee[1], &committee[2]],
+        Some(m.poll_id()),
+        RecordDetail::ResultAttestation { result_hash: rc.result_hash(), pass: true },
+        anchor,
+    );
     c.publish_records(m.poll_id(), &[att]);
     c.mine(HOUR);
 
@@ -552,7 +574,12 @@ fn replay_edge_vectors() {
         })
         .collect();
     for o in tally::zero_final_weight_owners(&rc2) {
-        diagnostics.push(obj(vec![("height", s(dec(close))), ("kind", s("owner")), ("id", s(to_hex(&o))), ("code", s("ZERO_FINAL_WEIGHT"))]));
+        diagnostics.push(obj(vec![
+            ("height", s(dec(close))),
+            ("kind", s("owner")),
+            ("id", s(to_hex(&o))),
+            ("code", s("ZERO_FINAL_WEIGHT")),
+        ]));
     }
     let v = obj(vec![
         ("network", network_json(&c.net)),

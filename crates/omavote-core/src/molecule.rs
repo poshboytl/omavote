@@ -292,11 +292,7 @@ mod tests {
 
     #[test]
     fn occupied_capacity_of_carrier_cell() {
-        let out = CellOutput {
-            capacity: 0,
-            lock: Script::new([0; 32], HashType::Type, vec![0; 20]),
-            type_: None,
-        };
+        let out = CellOutput { capacity: 0, lock: Script::new([0; 32], HashType::Type, vec![0; 20]), type_: None };
         // 8 + 32 + 1 + 20 + 78 = 139 bytes => 139 CKB, matching 03 §7.
         assert_eq!(out.occupied_capacity(78), 139 * 100_000_000);
     }

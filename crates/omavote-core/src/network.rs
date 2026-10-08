@@ -71,15 +71,7 @@ impl NetworkParams {
 
     /// Development chain: identities come from the operator's own node.
     pub fn devnet(genesis_hash: Hash32, secp256k1: ScriptId, dao: ScriptId) -> Self {
-        NetworkParams {
-            name: "devnet".into(),
-            genesis_hash,
-            hrp: "ckt".into(),
-            secp256k1,
-            dao,
-            omnilock: None,
-            pw_lock: None,
-        }
+        NetworkParams { name: "devnet".into(), genesis_hash, hrp: "ckt".into(), secp256k1, dao, omnilock: None, pw_lock: None }
     }
 
     pub fn known(genesis_hash: &Hash32) -> Option<Self> {
@@ -112,9 +104,7 @@ impl NetworkParams {
         use crate::json::{Object, Value};
         let id = |x: &Option<ScriptId>| match x {
             Some(i) => Value::Object(
-                Object::new()
-                    .with("code_hash", Value::str(to_hex(&i.code_hash)))
-                    .with("hash_type", Value::str(i.hash_type.as_str())),
+                Object::new().with("code_hash", Value::str(to_hex(&i.code_hash))).with("hash_type", Value::str(i.hash_type.as_str())),
             ),
             None => Value::Null,
         };

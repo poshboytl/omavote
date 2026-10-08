@@ -64,6 +64,7 @@ fn not_found(what: &str) -> Response {
     err(StatusCode::NOT_FOUND, "NOT_FOUND", format!("{what} not found"))
 }
 
+#[allow(clippy::result_large_err)] // the error is the ready HTTP response
 fn id_param(s: &str) -> Result<Hash32, Response> {
     hash_arg(s).map_err(|_| bad("expected a 0x-prefixed 32-byte hex id"))
 }
@@ -144,9 +145,10 @@ async fn status(State(s): State<AppState>) -> Response {
     let (mut v, tip_n) = {
         let st = read(&s.chain);
         let tip_n = st.tip().map(|t| t.0);
-        let last_reorg = st.reorgs.last().map(|r| {
-            json!({"at_ms": dec(r.at_ms), "old_tip": dec(r.old_tip), "fork_height": dec(r.fork_height), "depth": dec(r.depth)})
-        });
+        let last_reorg = st
+            .reorgs
+            .last()
+            .map(|r| json!({"at_ms": dec(r.at_ms), "old_tip": dec(r.old_tip), "fork_height": dec(r.fork_height), "depth": dec(r.depth)}));
         (
             json!({
                 "version": env!("CARGO_PKG_VERSION"),
@@ -267,14 +269,24 @@ async fn anchor(State(s): State<AppState>) -> Response {
             Some((n, h)) if n >= node_tip => break (n, h),
             _ if std::time::Instant::now() < deadline => tokio::time::sleep(std::time::Duration::from_millis(100)).await,
             Some((n, _)) => {
-                return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", format!("index is {} block(s) behind the node; retry shortly", node_tip - n))
+                return err(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "NOT_SYNCED",
+                    format!("index is {} block(s) behind the node; retry shortly", node_tip - n),
+                )
             }
             None => return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "no indexed blocks yet"),
         }
     };
     match s.info.rpc.block_hash(tip_n).await {
         Ok(Some(h)) if h == to_hex(&tip_h) => {}
-        Ok(_) => return err(StatusCode::SERVICE_UNAVAILABLE, "REORGANIZING", "the indexed tip is not on the node's canonical chain; retry shortly"),
+        Ok(_) => {
+            return err(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "REORGANIZING",
+                "the indexed tip is not on the node's canonical chain; retry shortly",
+            )
+        }
         Err(e) => return err(StatusCode::SERVICE_UNAVAILABLE, "NODE_UNAVAILABLE", e),
     }
     let st = read(&s.chain);
@@ -288,7 +300,7 @@ async fn proposals(State(s): State<AppState>) -> Response {
     let st = read(&s.chain);
     let e = &st.engine;
     let mut polls: Vec<_> = e.polls.values().collect();
-    polls.sort_by(|a, b| b.registered.cmp(&a.registered));
+    polls.sort_by_key(|p| std::cmp::Reverse(p.registered));
     let list: Vec<Value> = polls.iter().map(|p| views::poll_summary(e, p)).collect();
     ok(with_at(e, json!({"proposals": list})))
 }
@@ -344,12 +356,8 @@ async fn proposal_records(State(s): State<AppState>, Path(id): Path<String>) -> 
         None => return not_found("proposal"),
     };
     let rc = tally::result_core(e, &id).ok().flatten();
-    let rejected: Vec<Value> = e
-        .diagnostics
-        .iter()
-        .filter(|d| d.kind == "process_record" && d.poll_id == Some(id))
-        .map(views::diag)
-        .collect();
+    let rejected: Vec<Value> =
+        e.diagnostics.iter().filter(|d| d.kind == "process_record" && d.poll_id == Some(id)).map(views::diag).collect();
     ok(with_at(
         e,
         json!({
@@ -642,13 +650,7 @@ fn xml_escape(s: &str) -> String {
 }
 
 fn height_time(st: &ChainState, height: u64) -> String {
-    let clock = st
-        .hashes
-        .get(&height)
-        .and_then(|h| st.engine.block_clock(h))
-        .map(|x| x.1)
-        .or(st.engine.tip.map(|t| t.2))
-        .unwrap_or(0);
+    let clock = st.hashes.get(&height).and_then(|h| st.engine.block_clock(h)).map(|x| x.1).or(st.engine.tip.map(|t| t.2)).unwrap_or(0);
     utc_ms(clock).unwrap_or_else(|_| "1970-01-01T00:00:00.000Z".into())
 }
 
@@ -677,7 +679,12 @@ async fn global_feed(State(s): State<AppState>) -> Response {
             p.registered.height,
             format!("urn:omavote:poll:{}", to_hex(id)),
             format!("Proposal registered: {}", p.manifest.title),
-            format!("#{} voting {} to {}", short_id(id), utc_ms(p.manifest.start_ms).unwrap_or_default(), utc_ms(p.manifest.end_ms).unwrap_or_default()),
+            format!(
+                "#{} voting {} to {}",
+                short_id(id),
+                utc_ms(p.manifest.start_ms).unwrap_or_default(),
+                utc_ms(p.manifest.end_ms).unwrap_or_default()
+            ),
         ));
     }
     for r in &e.records {
@@ -688,7 +695,7 @@ async fn global_feed(State(s): State<AppState>) -> Response {
             r.poll_id.map(|p| format!("poll #{}", short_id(&p))).unwrap_or_default(),
         ));
     }
-    entries.sort_by(|a, b| b.0.cmp(&a.0));
+    entries.sort_by_key(|e| std::cmp::Reverse(e.0));
     entries.truncate(100);
     let updated = e.tip.map(|t| utc_ms(t.2).unwrap_or_default()).unwrap_or_default();
     let list = entries.into_iter().map(|(h, id, t, sm)| (id, t, height_time(&st, h), sm)).collect();
@@ -728,12 +735,18 @@ async fn owner_feed(State(s): State<AppState>, Path(id): Path<String>) -> Respon
             entries.push((
                 ev.position.height,
                 format!("urn:omavote:control:{}", to_hex(&ev.authorization_id)),
-                format!("Authorization control {}", match ev.action { omavote_core::messages::ControlAction::Grant => "GRANT", _ => "REVOKE" }),
+                format!(
+                    "Authorization control {}",
+                    match ev.action {
+                        omavote_core::messages::ControlAction::Grant => "GRANT",
+                        _ => "REVOKE",
+                    }
+                ),
                 format!("outcome {} at block {}", ev.outcome, ev.position.height),
             ));
         }
     }
-    entries.sort_by(|a, b| b.0.cmp(&a.0));
+    entries.sort_by_key(|e| std::cmp::Reverse(e.0));
     entries.truncate(100);
     let updated = e.tip.map(|t| utc_ms(t.2).unwrap_or_default()).unwrap_or_default();
     let list = entries.into_iter().map(|(h, id, t, sm)| (id, t, height_time(&st, h), sm)).collect();

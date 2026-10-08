@@ -47,9 +47,7 @@ pub struct Ratio {
 impl Ratio {
     fn to_json(&self) -> Value {
         Value::Object(
-            Object::new()
-                .with("numerator", Value::str(dec(self.numerator)))
-                .with("denominator", Value::str(dec(self.denominator))),
+            Object::new().with("numerator", Value::str(dec(self.numerator))).with("denominator", Value::str(dec(self.denominator))),
         )
     }
     fn from_json(v: &Value) -> Result<Self> {
@@ -102,12 +100,7 @@ pub struct RulesParams {
 
 impl Default for RulesParams {
     fn default() -> Self {
-        RulesParams {
-            threshold_inclusive: true,
-            opening_confirmations: 100,
-            delegate_cutoff_ms: 0,
-            voting_period_ms: 7 * DAY_MS,
-        }
+        RulesParams { threshold_inclusive: true, opening_confirmations: 100, delegate_cutoff_ms: 0, voting_period_ms: 7 * DAY_MS }
     }
 }
 
@@ -117,18 +110,12 @@ impl RulesProfile {
         for (k, v) in RULE_FIXED {
             o.insert(*k, Value::str(*v));
         }
-        o.insert(
-            "choices",
-            Value::Array(vec![Value::str("YES"), Value::str("NO"), Value::str("CANCEL")]),
-        );
+        o.insert("choices", Value::Array(vec![Value::str("YES"), Value::str("NO"), Value::str("CANCEL")]));
         o.insert("quorum_grant_multiplier", Value::str("3"));
         o.insert("quorum_meta_rule_shannon", Value::str(dec(185_000_000u128 * SHANNON_PER_CKB)));
         o.insert("approval_grant", Ratio { numerator: 51, denominator: 100 }.to_json());
         o.insert("approval_meta_rule", Ratio { numerator: 67, denominator: 100 }.to_json());
-        o.insert(
-            "threshold_comparison",
-            Value::str(if p.threshold_inclusive { "inclusive" } else { "strict" }),
-        );
+        o.insert("threshold_comparison", Value::str(if p.threshold_inclusive { "inclusive" } else { "strict" }));
         o.insert("opening_confirmations", Value::str(dec(p.opening_confirmations)));
         o.insert("delegate_cutoff_ms", Value::str(dec(p.delegate_cutoff_ms)));
         o.insert("voting_period_ms", Value::str(dec(p.voting_period_ms)));
@@ -165,8 +152,7 @@ impl RulesProfile {
         let opening_confirmations = parse_dec_u64(f.str("opening_confirmations")?, "opening_confirmations")?;
         let delegate_cutoff_ms = parse_dec_u64(f.str("delegate_cutoff_ms")?, "delegate_cutoff_ms")?;
         let voting_period_ms = parse_dec_u64(f.str("voting_period_ms")?, "voting_period_ms")?;
-        let proposer_min_deposit_shannon =
-            parse_dec_u64(f.str("proposer_min_deposit_shannon")?, "proposer_min_deposit_shannon")? as u128;
+        let proposer_min_deposit_shannon = parse_dec_u64(f.str("proposer_min_deposit_shannon")?, "proposer_min_deposit_shannon")? as u128;
         f.finish()?;
         if voting_period_ms == 0 || delegate_cutoff_ms > voting_period_ms {
             return Err(Error::format("rules_profile: invalid voting period or delegate cutoff"));
@@ -271,11 +257,7 @@ impl AuthRegistry {
 
     pub fn to_json(&self) -> Value {
         let arr = |v: &Vec<String>| Value::Array(v.iter().map(|s| Value::str(s.clone())).collect());
-        Value::Object(
-            Object::new()
-                .with("owner_adapters", arr(&self.owner_adapters))
-                .with("key_adapters", arr(&self.key_adapters)),
-        )
+        Value::Object(Object::new().with("owner_adapters", arr(&self.owner_adapters)).with("key_adapters", arr(&self.key_adapters)))
     }
 
     pub fn from_json(v: &Value) -> Result<Self> {
@@ -408,24 +390,15 @@ impl ManifestDraft {
             .with("title", Value::str(self.title.clone()))
             .with("signing_title", Value::str(self.signing_title.clone()))
             .with("content_hash", Value::str(to_hex(&self.content_hash)))
-            .with(
-                "content_locations",
-                Value::Array(self.content_locations.iter().map(|s| Value::str(s.clone())).collect()),
-            )
+            .with("content_locations", Value::Array(self.content_locations.iter().map(|s| Value::str(s.clone())).collect()))
             .with("forum_topic_id", Value::str(self.forum_topic_id.clone()))
             .with("forum_revision", Value::str(self.forum_revision.clone()))
             .with("discussion_evidence_hash", opt_hash(&self.discussion_evidence_hash))
             .with("budget_ckb_shannon", Value::str(dec(self.budget_ckb_shannon)))
             .with("quorum_base_shannon", Value::str(dec(self.quorum_base_shannon)))
             .with("payment_terms_hash", opt_hash(&self.payment_terms_hash))
-            .with(
-                "recipient_lock_script",
-                self.recipient_lock_script.as_ref().map(|s| s.to_json()).unwrap_or(Value::Null),
-            )
-            .with(
-                "proposer_owner_locks",
-                Value::Array(self.proposer_owner_locks.iter().map(|s| s.to_json()).collect()),
-            )
+            .with("recipient_lock_script", self.recipient_lock_script.as_ref().map(|s| s.to_json()).unwrap_or(Value::Null))
+            .with("proposer_owner_locks", Value::Array(self.proposer_owner_locks.iter().map(|s| s.to_json()).collect()))
             .with("rules_profile", self.rules.to_json().clone())
             .with("rules_hash", Value::str(to_hex(&self.rules.hash())))
             .with("auth_registry", self.auth_registry.to_json())
@@ -513,11 +486,7 @@ impl Manifest {
             Value::Null => None,
             other => Some(Script::from_json(other)?),
         };
-        let proposer_owner_locks = f
-            .array("proposer_owner_locks")?
-            .iter()
-            .map(Script::from_json)
-            .collect::<Result<Vec<_>>>()?;
+        let proposer_owner_locks = f.array("proposer_owner_locks")?.iter().map(Script::from_json).collect::<Result<Vec<_>>>()?;
         let rules = RulesProfile::from_json(f.value("rules_profile")?)?;
         let rules_hash = hash_field(&mut f, "rules_hash")?;
         let auth_registry = AuthRegistry::from_json(f.value("auth_registry")?)?;

@@ -27,12 +27,7 @@ pub struct CkbHasher(blake2b_simd::State);
 
 impl CkbHasher {
     pub fn new() -> Self {
-        CkbHasher(
-            blake2b_simd::Params::new()
-                .hash_length(32)
-                .personal(CKB_PERSONALIZATION)
-                .to_state(),
-        )
+        CkbHasher(blake2b_simd::Params::new().hash_length(32).personal(CKB_PERSONALIZATION).to_state())
     }
     pub fn update(&mut self, data: &[u8]) -> &mut Self {
         self.0.update(data);
@@ -89,17 +84,11 @@ mod tests {
     #[test]
     fn ckb_hash_of_empty_input() {
         // Well-known CKB constant: blake2b-256("") with personalization "ckb-default-hash".
-        assert_eq!(
-            to_hex(&ckb_hash(b"")),
-            "0x44f4c69744d5f8c55d642062949dcae49bc4e7ef43d388c5a12f42b5633d163e"
-        );
+        assert_eq!(to_hex(&ckb_hash(b"")), "0x44f4c69744d5f8c55d642062949dcae49bc4e7ef43d388c5a12f42b5633d163e");
     }
 
     #[test]
     fn keccak_of_empty_input() {
-        assert_eq!(
-            to_hex(&keccak256(b"")),
-            "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-        );
+        assert_eq!(to_hex(&keccak256(b"")), "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
     }
 }

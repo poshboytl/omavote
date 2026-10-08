@@ -245,9 +245,7 @@ impl Store {
                 Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?, r.get::<_, i64>(3)?))
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
-        rows.into_iter()
-            .map(|(t, i, cap, ch)| Ok((OutPoint { tx_hash: h(&t)?, index: i as u32 }, cap as u64, ch as u64)))
-            .collect()
+        rows.into_iter().map(|(t, i, cap, ch)| Ok((OutPoint { tx_hash: h(&t)?, index: i as u32 }, cap as u64, ch as u64))).collect()
     }
 
     // -- relay ---------------------------------------------------------------
@@ -313,9 +311,7 @@ impl Store {
     pub fn relay_counts(&self) -> Result<Vec<(String, u64)>> {
         let c = self.c();
         let mut st = c.prepare("SELECT status, COUNT(*) FROM relay_items GROUP BY status ORDER BY status")?;
-        let v = st
-            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)? as u64)))?
-            .collect::<rusqlite::Result<Vec<_>>>()?;
+        let v = st.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)? as u64)))?.collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(v)
     }
 

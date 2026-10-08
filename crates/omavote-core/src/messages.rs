@@ -109,9 +109,7 @@ impl KeyDescriptor {
     /// Wallet-visible address used in the GRANT text (docs/11 §4.1).
     pub fn key_display(&self, network: &NetworkParams) -> Result<String> {
         match self {
-            KeyDescriptor::Secp256k1 { public_key } => {
-                network.address(&network.secp256k1.with_args(blake160(public_key).to_vec()))
-            }
+            KeyDescriptor::Secp256k1 { public_key } => network.address(&network.secp256k1.with_args(blake160(public_key).to_vec())),
             KeyDescriptor::EvmEoa { address } => Ok(crate::address::eip55(address)),
         }
     }
@@ -708,9 +706,7 @@ impl RecordDetail {
                 .with("result_hash", Value::str(to_hex(result_hash)))
                 .with("outcome", Value::str(if *pass { "PASS" } else { "FAIL" })),
             RecordDetail::Execution { tx_hash } => Object::new().with("tx_hash", Value::str(to_hex(tx_hash))),
-            RecordDetail::RolesUpdate { new_roles_hash } => {
-                Object::new().with("new_roles_hash", Value::str(to_hex(new_roles_hash)))
-            }
+            RecordDetail::RolesUpdate { new_roles_hash } => Object::new().with("new_roles_hash", Value::str(to_hex(new_roles_hash))),
         };
         Value::Object(o)
     }
@@ -727,10 +723,7 @@ impl RecordDetail {
             },
             RecordType::Notice => {
                 let code = f.str("code")?.to_string();
-                if code.is_empty()
-                    || code.len() > 16
-                    || !code.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
-                {
+                if code.is_empty() || code.len() > 16 || !code.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_') {
                     return Err(Error::format("notice code must be 1-16 of A-Z, 0-9, _"));
                 }
                 RecordDetail::Notice { code }
@@ -892,13 +885,7 @@ impl ProcessEnvelope {
                 Value::Array(
                     self.proofs
                         .iter()
-                        .map(|(k, p)| {
-                            Value::Object(
-                                Object::new()
-                                    .with("signer_key_id", Value::str(to_hex(k)))
-                                    .with("proof", p.to_json()),
-                            )
-                        })
+                        .map(|(k, p)| Value::Object(Object::new().with("signer_key_id", Value::str(to_hex(k))).with("proof", p.to_json())))
                         .collect(),
                 ),
             ),
@@ -939,25 +926,22 @@ pub struct ManifestPayload {
 impl ManifestPayload {
     pub fn to_json(&self) -> Value {
         Value::Object(
-            Object::new()
-                .with("protocol_version", Value::str(PROTOCOL_VERSION))
-                .with("manifest", self.manifest.to_json().clone())
-                .with(
-                    "proposer_proofs",
-                    Value::Array(
-                        self.proposer_proofs
-                            .iter()
-                            .map(|p| {
-                                Value::Object(
-                                    Object::new()
-                                        .with("owner_lock", p.owner_lock.to_json())
-                                        .with("auth_adapter", Value::str(p.auth_adapter.clone()))
-                                        .with("proof", p.proof.to_json()),
-                                )
-                            })
-                            .collect(),
-                    ),
+            Object::new().with("protocol_version", Value::str(PROTOCOL_VERSION)).with("manifest", self.manifest.to_json().clone()).with(
+                "proposer_proofs",
+                Value::Array(
+                    self.proposer_proofs
+                        .iter()
+                        .map(|p| {
+                            Value::Object(
+                                Object::new()
+                                    .with("owner_lock", p.owner_lock.to_json())
+                                    .with("auth_adapter", Value::str(p.auth_adapter.clone()))
+                                    .with("proof", p.proof.to_json()),
+                            )
+                        })
+                        .collect(),
                 ),
+            ),
         )
     }
 

@@ -125,11 +125,7 @@ pub async fn replay(o: &ReplayOptions) -> Result<Replay> {
 
 /// Deposit set of an engine as comparable tuples.
 fn deposit_set(engine: &omavote_core::engine::Engine) -> std::collections::BTreeSet<(String, u32, String, u64)> {
-    engine
-        .dao_cells
-        .iter()
-        .map(|(op, c)| (to_hex(&op.tx_hash), op.index, to_hex(&c.owner_id), c.capacity))
-        .collect()
+    engine.dao_cells.iter().map(|(op, c)| (to_hex(&op.tx_hash), op.index, to_hex(&c.owner_id), c.capacity)).collect()
 }
 
 /// Accelerated mode must reproduce the full replay: same deposits at the start height
@@ -147,7 +143,8 @@ async fn compare_modes(opts: &ReplayOptions, fast: &Replay) -> Result<Value> {
     let fast_report = poll_report(&read(&fast.syncer.state).engine, None);
     // Only polls registered above the start height can be compared: objects at or
     // below it are, by the mode's precondition, not supposed to exist.
-    let after_start = |p: &&Value| p["registered_height"].as_str().and_then(|h| h.parse::<u64>().ok()).map(|h| h > b.height).unwrap_or(false);
+    let after_start =
+        |p: &&Value| p["registered_height"].as_str().and_then(|h| h.parse::<u64>().ok()).map(|h| h > b.height).unwrap_or(false);
     let hashes = |r: &Vec<Value>| -> std::collections::BTreeMap<String, Value> {
         r.iter().filter(after_start).map(|p| (p["poll_id"].as_str().unwrap_or("").to_string(), p["result_hash"].clone())).collect()
     };

@@ -4,14 +4,15 @@
 //! texts carried in envelopes are never trusted.
 
 use crate::error::{Error, Result};
-use crate::messages::{
-    Action, Authority, BallotBody, ControlAction, ControlBody, ProcessRecord, RecordDetail, RevokeMode, Role,
-};
-use crate::network::NetworkParams;
-use crate::types::{Manifest, ProposalType, CLOCK_ID, DAO_NAMESPACE, SIG_FORMAT_AUTHORIZATION, SIG_FORMAT_PROCESS, SIG_FORMAT_PROPOSAL, SIG_FORMAT_READABLE, SHANNON_PER_CKB};
 use crate::json::to_jcs;
 use crate::messages::short_id;
+use crate::messages::{Action, Authority, BallotBody, ControlAction, ControlBody, ProcessRecord, RecordDetail, RevokeMode, Role};
 use crate::molecule::Script;
+use crate::network::NetworkParams;
+use crate::types::{
+    Manifest, ProposalType, CLOCK_ID, DAO_NAMESPACE, SHANNON_PER_CKB, SIG_FORMAT_AUTHORIZATION, SIG_FORMAT_PROCESS, SIG_FORMAT_PROPOSAL,
+    SIG_FORMAT_READABLE,
+};
 use crate::util::{to_hex, utc_date, utc_ms};
 
 pub const MAX_SUMMARY_BYTES: usize = 60;
@@ -68,12 +69,7 @@ pub fn ballot_text(m: &Manifest, b: &BallotBody, net: &NetworkParams) -> Result<
     if b.rules_hash != m.rules_hash() || b.genesis != m.genesis {
         return Err(Error::rule("ballot network or rules do not match the manifest"));
     }
-    let summary = check_summary(format!(
-        "OMAVOTE VOTE {} #{} {}",
-        b.action.as_str(),
-        short_id(&b.poll_id),
-        budget_summary(m)
-    ))?;
+    let summary = check_summary(format!("OMAVOTE VOTE {} #{} {}", b.action.as_str(), short_id(&b.poll_id), budget_summary(m)))?;
     let choice = match b.action {
         Action::Yes => "YES (Approve)",
         Action::No => "NO (Reject)",

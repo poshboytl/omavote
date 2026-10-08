@@ -111,8 +111,7 @@ impl LiveCell {
 
     /// Plain capacity cells and our own reclaimable carrier cells.
     pub fn spendable_by_relay(&self) -> bool {
-        self.type_.is_none()
-            && (self.data.is_empty() || (self.data.len() == carrier::HEADER_LEN && self.data.starts_with(carrier::MAGIC)))
+        self.type_.is_none() && (self.data.is_empty() || (self.data.len() == carrier::HEADER_LEN && self.data.starts_with(carrier::MAGIC)))
     }
 }
 
@@ -231,10 +230,7 @@ pub fn sign(tx: &mut Transaction, input_locks: &[Script], keys: &[&Wallet]) -> R
     }
     for (first, members) in groups {
         let lock = &input_locks[first];
-        let key = keys
-            .iter()
-            .find(|k| &k.lock == lock)
-            .ok_or_else(|| anyhow!("no key for input lock {}", to_hex(&lock.args)))?;
+        let key = keys.iter().find(|k| &k.lock == lock).ok_or_else(|| anyhow!("no key for input lock {}", to_hex(&lock.args)))?;
         let placeholder = WitnessArgs { lock: Some(vec![0u8; 65]), input_type: None, output_type: None }.serialize();
         let mut h = CkbHasher::new();
         h.update(&tx_hash);
@@ -260,8 +256,8 @@ pub fn build(plan: &TxPlan, payer: &Wallet, mut available: Vec<LiveCell>, extra_
         }
     }
     available.sort_by(|a, b| b.capacity.cmp(&a.capacity).then(a.out_point.tx_hash.cmp(&b.out_point.tx_hash)));
-    let out_total: u64 = plan.outputs.iter().map(|(o, _)| o.capacity).sum::<u64>()
-        + plan.carriers.len() as u64 * carrier_output(&payer.lock).capacity;
+    let out_total: u64 =
+        plan.outputs.iter().map(|(o, _)| o.capacity).sum::<u64>() + plan.carriers.len() as u64 * carrier_output(&payer.lock).capacity;
     let fixed_total: u64 = plan.fixed_inputs.iter().map(|c| c.capacity).sum();
     let mut selected: Vec<LiveCell> = Vec::new();
     let mut avail = available.into_iter();
@@ -283,11 +279,9 @@ pub fn build(plan: &TxPlan, payer: &Wallet, mut available: Vec<LiveCell>, extra_
         }
         match avail.next() {
             Some(c) => selected.push(c),
-            None => bail!(
-                "insufficient capacity: need {} CKB, have {} CKB",
-                (out_total + fee + MIN_CHANGE) / SHANNONS,
-                in_total / SHANNONS
-            ),
+            None => {
+                bail!("insufficient capacity: need {} CKB, have {} CKB", (out_total + fee + MIN_CHANGE) / SHANNONS, in_total / SHANNONS)
+            }
         }
     }
 }
@@ -353,7 +347,13 @@ mod tests {
     use omavote_core::testkit::test_network;
 
     fn cell(lock: &Script, ckb: u64, tag: u8) -> LiveCell {
-        LiveCell { out_point: OutPoint { tx_hash: [tag; 32], index: 0 }, capacity: ckb * SHANNONS, lock: lock.clone(), type_: None, data: vec![] }
+        LiveCell {
+            out_point: OutPoint { tx_hash: [tag; 32], index: 0 },
+            capacity: ckb * SHANNONS,
+            lock: lock.clone(),
+            type_: None,
+            data: vec![],
+        }
     }
 
     #[test]

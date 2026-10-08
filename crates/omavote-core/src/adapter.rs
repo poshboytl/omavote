@@ -136,13 +136,7 @@ pub const OMNILOCK_AUTH_ETHEREUM: u8 = 0x01;
 pub const OMNILOCK_AUTH_ETHEREUM_DISPLAYING: u8 = 0x12;
 
 /// Verify that `sig` over `text` was produced by whoever controls `owner` under `adapter_id`.
-pub fn verify_owner_signature(
-    adapter_id: &str,
-    network: &NetworkParams,
-    owner: &Script,
-    text: &str,
-    sig: &[u8; 65],
-) -> Result<()> {
+pub fn verify_owner_signature(adapter_id: &str, network: &NetworkParams, owner: &Script, text: &str, sig: &[u8; 65]) -> Result<()> {
     match adapter_id {
         CKB_SECP256K1_MESSAGE_V1 => {
             let pk = recover_ckb(text.as_bytes(), sig)?;
@@ -191,9 +185,7 @@ fn signing_key(secret: &[u8; 32]) -> Result<SigningKey> {
 
 pub fn sign_digest_recoverable(secret: &[u8; 32], digest: &[u8; 32]) -> Result<[u8; 65]> {
     let sk = signing_key(secret)?;
-    let (sig, rid) = sk
-        .sign_prehash_recoverable(digest)
-        .map_err(|_| Error::signature("signing failed"))?;
+    let (sig, rid) = sk.sign_prehash_recoverable(digest).map_err(|_| Error::signature("signing failed"))?;
     let mut out = [0u8; 65];
     out[..64].copy_from_slice(&sig.to_bytes());
     out[64] = rid.to_byte();

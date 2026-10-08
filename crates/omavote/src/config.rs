@@ -119,13 +119,7 @@ fn default_db() -> PathBuf {
 
 impl Default for ServerConfig {
     fn default() -> Self {
-        ServerConfig {
-            listen: default_listen(),
-            database: default_db(),
-            web_root: None,
-            receipt_key_file: None,
-            cors_origins: Vec::new(),
-        }
+        ServerConfig { listen: default_listen(), database: default_db(), web_root: None, receipt_key_file: None, cors_origins: Vec::new() }
     }
 }
 

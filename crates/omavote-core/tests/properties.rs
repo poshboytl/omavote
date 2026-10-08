@@ -24,7 +24,13 @@ fn setup(owners: usize) -> (TestChain, Vec<TestOwner>) {
 
 fn open_poll(c: &mut TestChain, proposer: &TestOwner) -> Manifest {
     let start = c.clock_ms + 4 * HOUR;
-    let p = c.manifest(&[proposer], start, TestChain::default_registry(), RulesParams { opening_confirmations: 2, ..RulesParams::default() }, 1000);
+    let p = c.manifest(
+        &[proposer],
+        start,
+        TestChain::default_registry(),
+        RulesParams { opening_confirmations: 2, ..RulesParams::default() },
+        1000,
+    );
     c.publish_manifest(&p);
     c.mine(HOUR);
     while c.clock_ms < p.manifest.start_ms {

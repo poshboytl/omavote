@@ -13,9 +13,7 @@ use omavote_core::messages::{short_id, BallotBody, ControlBody, KeyDescriptor, P
 use omavote_core::molecule::Script;
 use omavote_core::network::NetworkParams;
 use omavote_core::text;
-use omavote_core::types::{
-    AuthPolicy, AuthRegistry, ConfirmationPolicy, Manifest, ManifestDraft, ProposalType, RulesParams, RulesProfile,
-};
+use omavote_core::types::{AuthPolicy, AuthRegistry, ConfirmationPolicy, Manifest, ManifestDraft, ProposalType, RulesParams, RulesProfile};
 use omavote_core::util::{dec, parse_dec_u128, parse_dec_u64, parse_hash, parse_hex, parse_hex_fixed, to_hex, utc_ms};
 
 fn s(v: impl Into<String>) -> Value {
@@ -31,9 +29,7 @@ fn obj(pairs: Vec<(&str, Value)>) -> Value {
 }
 
 fn field<'a>(p: &'a Value, key: &str) -> Result<&'a Value> {
-    p.as_object()
-        .and_then(|o| o.get(key))
-        .ok_or_else(|| Error::format(format!("missing parameter {key}")))
+    p.as_object().and_then(|o| o.get(key)).ok_or_else(|| Error::format(format!("missing parameter {key}")))
 }
 
 fn str_param<'a>(p: &'a Value, key: &str) -> Result<&'a str> {

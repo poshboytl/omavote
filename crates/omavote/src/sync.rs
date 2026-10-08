@@ -143,7 +143,7 @@ impl ChainState {
             }
         }
         self.blocks_applied += 1;
-        if cfg.snapshot_every > 0 && number % cfg.snapshot_every == 0 {
+        if cfg.snapshot_every > 0 && number.is_multiple_of(cfg.snapshot_every) {
             self.snapshots.push(Snapshot { height: number, engine: self.engine.clone(), window: self.window.clone() });
             if self.snapshots.len() > cfg.snapshots_kept {
                 self.snapshots.remove(0);

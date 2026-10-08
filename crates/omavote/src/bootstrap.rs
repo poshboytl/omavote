@@ -95,7 +95,12 @@ async fn live_deposits(rpc: &Rpc, net: &NetworkParams, height: u64, cells: &mut 
                     out_point: op,
                     lock: script_from_rpc(&o["output"]["lock"])?,
                     capacity: hex_u64(&o["output"]["capacity"])?,
-                    created: Position { height: created, tx_index: hex_u64(&o["tx_index"])? as u32, output_index: op.index, envelope_index: 0 },
+                    created: Position {
+                        height: created,
+                        tx_index: hex_u64(&o["tx_index"])? as u32,
+                        output_index: op.index,
+                        envelope_index: 0,
+                    },
                 },
             );
         }
@@ -173,7 +178,8 @@ async fn deposits_at(rpc: &Rpc, net: &NetworkParams, height: u64) -> Result<(Vec
         live_deposits(rpc, net, height, &mut cells).await?;
         let (tip2, tip2_hash) = rpc.indexer_tip().await?;
         spent_deposits(rpc, net, height, tip2, &mut cells).await?;
-        let canonical = |n: u64, h: String| async move { Ok::<bool, anyhow::Error>(rpc.block_hash(n).await?.as_deref() == Some(h.as_str())) };
+        let canonical =
+            |n: u64, h: String| async move { Ok::<bool, anyhow::Error>(rpc.block_hash(n).await?.as_deref() == Some(h.as_str())) };
         if canonical(tip, tip_hash).await? && canonical(tip2, tip2_hash.clone()).await? {
             return Ok((cells.into_values().collect(), (tip2, crate::util::hash_arg(&tip2_hash)?)));
         }
@@ -240,7 +246,12 @@ impl Bootstrap {
                         out_point: op,
                         lock: script_from_rpc(&c["lock"])?,
                         capacity: n(&c["capacity"])?,
-                        created: Position { height: n(&c["created_height"])?, tx_index: n(&c["created_tx_index"])? as u32, output_index: op.index, envelope_index: 0 },
+                        created: Position {
+                            height: n(&c["created_height"])?,
+                            tx_index: n(&c["created_tx_index"])? as u32,
+                            output_index: op.index,
+                            envelope_index: 0,
+                        },
                     })
                 })
                 .collect::<Result<_>>()?,
