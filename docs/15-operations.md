@@ -23,7 +23,7 @@ scripts/package.sh   # output/releases/omavote-<commit>-<arch>.tar.gz 及 .sha25
 发布包内容：
 - `bin/omavote`；
 - `web/dist`；
-- 已构建的 `verifier-ts`；
+- 已构建的 `verifier-ts`（不含依赖，使用前在其目录运行 `npm ci --omit=dev`）；
 - `docs/`、`schemas/`、`vectors/`、`deploy/` 与开发链证据；
 - `BUILD.txt`：源码 commit、未提交改动、rustc/node 版本与平台；
 - `SHA256SUMS`。
