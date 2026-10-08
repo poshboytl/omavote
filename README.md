@@ -1,108 +1,142 @@
-# Omavote: lightweight voting for the CKB Community Fund DAO
+# Omavote
 
-Voters sign readable ballots in their own wallets, open relays publish the signed ballots to CKB for free, and anyone can recompute the result from their own node.
+Free, verifiable voting for the [CKB Community Fund DAO](https://talk.nervos.org/c/daos-funding/ckb-community-fund-dao/65).
+
+Depositors vote by signing a short, readable ballot in the wallet they already use. Relays publish the signed ballots to CKB at no cost to the voter. Anyone can recount the result from their own node, so nobody has to trust the voting site.
+
+> **Status: early, not deployed.** Omavote runs end to end on a local CKB dev chain. The protocol is a draft and its wire format is not frozen. A deployment starts in shadow mode, which means its results carry no governance weight. Four things must happen before real use:
+>
+> - testing with real wallets and devices;
+> - a review and a second verifier written by someone else;
+> - a run at mainnet scale;
+> - approval through the Community Fund DAO's own governance process.
+
+## Why
+
+Community Fund DAO votes are weighted by Nervos DAO deposits, but voting has run on a hosted platform where an account is bound to a deposit address. A [committee investigation](https://talk.nervos.org/t/dis-community-fund-dao-v1-1-web5-community-fund-dao-v1-1-web5-optimization-proposal/8973/70) found that rebinding the same address to a second account let one deposit count twice. The tally also could not be checked end to end from public data.
+
+Omavote changes three things:
+
+- each vote is tied to the deposit's own lock script, so there are no accounts to rebind;
+- every signed ballot goes on chain;
+- counting is deterministic, so anyone can redo it.
 
 ## How it works
 
-The design baseline is **readable ballots signed in the voter's wallet, open relays that batch the complete signed ballots onto the chain, deterministic off-chain counting, and independent recomputation by anyone**. Voting power stays linear in existing Nervos DAO deposits. Deposits never move, and the voting result is not wired to automatic treasury payments.
+```
+Wallet (MetaMask, Neuron)
+  │ 1. sign a readable ballot: no fee, the deposit never moves
+  ▼
+Web page (React + the protocol core compiled to WebAssembly)
+  │ 2. submit the signed ballot, get a signed receipt back
+  ▼
+Relay (omavote serve + omavote relay)
+  │ 3. publish the ballot to CKB, paying the fee
+  ▼
+CKB: Nervos DAO deposits are the voting power; ballots are public
+  │ 4. anyone replays the chain with fixed rules
+  ▼
+Result hash: the same from the server, the page and two independent verifiers
+```
 
-The latest requirements confirmed by the project owner:
+- **Free for voters.** Relays pay the transaction fees and the cell capacity. Voting, changing a vote, delegating and revoking never require holding ordinary CKB.
+- **Deposits stay put.** Voters only sign messages. Voting power is the deposit principal at the close of voting.
+- **Readable signatures.** The wallet shows what is being signed. The first line is a summary that fits on a hardware wallet screen, for example `OMAVOTE VOTE YES #… 1000CKB`.
+- **Relays are replaceable.** Any relay, or anyone at all, can publish the same signed ballot unchanged. If one relay goes down or refuses a ballot, the voter submits it to another one without signing again.
+- **Optional delegation.** A depositor can authorize a separate voting key for up to a year, for example so that a Neuron user can vote from a browser wallet. The authorization can be revoked at any time, and voting directly always overrides the delegate.
+- **Change your mind.** Signing a newer ballot replaces the earlier one. Only the latest valid ballot counts.
+- **Payments stay manual.** A result never triggers a payment. The committee still reviews and pays from the treasury.
 
-- **Vote weight**: the calculation stays as it is.
-- **Wallets**: which wallets to support is open to discussion.
-- **Free voting**: voting stays free for users. Relays and operators pay the chain fees and the carrier capacity. Authorizing, renewing, voting, changing a vote, cancelling and recovering never require users to pay fees or hold ordinary CKB.
-- **Backend**: a trusted backend is acceptable only if it is verifiable. Running without one must not make the experience noticeably worse.
+## Try it locally
 
-The first release supports one authorization for many votes: one year (365 chain days) by default and at most 365 days. This replaces the earlier scope of "no authorization in the first release".
+You need:
 
-The main flow for Neuron users:
+- Linux x86_64 (for the dev chain);
+- Rust stable with the `wasm32-unknown-unknown` target and `wasm-pack`;
+- Node.js 22 or later;
+- Python 3;
+- `curl`.
 
-1. Use Neuron once to authorize a second, online wallet.
-2. During the authorization period, sign each vote with that online wallet.
-3. Relays publish the votes for free.
+```bash
+deploy/devnet/setup.sh          # start a local CKB dev chain (downloads ckb v0.210.0), RPC on 127.0.0.1:18114
+(cd web && npm ci && npm run wasm && npm run build)
+deploy/devnet/run-demo.sh       # real transactions: deposits, a proposal, votes, a reorg, an independent recount
+target/release/omavote serve --config devnet/omavote.toml   # then open http://127.0.0.1:18080
+```
 
-The deposits stay at their original address, and the online wallet needs no CKB. A local key generated in the browser remains an optional candidate and is not required for the first release.
+More checks:
 
-## Implementation
+```bash
+scripts/ci.sh                   # everything that needs no chain: format, lint, tests, advisories, both verifiers, the web app
+deploy/devnet/run-e2e.sh        # the full voting flow in a browser on desktop and mobile (Playwright)
+```
 
-Since 2026-10-08 the [technical plan and milestones](docs/13-technical-plan.md) have been implemented and run end to end on a local CKB dev chain:
+## Verify a result yourself
 
-- a Rust protocol core, also compiled to WASM;
-- a server for sync and replay, relaying and the API;
-- `omavote verify`;
-- a web frontend;
-- an independent TypeScript verifier.
+You only need your own CKB node:
 
-The implementation has only run on a dev chain. **It has not been deployed to testnet or mainnet.**
+```bash
+omavote verify --rpc http://127.0.0.1:8114 --poll 0x<poll_id> --check-clock --out bundle.json
+```
+
+You can also check an evidence bundle downloaded from a proposal page, with its chain history. `--rpc` compares every block with your node, which proves that nothing was left out:
+
+```bash
+omavote verify-evidence --input omavote-<id>-bundle-history.json --rpc http://127.0.0.1:8114
+(cd verifier-ts && npm ci && npm run build)
+node verifier-ts/dist/cli.js replay omavote-<id>-bundle-history.json --poll 0x<poll_id>
+```
+
+The second implementation, in TypeScript, was written from the specification and test vectors alone. Both must produce the same `result_hash`.
+
+## Repository
+
+| Path | What it is |
+|---|---|
+| `crates/omavote-core` | The protocol core in Rust, with no I/O: ballots, signatures, replay, tally. The same code is used by the server, the CLI and the browser |
+| `crates/omavote-wasm` | WebAssembly bindings for the browser |
+| `crates/omavote` | The server and CLI: `serve`, `relay`, `verify`, `verify-evidence`, `backup`, `rebuild-index` and dev chain helpers |
+| `web/` | The web app (React, TypeScript, Vite), in English and Chinese |
+| `verifier-ts/` | An independent verifier in TypeScript (CCC) |
+| `schemas/`, `vectors/` | JSON Schema and cross-language test vectors |
+| `deploy/` | systemd units, Caddy, example configuration and dev chain scripts |
+| `evidence/` | Results of the dev chain runs |
+| `docs/` | Design and specification (in Chinese) |
+| `research/` | Research model and sources behind the design |
+
+## Documentation
+
+The design documents are written in Chinese.
 
 | Document | Contents |
 |---|---|
-| [Implementation status](docs/14-implementation-status.md) | Progress, test evidence and the work that still needs people |
-| [Operations](docs/15-operations.md) | Deployment and day-to-day operation |
-| [HTTP API and CLI](docs/16-api.md) | Endpoints and command-line usage |
-| [External acceptance template](docs/17-external-acceptance.md) | How to record tests with real devices, real users and independent audits |
-| [Switch proposal](docs/18-governance-switch-proposal.md) | The official switch, which must go through the existing governance process |
+| [Design guide](docs/00-design-index.md) | Where to start |
+| [Protocol](docs/03-protocol.md) and [authorization](docs/11-authorization.md) | The V2 specification |
+| [Security analysis](docs/04-security.md) | Threats and defences |
+| [Technical plan](docs/13-technical-plan.md) | How the code is built |
+| [Implementation status](docs/14-implementation-status.md) | Tests, evidence and what is left |
+| [Operations](docs/15-operations.md) | Running a deployment |
+| [HTTP API and CLI](docs/16-api.md) | Every endpoint and command |
+| [Acceptance template](docs/17-external-acceptance.md) | How to record tests with real wallets and an independent review |
+| [Switch proposal (draft)](docs/18-governance-switch-proposal.md) | The proposal for moving the official vote to Omavote |
 
-Until the switch is approved, deployments run in shadow mode and their results have no governance effect. A file map is in [docs/14 §10](docs/14-implementation-status.md).
+Some rules are left undefined by the current process and need a decision through governance before launch:
 
-```bash
-cargo test --workspace                # protocol core, server, WASM bindings
-scripts/ci.sh                         # every check that needs no node: format, clippy, tests, RustSec, both verifiers, frontend
-deploy/devnet/setup.sh                # local dev chain (downloads ckb v0.210.0)
-deploy/devnet/run-demo.sh             # end-to-end demo: deposits, authorization, votes, reorg, replay
-deploy/devnet/run-e2e.sh              # browser end-to-end tests on desktop and mobile (Playwright)
-```
+- the exact moment voting power is measured;
+- deposits that are being withdrawn;
+- rounding;
+- the 67% boundary.
 
-## Design documents
+The [design decisions](docs/09-design-update.md) list them.
 
-**Start here: [design guide](docs/00-design-index.md).** It covers the recommendation, how it meets each requirement, every file and the limits of what has been verified.
+## Contributing
 
-**For reviewers: [review guide and checklist](docs/12-review-guide.md).** Read in this order:
+Issues and reviews are welcome. The most useful help right now:
 
-1. The [current decisions](docs/09-design-update.md) and the [complete user journey](docs/10-user-journey.md).
-2. The [main protocol](docs/03-protocol.md) together with [term-limited authorization](docs/11-authorization.md).
-
-The main protocol is an undeployed V2 draft. Four things are unchanged: complete ballots go on chain, relays pay for publishing, results are recomputed independently, and treasury payments stay manual. Two sets of changes are written into the specification ([decision log §9–11](docs/09-design-update.md)):
-
-- the freeze blockers from Claude's second review;
-- the fixes from two colleague reviews.
-
-The implementation tests them against the scenarios in [docs/11 §8](docs/11-authorization.md). The wire format stays unfrozen until signatures from real wallets have been tested ([docs/14 §3](docs/14-implementation-status.md)).
-
-Suggested reading order:
-
-1. [Design and options](docs/02-design.md): what is recommended, why, the alternatives and the trade-offs.
-2. [Rules and research findings](docs/01-research.md): how the rules evolved, past incidents, community views, source checks and compatibility limits.
-3. [Protocol draft](docs/03-protocol.md): the exact semantics of voting power, signatures, evidence, vote changes, deadlines, reorgs and replay.
-4. [Security analysis](docs/04-security.md): attack paths, defences, what cannot be solved, and acceptance requirements.
-5. [Product and delivery plan](docs/05-delivery.md): wallet experience, system boundaries, costs, migration and release gates.
-6. [Executable model](research/README.md): checks the core counting invariants. It **does not implement cryptography, CKB validation or wallet integration**.
-7. [Deeper comparisons](docs/06-alternatives.md): off-chain logs, on-chain evidence, direct transactions, contracts and zkVM, challenge periods and other snapshot policies.
-
-The [source list](research/sources.json) pins the versions of the 14 repositories studied and registers 28 forum topics. The 637 fetched posts were used for search and targeted reading; they were not audited one by one. Upstream source snapshots are not necessarily the versions deployed today.
-
-The most important open items concern the rules, not the tech stack. The current rules leave these details undefined, and they need to be written down:
-
-- a single point in time for counting;
-- the voting power of phase-1 withdrawals;
-- decimal handling;
-- the 67% boundary;
-- the deadline.
-
-The documents keep facts, design recommendations and items that need governance confirmation apart, and never present a recommendation as a rule in force.
-
-Run the research model:
-
-```bash
-python -m unittest discover -s research -p 'test_*.py' -v
-```
-
-Nothing in this repository has deployed a contract, changed DAO rules, or touched a real wallet or the treasury. All transactions so far ran on a local dev chain.
-
-Item-by-item completion evidence for the initial design is in the [completion audit](docs/07-completion-audit.md). Technical inferences that are easy to misuse, and the ACP counterexample, are in the [security assumptions review](docs/08-design-review.md).
-
-This design was chosen as the basis, and the applicable parts of the earlier Claude and Fable drafts were adopted into it. The Fable draft was deleted on 2026-10-08, and `docs/` is the single design baseline.
+- testing with real wallets: Neuron with and without a Ledger, MetaMask on desktop and on mobile;
+- an independent verifier written from the specification;
+- a review of the protocol.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+[MIT](LICENSE)
