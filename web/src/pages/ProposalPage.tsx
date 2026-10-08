@@ -343,6 +343,25 @@ function ProposalView({
           >
             {bundleBusy ? t("common.loading") : t("proposal.downloadBundle")}
           </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={bundleBusy}
+            onClick={async () => {
+              setBundleBusy(true);
+              setBundleError(null);
+              try {
+                const b = await api.bundle(detail.poll_id, true);
+                downloadJson(`omavote-${detail.short_id}-bundle-history.json`, b);
+              } catch (e) {
+                setBundleError(e);
+              } finally {
+                setBundleBusy(false);
+              }
+            }}
+          >
+            {t("proposal.downloadBundleHistory")}
+          </button>
           <Link to={`/verify/${detail.poll_id}`} className="btn">
             {t("proposal.verifyIndependently")}
           </Link>

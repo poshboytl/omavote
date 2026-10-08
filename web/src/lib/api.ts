@@ -158,8 +158,10 @@ export class Api {
     return this.url(`/api/results/${hexId(pollId)}/bundle`);
   }
 
-  bundle(pollId: string): Promise<Record<string, unknown>> {
-    return this.get(`/api/results/${hexId(pollId)}/bundle`);
+  /** Evidence bundle; with `history` it also carries the reduced chain history that
+   * `omavote verify-evidence` and the TypeScript verifier replay. */
+  bundle(pollId: string, history = false): Promise<Record<string, unknown>> {
+    return this.get(`/api/results/${hexId(pollId)}/bundle${history ? "?history=true" : ""}`);
   }
 
   ownerPower(ownerId: string): Promise<OwnerPower> {

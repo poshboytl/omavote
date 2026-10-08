@@ -83,6 +83,14 @@ function VerifyView({ core, network, id }: { core: Core; network: NetworkInfo; i
         <p className="muted small">{t("verifyPage.tsNote")}</p>
       </Section>
 
+      <Section title={t("verifyPage.evidenceTitle")}>
+        <p>{t("verifyPage.evidenceBody")}</p>
+        <Cmd
+          text={`omavote verify-evidence --input omavote-${pid.slice(2, 18) || "<poll>"}-bundle-history.json --poll ${pid} --rpc http://127.0.0.1:8114\nnode verifier-ts/dist/cli.js replay omavote-${pid.slice(2, 18) || "<poll>"}-bundle-history.json --poll ${pid}`}
+        />
+        <p className="muted small">{t("verifyPage.evidenceNote")}</p>
+      </Section>
+
       {pollId && (
         <Section title={t("verifyPage.compareTitle", { tag: pollTag(pollId) })}>
           {detail.loading && !detail.data && <Loading />}

@@ -45,6 +45,8 @@ enum Cmd {
     },
     /// Replay from your own node and print result_core / result_hash (and an evidence bundle).
     Verify(verify::VerifyArgs),
+    /// Replay an evidence bundle (downloaded with ?history=true); --rpc proves its completeness.
+    VerifyEvidence(verify::EvidenceArgs),
     /// Print the network parameters read from the node's genesis block.
     Network {
         #[arg(long, default_value = "http://127.0.0.1:8114")]
@@ -104,6 +106,7 @@ async fn main() -> Result<()> {
         Cmd::Serve { config } => serve(config::Config::load(&config)?).await,
         Cmd::Relay { config } => relay_only(config::Config::load(&config)?).await,
         Cmd::Verify(args) => verify::run(args).await,
+        Cmd::VerifyEvidence(args) => verify::verify_evidence(args).await,
         Cmd::Network { rpc, network_overrides } => {
             let rpc = rpc::Rpc::new(&rpc);
             let (net, cells) = discover(&rpc, &verify::load_overrides(&network_overrides)?).await?;

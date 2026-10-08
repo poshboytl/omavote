@@ -371,23 +371,84 @@ async fn proposal_records(State(s): State<AppState>, Path(id): Path<String>) -> 
     ))
 }
 
-async fn bundle(State(s): State<AppState>, Path(id): Path<String>) -> Response {
+#[derive(Deserialize)]
+struct BundleQuery {
+    /// Include the reduced chain history (replay input for both verifiers).
+    history: Option<bool>,
+}
+
+/// Reduced blocks `[start, to]` from the cache, each with its header timestamp so that
+/// a verifier can recompute the median-time clock itself, plus the accelerated-start
+/// seed when the deployment does not replay from genesis.
+fn history_json(store: &crate::store::Store, to: u64) -> anyhow::Result<(Value, Option<Value>)> {
+    let mut blocks = Vec::new();
+    store.for_each_block(0, to, |row| {
+        let mut v: Value = match &row.body {
+            Some(body) => serde_json::from_str(body)?,
+            None => json!({
+                "number": row.number.to_string(),
+                "hash": to_hex(&row.hash),
+                "parent_hash": to_hex(&row.parent_hash),
+                "clock_ms": row.clock_ms.to_string(),
+                "transactions": [],
+            }),
+        };
+        v["timestamp_ms"] = json!(row.timestamp.to_string());
+        blocks.push(v);
+        Ok(())
+    })?;
+    let seed = store.meta_get("bootstrap")?.filter(|s| !s.is_empty()).map(|s| serde_json::from_str(&s)).transpose()?;
+    Ok((Value::Array(blocks), seed))
+}
+
+async fn bundle(State(s): State<AppState>, Path(id): Path<String>, Query(q): Query<BundleQuery>) -> Response {
     let id = match id_param(&id) {
         Ok(i) => i,
         Err(r) => return r,
     };
-    let st = read(&s.chain);
-    match views::bundle(&st.engine, &id, &views::BundleMeta { mode: "server-cache".into(), generated_at_ms: now_ms() }) {
-        Ok(b) => {
-            let name = format!("attachment; filename=\"omavote-{}-bundle.json\"", short_id(&id));
-            let mut r = ok(b);
-            if let Ok(v) = HeaderValue::from_str(&name) {
-                r.headers_mut().insert(header::CONTENT_DISPOSITION, v);
+    let (built, tip) = {
+        let st = read(&s.chain);
+        (views::bundle(&st.engine, &id, &views::BundleMeta { mode: "server-cache".into(), generated_at_ms: now_ms() }), st.tip())
+    };
+    let mut b = match built {
+        Ok(b) => b,
+        Err(_) => return not_found("proposal"),
+    };
+    let mut name = format!("attachment; filename=\"omavote-{}-bundle.json\"", short_id(&id));
+    if q.history == Some(true) {
+        let Some((tip_n, _, _)) = tip else { return err(StatusCode::SERVICE_UNAVAILABLE, "NOT_SYNCED", "no indexed blocks yet") };
+        // The cache is written right after each indexed batch: wait for the bundle's tip.
+        for _ in 0..30 {
+            if matches!(s.store.block_hash(tip_n), Ok(Some(_))) {
+                break;
             }
-            r
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         }
-        Err(_) => not_found("proposal"),
+        let store = s.store.clone();
+        match tokio::task::spawn_blocking(move || history_json(&store, tip_n)).await {
+            Ok(Ok((blocks, seed))) => {
+                let from = blocks.as_array().and_then(|a| a.first()).and_then(|f| f["number"].as_str()).unwrap_or("0").to_string();
+                b["history"] = json!({
+                    "from_height": from,
+                    "to_height": tip_n.to_string(),
+                    "from_genesis": seed.is_none(),
+                    "completeness": "unproven offline: check against your own node with `omavote verify-evidence --rpc`",
+                });
+                b["blocks"] = blocks;
+                if let Some(seed) = seed {
+                    b["bootstrap"] = seed;
+                }
+                name = format!("attachment; filename=\"omavote-{}-bundle-history.json\"", short_id(&id));
+            }
+            Ok(Err(e)) => return err(StatusCode::INTERNAL_SERVER_ERROR, "STORE", e),
+            Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL", e),
+        }
     }
+    let mut r = ok(b);
+    if let Ok(v) = HeaderValue::from_str(&name) {
+        r.headers_mut().insert(header::CONTENT_DISPOSITION, v);
+    }
+    r
 }
 
 #[derive(Deserialize)]

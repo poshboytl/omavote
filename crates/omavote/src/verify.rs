@@ -300,3 +300,110 @@ pub async fn run(args: VerifyArgs) -> Result<()> {
     }
     Ok(())
 }
+
+#[derive(clap::Args, Debug)]
+pub struct EvidenceArgs {
+    /// Evidence bundle downloaded with `?history=true` (or a block dump).
+    #[arg(long)]
+    pub input: PathBuf,
+    /// Poll to report (default: every poll in the history).
+    #[arg(long)]
+    pub poll: Option<String>,
+    /// Your own node: every block is compared with it and re-reduced, which proves
+    /// that the provided history is complete. Without it the check is offline only.
+    #[arg(long)]
+    pub rpc: Option<String>,
+}
+
+/// Replay an evidence bundle (or dump) and recompute every result. Offline this checks
+/// internal consistency (links, median-time clocks from the timestamps, results);
+/// with `--rpc` it also proves that no protocol data was left out or altered.
+pub async fn verify_evidence(a: EvidenceArgs) -> Result<()> {
+    let v: Value = serde_json::from_slice(&std::fs::read(&a.input).with_context(|| format!("read {}", a.input.display()))?)?;
+    let net = omavote_core::network::NetworkParams::from_json(&crate::util::from_serde(&v["network"])?).map_err(core_err)?;
+    let mut ecfg = EngineConfig::new(net.clone());
+    ecfg.initial_roles_hash = v["initial_roles_hash"].as_str().map(hash_arg).transpose()?;
+    if let Some(d) = v["process_publication_delay_ms"].as_str() {
+        ecfg.process_publication_delay_ms = d.parse().context("process_publication_delay_ms")?;
+    }
+    let mut cfg = SyncConfig::new(ecfg);
+    if let Some(seed) = v.get("bootstrap").filter(|s| !s.is_null()) {
+        cfg.bootstrap = Some(crate::bootstrap::Bootstrap::from_json(seed)?);
+    }
+    let blocks = v["blocks"].as_array().ok_or_else(|| anyhow!("no `blocks`: download the bundle with ?history=true"))?;
+    let rpc = a.rpc.as_deref().map(Rpc::new);
+    if let Some(rpc) = &rpc {
+        let g = rpc.block_hash(0).await?.unwrap_or_default();
+        if g != to_hex(&net.genesis_hash) {
+            bail!("your node's genesis {g} is not the bundle's network");
+        }
+    }
+    let mut st = crate::sync::ChainState::new(&cfg);
+    let mut checked = 0u64;
+    for chunk in blocks.chunks(200) {
+        let raws = match &rpc {
+            Some(rpc) => {
+                let numbers: Vec<u64> =
+                    chunk.iter().map(|b| b["number"].as_str().unwrap_or("x").parse::<u64>()).collect::<Result<_, _>>()?;
+                futures::future::try_join_all(numbers.iter().map(|n| rpc.block_by_number(*n))).await?
+            }
+            None => Vec::new(),
+        };
+        for (i, b) in chunk.iter().enumerate() {
+            let mut b = b.clone();
+            let ts: Option<u64> =
+                b.as_object_mut().and_then(|o| o.remove("timestamp_ms")).and_then(|t| t.as_str().and_then(|s| s.parse().ok()));
+            let input = BlockInput::from_json(&crate::util::from_serde(&b)?).map_err(core_err)?;
+            if let Some(ts) = ts {
+                let expected = st.window.clock_for_next(ts);
+                if expected != input.clock_ms {
+                    bail!("block {}: clock {} differs from the median time {expected} of the timestamps", input.number, input.clock_ms);
+                }
+            }
+            if let Some(raw) = raws.get(i) {
+                let raw = RawBlock::from_rpc(raw.as_ref().ok_or_else(|| anyhow!("your node has no block {}", input.number))?)?;
+                if raw.hash != input.hash || Some(raw.timestamp) != ts {
+                    bail!("block {} differs from your node's canonical block", input.number);
+                }
+                let engine = &st.engine;
+                let reduced = raw.reduce(input.clock_ms, &net, &|op: &omavote_core::molecule::OutPoint| engine.is_tracked(op));
+                if omavote_core::json::to_jcs(&reduced.to_json()) != omavote_core::json::to_jcs(&input.to_json()) {
+                    bail!("block {}: the bundle leaves out or alters protocol data", input.number);
+                }
+                checked += 1;
+            }
+            st.engine.process_block(&input).map_err(core_err).with_context(|| format!("block {}", input.number))?;
+            if let Some(ts) = ts {
+                st.window.push(ts);
+            }
+        }
+    }
+    let wanted: Option<Hash32> = a.poll.as_deref().map(hash_arg).transpose()?;
+    let polls = poll_report(&st.engine, wanted);
+    let claimed = v["result_hash"].as_str().map(str::to_string);
+    let bundle_poll = v["poll"]["poll_id"].as_str().map(str::to_string);
+    let matches_claim = match (&claimed, &bundle_poll) {
+        (Some(c), Some(p)) => {
+            polls.iter().find(|x| x["poll_id"].as_str() == Some(p.as_str())).map(|x| x["result_hash"].as_str() == Some(c.as_str()))
+        }
+        _ => None,
+    };
+    let first = blocks.first().and_then(|b| b["number"].as_str()).unwrap_or("?");
+    let last = blocks.last().and_then(|b| b["number"].as_str()).unwrap_or("?");
+    let report = json!({
+        "verifier": {"name": "omavote verify-evidence", "version": env!("CARGO_PKG_VERSION")},
+        "history": {"from_height": first, "to_height": last, "accelerated_start": cfg.bootstrap.is_some()},
+        "completeness": match &a.rpc {
+            Some(url) => json!(format!("checked: every block equals your node ({url}) and was re-reduced ({checked} blocks)")),
+            None => json!("unproven: offline replay of the provided data only; add --rpc with your own node"),
+        },
+        "bundle_result_hash": claimed,
+        "recomputed_matches_bundle": matches_claim,
+        "polls": polls,
+    });
+    println!("{}", serde_json::to_string_pretty(&report)?);
+    if matches_claim == Some(false) {
+        bail!("the recomputed result_hash differs from the bundle's");
+    }
+    Ok(())
+}
