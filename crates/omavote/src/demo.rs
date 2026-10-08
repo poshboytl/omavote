@@ -241,19 +241,26 @@ impl Demo {
             for id in ids {
                 let path = format!("/api/receipts/{}", to_hex(id));
                 let statuses: Vec<String> = statuses.iter().map(|s| s.to_string()).collect();
-                this.wait(what, 180, || {
-                    let path = path.clone();
-                    let statuses = statuses.clone();
-                    async move {
-                        let v = this.get(&path).await?;
-                        let st = v["items"][0]["status"].as_str().unwrap_or("").to_string();
-                        if st == "EXPIRED" || st == "FAILED" {
-                            bail!("relay item {st}: {}", v["items"][0]["error"]);
+                let block = this
+                    .wait(what, 180, || {
+                        let path = path.clone();
+                        let statuses = statuses.clone();
+                        async move {
+                            let v = this.get(&path).await?;
+                            let st = v["items"][0]["status"].as_str().unwrap_or("").to_string();
+                            if st == "EXPIRED" || st == "FAILED" {
+                                bail!("relay item {st}: {}", v["items"][0]["error"]);
+                            }
+                            let block = v["items"][0]["block_number"].as_str().and_then(|x| x.parse::<u64>().ok());
+                            Ok(if statuses.contains(&st) { Some(block) } else { None })
                         }
-                        Ok(if statuses.contains(&st) { Some(()) } else { None })
-                    }
-                })
-                .await?;
+                    })
+                    .await?;
+                // INCLUDED comes from the relay's view of the node, not from the server's
+                // index; the checks that follow read the index, so let it catch up first.
+                if let Some(block) = block {
+                    this.server_caught_up(block).await?;
+                }
             }
         }
         self.say(format!("{what}: relayed ({} item(s))", ids.len()));
@@ -634,10 +641,6 @@ pub async fn run(args: DemoArgs) -> Result<()> {
         let r = d.get(&format!("/api/receipts/{}", to_hex(&second_ids[0]))).await?;
         let n: u64 = r["items"][0]["block_number"].as_str().and_then(|x| x.parse().ok()).ok_or_else(|| anyhow!("no inclusion block"))?;
         let old_block = r["items"][0]["block_hash"].as_str().unwrap_or("").to_string();
-        // INCLUDED comes from the relay's view of the node, not from the server's index.
-        // If the server has not indexed the block yet when it is removed, it never sees
-        // a rollback, so wait for the index first.
-        d.server_caught_up(n).await?;
         // Truncate to just below the inclusion block. The ballots anchor at the newest
         // block before inclusion, so their anchors stay canonical.
         let target_n = n - 1;
