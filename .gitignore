@@ -10,3 +10,4 @@
 research/__pycache__/
 # Local development chain runtime (keys, data, logs); scripts live in deploy/devnet/
 /devnet/
+/output/

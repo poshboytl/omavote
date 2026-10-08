@@ -152,6 +152,53 @@ impl Store {
         Ok(())
     }
 
+    /// Consistent online copy (SQLite backup API) into a new file readable only by its
+    /// owner, checked with `PRAGMA integrity_check`. Keys are never part of it.
+    pub fn backup_to(&self, dest: &Path) -> Result<()> {
+        if dest.exists() {
+            anyhow::bail!("{} already exists; choose a new file", dest.display());
+        }
+        {
+            let mut opts = std::fs::OpenOptions::new();
+            opts.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::OpenOptionsExt;
+                opts.mode(0o600);
+            }
+            opts.open(dest)?;
+        }
+        let result = (|| -> Result<()> {
+            let src = self.c();
+            let mut dst = Connection::open(dest)?;
+            rusqlite::backup::Backup::new(&src, &mut dst)?.run_to_completion(256, std::time::Duration::from_millis(5), None)?;
+            let check: String = dst.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
+            if check != "ok" {
+                anyhow::bail!("backup integrity check failed: {check}");
+            }
+            Ok(())
+        })();
+        if result.is_err() {
+            let _ = std::fs::remove_file(dest);
+        }
+        result
+    }
+
+    /// Clear the chain index only (blocks, DAO history, accelerated-start seed) and keep
+    /// the relay queue and receipts. Returns the number of queue rows kept.
+    pub fn clear_chain_index(&self) -> Result<u64> {
+        let mut c = self.c();
+        let tx = c.transaction()?;
+        let before: i64 = tx.query_row("SELECT COUNT(*) FROM relay_items", [], |r| r.get(0))?;
+        tx.execute_batch("DELETE FROM blocks; DELETE FROM dao_history; DELETE FROM meta WHERE key = 'bootstrap';")?;
+        let after: i64 = tx.query_row("SELECT COUNT(*) FROM relay_items", [], |r| r.get(0))?;
+        if before != after {
+            anyhow::bail!("queue changed while rebuilding");
+        }
+        tx.commit()?;
+        Ok(after as u64)
+    }
+
     /// Drop every chain-derived table (used when the network or protocol settings change).
     pub fn reset_chain(&self) -> Result<()> {
         self.c().execute_batch("DELETE FROM blocks; DELETE FROM dao_history;")?;

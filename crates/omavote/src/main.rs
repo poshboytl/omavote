@@ -60,6 +60,20 @@ enum Cmd {
     },
     /// Print an example configuration file.
     ExampleConfig,
+    /// Online, consistent copy of the database (queue, receipts, chain cache). Keys are not included.
+    Backup {
+        #[arg(long, default_value = "omavote.toml")]
+        config: PathBuf,
+        /// New file to write (mode 0600).
+        #[arg(long)]
+        out: PathBuf,
+    },
+    /// Clear the chain index (blocks, DAO history, start seed) but keep the relay queue and
+    /// receipts. Stop `serve` and `relay` first; they rebuild the index from the node on start.
+    RebuildIndex {
+        #[arg(long, default_value = "omavote.toml")]
+        config: PathBuf,
+    },
     /// Development chains: end-to-end run with real deposits, relay, votes and replay.
     Demo(demo::DemoArgs),
     /// Sign a text with a key file, as Neuron (`ckb`) or MetaMask personal_sign (`evm`) would.
@@ -113,6 +127,22 @@ async fn main() -> Result<()> {
         }
         Cmd::ExampleConfig => {
             print!("{}", config::EXAMPLE);
+            Ok(())
+        }
+        Cmd::Backup { config, out } => {
+            let cfg = config::Config::load(&config)?;
+            let store = store::Store::open(&cfg.path(&cfg.server.database))?;
+            store.backup_to(&out)?;
+            eprintln!("database copied to {} (back up the key files separately)", out.display());
+            Ok(())
+        }
+        Cmd::RebuildIndex { config } => {
+            let cfg = config::Config::load(&config)?;
+            let db = cfg.path(&cfg.server.database);
+            let _serve = lock_file(&db, "lock", "`omavote serve`")?;
+            let _relay = lock_file(&db, "relay.lock", "a relay publisher")?;
+            let kept = store::Store::open(&db)?.clear_chain_index()?;
+            eprintln!("chain index cleared; {kept} relay queue/receipt rows kept. Start `omavote serve` to replay from your node.");
             Ok(())
         }
         Cmd::Demo(args) => demo::run(args).await,
