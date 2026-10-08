@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { useI18n } from "../app/i18n";
 import { useApp, useLoad } from "../app/state";
 import {
@@ -99,6 +99,14 @@ function ProposalView({
 }) {
   const { t, lang } = useI18n();
   const { api } = useApp();
+  const [params] = useSearchParams();
+  const focusVote = params.get("focus") === "vote";
+  const scrollToVote = () => document.getElementById("vote")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  useEffect(() => {
+    if (!focusVote) return;
+    const timer = setTimeout(scrollToVote, 150);
+    return () => clearTimeout(timer);
+  }, [focusVote]);
   const manifest = detail.manifest_payload.manifest;
   const net = network.network;
   const local = useMemo((): { info: ManifestInfo | null; error: unknown } => {
@@ -131,6 +139,13 @@ function ProposalView({
           <GovernanceBadge v={detail.governance} />
           <AttestationBadge v={detail.attestation} />
         </div>
+        {["OPEN", "ANNOUNCED"].includes(detail.status) && (
+          <div className="page-head-actions">
+            <button type="button" className="btn btn-primary" onClick={scrollToVote}>
+              {detail.status === "OPEN" ? t("proposal.jumpToVote") : t("proposal.jumpToVoteSoon")}
+            </button>
+          </div>
+        )}
       </div>
 
       {local.error !== null ? (

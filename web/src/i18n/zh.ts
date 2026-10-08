@@ -327,8 +327,11 @@ export const zh: Record<MessageKey, string> = {
   "proposals.lead": "已在链上登记的提案。打开一个提案即可阅读事实、查看状态并投票。",
   "proposals.officialNote": "任何人都能登记密码学上有效的 poll。只有标为「已正式准入」的提案才是正式的 DAO 投票；请与论坛和官方目录核对 # 编号。",
   "proposals.none": "还没有登记的提案。",
+  "proposals.voteNow": "去投票",
 
   "proposal.badId": "这不是提案 ID（0x 加 64 位十六进制）。",
+  "proposal.jumpToVote": "去投票",
+  "proposal.jumpToVoteSoon": "准备选票（投票尚未开始）",
   "proposal.tagHint": "每张已签选票的首行都有这个 # 编号，请在钱包或 Ledger 上核对。",
   "proposal.integrityOk": "已用协议核心从 manifest 在本地重算提案 ID：一致。",
   "proposal.integrityBad": "服务器返回的 manifest 哈希为 {local}，与本提案 ID 不符。不要在本页投票。",

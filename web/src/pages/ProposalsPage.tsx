@@ -43,6 +43,13 @@ function ProposalCard({ p, chainClock }: { p: ProposalSummary; chainClock: strin
         <AttestationBadge v={p.attestation} />
         {!p.proposer_eligible && <Badge tone="bad">{t("proposal.proposerIneligible")}</Badge>}
       </div>
+      {p.status === "OPEN" && (
+        <div className="proposal-card-actions">
+          <Link to={`/proposal/${p.poll_id}?focus=vote`} className="btn btn-primary">
+            {t("proposals.voteNow")}
+          </Link>
+        </div>
+      )}
       <div className="proposal-card-grid">
         <div>
           <div className="muted small">{p.proposal_type === "meta_rule" ? t("proposal.typeMeta") : t("proposal.typeGrant")}</div>

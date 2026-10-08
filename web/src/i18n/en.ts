@@ -326,8 +326,11 @@ export const en = {
   "proposals.lead": "Proposals registered on chain. Open one to read the facts, check its status and vote.",
   "proposals.officialNote": "Anyone can register a cryptographically valid poll. Only proposals marked “Officially admitted” are official DAO votes; compare the # number with the forum and the official directory.",
   "proposals.none": "No proposals are registered yet.",
+  "proposals.voteNow": "Vote",
 
   "proposal.badId": "This is not a proposal id (0x followed by 64 hex digits).",
+  "proposal.jumpToVote": "Vote on this proposal",
+  "proposal.jumpToVoteSoon": "Prepare a ballot (voting has not started)",
   "proposal.tagHint": "The # number appears in the first line of every signed ballot. Compare it on your wallet or Ledger.",
   "proposal.integrityOk": "Proposal id recomputed locally from the manifest with the protocol core: it matches.",
   "proposal.integrityBad": "The manifest returned by the server hashes to {local}, not to this proposal id. Do not vote on this page.",

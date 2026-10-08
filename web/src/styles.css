@@ -637,6 +637,11 @@ input.narrow {
   flex-wrap: wrap;
 }
 
+.proposal-card-actions,
+.page-head-actions {
+  margin-top: 0.6rem;
+}
+
 .proposal-title {
   font-size: 1.1rem;
   font-weight: 700;
