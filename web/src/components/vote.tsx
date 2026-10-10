@@ -244,6 +244,7 @@ export function BallotRunner({
           const verify = verifierFor(job.entry)(job.prepared.text, signature);
           if (!verify.ok) {
             update(i, { step: null, result: { signature, verify, envelope: null, submit: null, receipt: null } });
+            for (const rest of batch.slice(k + 1)) update(rest.i, { step: null });
             return;
           }
           await submitSigned(i, signature);

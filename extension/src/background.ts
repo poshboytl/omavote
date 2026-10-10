@@ -138,10 +138,17 @@ chrome.runtime.onMessage.addListener((msg: { kind?: string } | undefined, s, sen
   return true;
 });
 
-chrome.alarms.onAlarm.addListener((a) => void ready().then((svc) => svc.onAlarm(a.name)));
-chrome.windows.onRemoved.addListener((id) => void ready().then((svc) => svc.onWindowRemoved(id)));
-chrome.permissions.onAdded.addListener((p) => void ready().then((svc) => svc.onPermissionsAdded(p.origins ?? [])));
-chrome.permissions.onRemoved.addListener((p) => void ready().then((svc) => svc.onPermissionsRemoved(p.origins ?? [])));
+/** Browser events have nobody to answer: log failures instead of leaving them unhandled. */
+function onEvent(handle: (svc: SignerService) => Promise<void>): void {
+  ready()
+    .then(handle)
+    .catch((e: unknown) => console.warn("omavote signer: event handler failed", e));
+}
+
+chrome.alarms.onAlarm.addListener((a) => onEvent((svc) => svc.onAlarm(a.name)));
+chrome.windows.onRemoved.addListener((id) => onEvent((svc) => svc.onWindowRemoved(id)));
+chrome.permissions.onAdded.addListener((p) => onEvent((svc) => svc.onPermissionsAdded(p.origins ?? [])));
+chrome.permissions.onRemoved.addListener((p) => onEvent((svc) => svc.onPermissionsRemoved(p.origins ?? [])));
 chrome.runtime.onStartup.addListener(() => void ready());
 
 // Re-register host-level injections after an update (registrations persist, but be safe).

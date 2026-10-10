@@ -1,6 +1,7 @@
 // Shared bits of the popup and the confirmation window. All text goes in through
 // textContent: nothing from a page is ever parsed as HTML.
 
+import { MIN_PASSWORD_LENGTH } from "../keystore";
 import type { InternalOp, InternalReply, StateView } from "../protocol";
 import { t, toggleLang, type Key } from "./i18n";
 
@@ -102,7 +103,7 @@ export function createKeyForm(onDone: (s: StateView) => void): HTMLElement {
     notice("warn", t("create.noTransfer")),
     notice("info", t("create.noBackup")),
     form([a.field, b.field], t("create.submit"), async () => {
-      if ([...a.input.value].length < 12) throw new UiError("INVALID_REQUEST", t("create.short"));
+      if ([...a.input.value].length < MIN_PASSWORD_LENGTH) throw new UiError("INVALID_REQUEST", t("create.short"));
       if (a.input.value !== b.input.value) throw new UiError("INVALID_REQUEST", t("create.mismatch"));
       onDone(await send<StateView>({ op: "create", password: a.input.value }));
     }),

@@ -366,6 +366,17 @@ describe("findings of the security review", () => {
   });
 });
 
+describe("findings of the cloud review", () => {
+  it("one failed registration does not skip the other hosts granted together", async () => {
+    const b = new FakeBrowser();
+    const svc = service(b);
+    b.failRegister.add("https://broken.example/*");
+    await expect(svc.onPermissionsAdded(["https://broken.example/*", `${MIRROR}/*`])).resolves.toBeUndefined();
+    expect(b.registered.has(`${MIRROR}/*`)).toBe(true);
+    expect(b.injected).toEqual([`${MIRROR}/*`]);
+  });
+});
+
 async function secretOfUnlocked(b: FakeBrowser): Promise<string> {
   return (await b.session.get<{ secret: string }>("unlocked"))!.secret;
 }

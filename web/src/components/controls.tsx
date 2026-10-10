@@ -79,7 +79,8 @@ export function ControlPanel({
   const { api } = useApp();
   const w = useWallet();
   const x = useExtension();
-  const extKey = x.key?.descriptor.kind === "secp256k1" ? x.key.descriptor.public_key : null;
+  const extWrongNetwork = x.key !== null && x.key.genesis !== network.network.genesis_hash;
+  const extKey = x.key?.descriptor.kind === "secp256k1" && !extWrongNetwork ? x.key.descriptor.public_key : null;
   const errorText = useErrorText();
   const sync = useSyncCheck();
   const net = network.network;
@@ -316,7 +317,11 @@ export function ControlPanel({
             >
               {t("control.extensionRecover")}
             </button>
-            {!extKey && <span className="muted small">{t("control.connectExtensionForKey")}</span>}
+            {!extKey && (
+              <span className="muted small">
+                {extWrongNetwork ? t("vote.extensionWrongNetwork", { genesis: x.key?.genesis ?? "" }) : t("control.connectExtensionForKey")}
+              </span>
+            )}
           </div>
           {key.info && (
             <Notice tone="info" title={t("control.keyCheckTitle")}>

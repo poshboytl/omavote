@@ -1,6 +1,7 @@
 // Toolbar popup: create, unlock and lock the key; connect the current site; list and
 // disconnect sites; change the password or reset the key.
 
+import { MIN_PASSWORD_LENGTH } from "../keystore";
 import { acceptableOrigin, isOfficial, originPattern } from "../origins";
 import type { StateView } from "../protocol";
 import { createKeyForm, el, errorText, form, header, keepAliveOnActivity, nodes, notice, passwordField, send, UiError, unlockForm } from "./common";
@@ -113,7 +114,7 @@ function settingsSection(): HTMLElement {
   const newP = passwordField(t("settings.newPassword"), "new-password");
   const saved = el("p", { class: "status ok" });
   const change = form([oldP.field, newP.field], t("settings.save"), async () => {
-    if ([...newP.input.value].length < 12) throw new UiError("INVALID_REQUEST", t("create.short"));
+    if ([...newP.input.value].length < MIN_PASSWORD_LENGTH) throw new UiError("INVALID_REQUEST", t("create.short"));
     await send({ op: "changePassword", oldPassword: oldP.input.value, newPassword: newP.input.value });
     oldP.input.value = "";
     newP.input.value = "";

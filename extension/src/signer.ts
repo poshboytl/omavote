@@ -600,8 +600,14 @@ export class SignerService {
       const intent = await this.env.session.get<{ origin: string; until: number }>(K.intent);
       for (const pattern of patterns) {
         if (this.config.officialPatterns.includes(pattern) || !isSingleHostPattern(pattern)) continue;
-        await this.env.registerSite(pattern);
-        await this.env.injectIntoOpenTabs(pattern);
+        // Chrome may batch several hosts into one event: one failure must not skip the rest.
+        try {
+          await this.env.registerSite(pattern);
+          await this.env.injectIntoOpenTabs(pattern);
+        } catch (e) {
+          console.warn(`omavote signer: could not inject into ${pattern}`, e);
+          continue;
+        }
         // Only a connect the user started in the toolbar popup also counts as a connection.
         if (intent && intent.until >= this.env.now() && matchesPattern(intent.origin, pattern)) {
           await this.env.session.remove(K.intent);

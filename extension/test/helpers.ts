@@ -135,6 +135,8 @@ export class FakeBrowser {
   /** Host permissions granted at runtime (non-official sites). */
   readonly hostPermissions = new Set<string>();
   failWindows = false;
+  /** Patterns whose content-script registration fails. */
+  readonly failRegister = new Set<string>();
   private nextWindow = 100;
   private counter = 0;
 
@@ -174,6 +176,7 @@ export class FakeBrowser {
         this.alarms.delete(name);
       },
       registerSite: async (p) => {
+        if (this.failRegister.has(p)) throw new Error(`cannot register ${p}`);
         this.registered.add(p);
       },
       unregisterSite: async (p) => {
