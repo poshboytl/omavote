@@ -922,7 +922,9 @@ async function scenario({ A, B, K1, K2, committee, coordinator }) {
     check(/^0x[0-9a-f]{64}$/.test(pageHash ?? ""), "result_hash shown on the page");
     const button = page.getByRole("button", { name: "Download with chain history (large)" });
     await button.scrollIntoViewIfNeeded();
-    const [download] = await Promise.all([page.waitForEvent("download", { timeout: 120_000 }), button.click()]);
+    // The history bundle covers every block since genesis: on a dev chain left running
+    // for days (170k blocks, 51 MB) building it takes minutes, not seconds.
+    const [download] = await Promise.all([page.waitForEvent("download", { timeout: 600_000 }), button.click()]);
     const file = join(OUT, "bundle-history.json");
     await download.saveAs(file);
     notes.bundle = file;
