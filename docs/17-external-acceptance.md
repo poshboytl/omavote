@@ -5,7 +5,7 @@
 以下都不能代替这些门槛：
 - 开发链；
 - 公开测试密钥；
-- 浏览器自动化（`deploy/devnet/run-e2e.sh`，桌面与手机尺寸 Chromium）；
+- 浏览器自动化（`deploy/devnet/run-e2e.sh`，桌面与手机尺寸 Chromium，以及加载开发版签名插件的 Chromium）；
 - 模拟钱包；
 - 本机上的两个服务。
 
@@ -47,6 +47,7 @@
 | Neuron + Ledger | 同上，另测中英文、长标题、三种选择和换钥 | 固件、App 与 Neuron 版本；设备首行实际显示的动作、短提案 ID 或目标密钥、到期日（[11 §4.1](11-authorization.md)）。网页截图不能代替设备显示 |
 | MetaMask 桌面版 | 单独的投票账户；连接、签代理票、断开与重连、切换账户 | 弹窗能核对全文、owner、预算、收款人和选择；切换账户后未完成的草稿被清除；没有出现转账请求 |
 | MetaMask 手机版 | 在 App 内浏览器完成授权、YES→NO→CANCEL、换服务器后重连。前端未接 WalletConnect | 钱包版本、操作与连接次数、签名弹窗全文的录屏。手机尺寸的自动化测试不能代替 |
+| Omavote 签名插件 | Chrome、Brave、Edge、Arc 各一次：安装（记录安装提示的权限文字）；创建 key；官方域名上一键连接；自托管站点从工具栏连接并在 Chrome 权限框同意；Neuron 授权插件 key；一次确认为多个 owner 签票；锁定、自动锁定与解锁；重启浏览器后仍为锁定；断开站点；重置 key 并以 GRANT+CANCEL 换 key（[19](19-signer-extension.md)） | 浏览器与插件版本；安装提示只列官方域名；确认窗口完整显示来源、key 地址、提案编号、选择和全部 owner 地址；GRANT 首行地址缩写与插件显示一致；断开后旧确认窗口不能签名；没有出现转账或交易请求 |
 | 多地址与多笔存款 | 1、3、10 个 owner，其中至少一个有多笔 DAO 存款；分别添加、授权、签票 | 每个地址的本金与笔数、发现方式；遗漏的 owner 与本金单独列出 |
 | EVM owner lock | Omnilock（auth flag 0x01、0x12）与 PW Lock 的普通模式，使用真实存款的完整 script | 实际 args 与 flags 和网络注册表一致；多签、passkey 等不支持的模式被明确拒绝，不被当作普通 EOA |
 

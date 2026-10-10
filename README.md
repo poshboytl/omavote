@@ -68,7 +68,7 @@ More checks:
 
 ```bash
 scripts/ci.sh                   # everything that needs no chain: format, lint, tests, advisories, both verifiers, the web app
-deploy/devnet/run-e2e.sh        # the full voting flow in a browser on desktop and mobile (Playwright)
+deploy/devnet/run-e2e.sh        # the full voting flow in a browser on desktop, mobile and with the signer extension (Playwright)
 ```
 
 ## Verify a result yourself
@@ -98,6 +98,7 @@ The second implementation, in TypeScript, was written from the specification and
 | `crates/omavote` | The server and CLI: `serve`, `relay`, `verify`, `verify-evidence`, `backup`, `rebuild-index` and dev chain helpers |
 | `web/` | The web app (React, TypeScript, Vite), in English and Chinese |
 | `verifier-ts/` | An independent verifier in TypeScript (CCC) |
+| `extension/` | An optional browser extension (Chrome, Manifest V3) that holds one dedicated voting key and signs only delegate ballots |
 | `schemas/`, `vectors/` | JSON Schema and cross-language test vectors |
 | `deploy/` | systemd units, Caddy, example configuration and dev chain scripts |
 | `evidence/` | Results of the dev chain runs |
@@ -119,7 +120,7 @@ The design documents are written in Chinese.
 | [HTTP API and CLI](docs/16-api.md) | Every endpoint and command |
 | [Acceptance template](docs/17-external-acceptance.md) | How to record tests with real wallets and an independent review |
 | [Switch proposal (draft)](docs/18-governance-switch-proposal.md) | The proposal for moving the official vote to Omavote |
-| [Signer extension (draft)](docs/19-signer-extension.md) | An optional browser extension that holds a dedicated voting key |
+| [Signer extension](docs/19-signer-extension.md) | An optional browser extension that holds a dedicated voting key (first version built, not yet published) |
 
 Some rules are left undefined by the current process and need a decision through governance before launch:
 

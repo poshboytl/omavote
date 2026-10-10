@@ -1,4 +1,4 @@
-# 实施进度（2026-10-08 夜间；上午补充 §11）
+# 实施进度（2026-10-08 夜间；上午补充 §11；10-10 补充 §12 签名插件）
 
 实施者：Claude 单人（另有两个子 agent 分别编写前端与独立 TypeScript 验证器）。依据：[13 技术方案](13-technical-plan.md)。代码只在本地 CKB 开发链上运行过，**没有部署到测试网或主网，没有接触任何真实资金**。全部提交都是本地 git 提交，未推送。
 
@@ -201,6 +201,7 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 4. **主网加速同步**：[13 §5](13-technical-plan.md) 的加速模式已实现，并在开发链上与基准回放比对一致。主网上线前仍需在主网节点上实测：一次从创世块的完整回放，以及在上线高度用 `omavote verify --from-height <H0> --compare` 比对。
 5. **体验测试**：8–12 人的实际使用测试；授权、投票、改票、撤回、恢复的免费路径演练。
 6. **影子运行（M7）**：在测试网或主网上与现行投票并行，比对结果后再提交切换提案。
+7. **签名插件**：确定官方域名并写入 `extension/official.json`；在 Chrome、Brave、Edge、Arc 上逐个人工验收（安装提示、官方域名连接、非官方站点工具栏连接、确认窗口、锁定与解锁、浏览器重启、断开）；外部安全审查；上架（§12）。
 
 以上各项的操作步骤与记录格式见 [17：外部验收记录模板](17-external-acceptance.md)；切换提案的草案见 [18](18-governance-switch-proposal.md)，请既有治理逐项确认规则并补齐附件。
 
@@ -221,6 +222,7 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 | `crates/omavote/` | 服务端二进制：`serve`、`relay`、`verify`、`verify-evidence`、`network`、`keygen`、`backup`、`rebuild-index`、`sign`、`demo`、`demo-roles`、`devnet`（命令说明见 [16 §5](16-api.md)） |
 | `web/` | 前端（React + Vite + WASM） |
 | `verifier-ts/` | 独立 TypeScript 验证器（CCC） |
+| `extension/` | 可选的浏览器签名插件（Chrome MV3），见 §12 |
 | `vectors/` | 跨语言测试向量；`external.json` 为外部钱包和 SDK 的输出 |
 | `schemas/` | JSON Schema 与校验脚本 |
 | `deploy/` | systemd、Caddyfile、配置样例、开发链脚本 |
@@ -250,3 +252,20 @@ Rust 测试合计 89 项。一键运行全部（不需要节点）：`scripts/ci
 - **投票进度曲线与选票列表分页**：体验改进，不是验收门槛，留作后续。
 
 **两边都还没有的**：真机钱包、另一个人写的验证器、主网规模实测、治理确认。记录方式见 [17](17-external-acceptance.md)。
+
+## 12. 签名插件（2026-10-10）
+
+按 [19](19-signer-extension.md) 实现，设计先经过第三轮评审（结果异步送回、`activeTab`、注入由 service worker 完成、同锚点拦截、拒绝非活动文档、确认按钮延迟、具体字节上限；签名改用核心 WASM）。代码在 `extension/`，开发分支 `signer-extension`。
+
+| 项目 | 实现 | 验证 |
+|---|---|---|
+| 签名 | WASM 新增 `secp256k1_public_key` 与 `ckb_sign_message`，只包装核心已有的 k256 函数，输出协议格式 `r \|\| s \|\| v`。服务端 `POST /api/core/{method}` 拒绝这两个需要私钥的方法 | Rust 测试：与 `vectors/signatures.json` 逐字节一致；非法私钥（0、n）被拒；远程调用被拒 |
+| 密钥保管 | PBKDF2-HMAC-SHA256 600,000 次，派生 AES-256-GCM 密钥，AAD 绑定版本与公钥；解锁后私钥只在 `chrome.storage.session`；签名前按解锁截止时间判断，alarm 只做辅助 | 6 项测试：往返、每次新盐与 IV、错误口令、篡改密文、换公钥、版本与口令长度 |
+| 请求校验 | 只接受 `{manifest, bodies}`；先按字节上限拒绝，再由核心重建全部票面；内置网络、代理票、本 key、CKB adapter、提案接受该 adapter、同一提案同一选择、owner 不重复、最多 20 张；同锚点不同票拒绝（`ANCHOR_REUSED`） | 9 项测试 |
+| service worker | 页面请求与内部操作按 `sender.origin` 分开；拒绝 iframe、非活动文档与非 https 来源；请求绑定连接版本、key 与文档，确认后签名前再查一遍；结果经 `chrome.tabs.sendMessage` 指定 `documentId` 送回；`permissions.onAdded` 完成注入，只有弹窗发起的连接才记为已连接；重置 key 断开所有站点 | 16 项测试，覆盖 19 §12 的失败场景：伪造内部消息、断开后批准、重置后批准、解锁过期而 alarm 未触发、确认超时、页面已关闭、worker 被回收后结果仍送回、关窗即拒绝、权限撤销 |
+| 界面 | 工具栏弹窗与确认窗口，原生 DOM，中英文；确认范围始终可见，确认按钮在窗口获得焦点 1 秒后才可点；所有页面数据经 `textContent` 显示 | 浏览器端到端 |
+| 构建 | `scripts/build.mjs` 生成 manifest；发布版取 `official.json`（现为占位，`--strict` 拒绝构建），开发版读取本地服务的 `/api/network`；内容脚本单独打包为不含 `import` 的文件 | `scripts/ci.sh` 增加类型检查、单元测试与构建 |
+| 前端 | 新增“Omavote 插件（投票 key）”页签；代理投票组件的 key descriptor 与 adapter 取自签名来源，提案不接受该 adapter 时不发起签名；按 20 张分批，每个签名本地验签后再提交；GRANT 表单可直接用插件 key，也可一步以 GRANT+CANCEL 换新 key；未检测到插件时提示如何连接 | 6 项前端测试；浏览器端到端 |
+| 浏览器端到端 | `web/e2e/devnet-e2e.mjs` 的 `DEVICE=extension` 模式：Chromium 加载开发版插件，完成创建 key、连接、两个 owner 授权、一次确认签两张票、重置 key、GRANT+CANCEL 换 key 并改票。`deploy/devnet/run-e2e.sh` 默认包含这一模式，CI 的开发链任务也会运行 | 447 秒，12 步全部通过：旧 key 为 A 投的票被撤回屏障排除，新 key 的票与 C 的票计入；10 个地址 26 次余额检查普通余额都是 0；无页面错误与 CSP 违规。证据在 `evidence/devnet-2026-10-10/extension-e2e/` |
+
+**还没做的**：官方域名（占位）、上架、逐浏览器人工验收、外部安全审查，见 §8 第 7 项。端到端测试里的 Neuron 签名仍由 `omavote sign` 生成。

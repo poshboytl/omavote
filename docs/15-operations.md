@@ -178,7 +178,33 @@ systemctl start omavote omavote-relay
 ```bash
 deploy/devnet/setup.sh      # 下载 ckb v0.210.0，初始化开发链（固定 genesis），启动节点与矿工
 deploy/devnet/run-demo.sh   # 端到端演示：存款、授权、投票、重组、复算
-deploy/devnet/run-e2e.sh    # 浏览器端到端（桌面与手机）
+deploy/devnet/run-e2e.sh    # 浏览器端到端（桌面、手机与签名插件）
 ```
 
 开发链启用了 `IntegrationTest` RPC，用于重组测试。所有开发链密钥都是公开的测试密钥。
+
+## 13. 签名插件
+
+插件代码在 `extension/`，设计见 [19](19-signer-extension.md)。
+
+**构建**
+
+```bash
+cd extension && npm ci && npm run wasm
+npm run build                                      # 发布版 → extension/dist/（主网参数，官方域名取 official.json）
+npm run build -- --strict                          # 官方域名仍是占位时拒绝构建；上架前用这一条
+npm run build:dev -- --api http://127.0.0.1:18080  # 开发版 → extension/dist-devnet/
+```
+
+开发版从本地服务的 `/api/network` 读取开发链参数，官方域名换成 `localhost` 与 `127.0.0.1`（任意端口），弹窗和确认窗口标注 DEVNET。在 Chrome 的“扩展程序”页打开开发者模式，选“加载已解压的扩展程序”，指向 `extension/dist-devnet/`。开发链重新初始化（genesis 改变）后要重新构建开发版。
+
+**官方域名**：`extension/official.json` 目前是占位 `https://omavote.invalid`。首次上架 Chrome 网上应用店之前必须换成正式域名，有备用站的一并写入：之后再新增域名会触发权限警告，Chrome 会先停用插件，直到用户同意新权限。
+
+**自托管站点的访问者**
+
+- 插件只在官方域名上自动注入。访问自托管站点或镜像时，访问者点浏览器工具栏的 Omavote 图标，弹窗显示当前站点的来源，点“连接这个网站”。
+- Chrome 随后弹出权限框，询问是否允许插件读取和更改该网站上的数据。这一授权只针对这一个站点：插件借此在页面里放入 `window.omavote` 接口，不读取页面内容。同意后无需刷新，以后打开该站点自动可用。
+- 连接后，网站能看到投票 key 的地址。每次签名仍须在插件自己的确认窗口里确认；窗口显示请求来源，非官方站点有醒目提示。
+- 断开：在插件弹窗的“已连接的网站”里点“断开”。非官方站点会同时撤销 Chrome 权限并停止注入。在 Chrome 的扩展程序设置里撤销站点权限，效果相同。
+- 只接受 https 站点；`http` 只允许 `localhost` 与 `127.0.0.1`。
+- 运营者不需要任何配置。前端没检测到插件时，会在连接处提示访问者如何连接本站。
