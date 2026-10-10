@@ -101,7 +101,8 @@ let service: Promise<SignerService> | null = null;
 
 function ready(): Promise<SignerService> {
   if (!service) {
-    service = init({ module_or_path: chrome.runtime.getURL("omavote_wasm_bg.wasm") }).then(async () => {
+    // The default path is the .wasm asset the build emits next to this module.
+    service = init().then(async () => {
       const core = new Core(call, version());
       const s = new SignerService(env, core, { flavor: FLAVOR, network: NETWORK ?? core.knownNetwork("mainnet"), officialPatterns: OFFICIAL_PATTERNS });
       await s.start();

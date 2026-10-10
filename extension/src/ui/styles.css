@@ -1,0 +1,95 @@
+/* Omavote signer: the web app's palette, system fonts, light and dark. */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #17202b;
+  --muted: #5d6b7a;
+  --border: #d9dee5;
+  --accent: #0f766e;
+  --accent-text: #ffffff;
+  --ok: #157f3b;
+  --ok-soft: #e4f5ea;
+  --warn: #9a5b00;
+  --warn-soft: #fff4dc;
+  --bad: #b42318;
+  --bad-soft: #fde8e7;
+  --info: #1f5fa8;
+  --info-soft: #e6effa;
+  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans", Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1419;
+    --surface: #161c23;
+    --text: #e6ebf0;
+    --muted: #93a1b0;
+    --border: #2c3742;
+    --accent: #2dd4bf;
+    --accent-text: #062a26;
+    --ok: #4ade80;
+    --ok-soft: #12301d;
+    --warn: #fbbf24;
+    --warn-soft: #33270b;
+    --bad: #f87171;
+    --bad-soft: #3a1515;
+    --info: #7cb3f5;
+    --info-soft: #14263a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+body.popup { width: 380px; }
+#app { padding: 12px 14px 16px; }
+h1 { font-size: 18px; margin: 8px 0 12px; }
+h2 { font-size: 15px; margin: 0 0 6px; }
+h3 { font-size: 14px; margin: 8px 0 2px; }
+section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+.top { display: flex; align-items: center; gap: 8px; }
+.top .link { margin-left: auto; }
+.mono { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.address { margin: 4px 0 6px; }
+.origin { font-size: 14px; font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.status { font-weight: 600; margin: 6px 0; }
+.status.ok { color: var(--ok); }
+.status.bad { color: var(--bad); }
+.badge { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.badge.bad { background: var(--bad-soft); color: var(--bad); }
+.badge.devnet { background: var(--warn-soft); color: var(--warn); }
+.notice { border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+.notice.info { background: var(--info-soft); }
+.notice.warn { background: var(--warn-soft); }
+.notice.bad { background: var(--bad-soft); }
+.notice.ok { background: var(--ok-soft); }
+.error { color: var(--bad); min-height: 0; margin: 4px 0; }
+.field { display: block; margin: 8px 0; }
+.field span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+input[type="password"] { width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+.btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; margin: 4px 6px 0 0; }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+.btn.danger { background: var(--bad); color: #fff; border-color: var(--bad); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+button.link { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; }
+.sites { list-style: none; padding: 0; margin: 0; }
+.sites li { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-top: 1px solid var(--border); }
+.sites li .btn { margin-left: auto; }
+.ack { display: block; margin: 8px 0; }
+.row { display: grid; grid-template-columns: 96px 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.row .label { color: var(--muted); font-size: 12px; }
+.choice { font-size: 18px; }
+.choice.yes { color: var(--ok); }
+.choice.no { color: var(--bad); }
+.owners ol { margin: 4px 0 8px; padding-left: 22px; }
+.owners li { margin: 2px 0; }
+.fulltext summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+.fulltext pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.4 var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+.actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }

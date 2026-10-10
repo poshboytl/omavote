@@ -1,0 +1,4 @@
+{
+  "//": "Official origins of the voting site (docs/19 §8). Placeholder until the team decides the domain; must be final before the first store release, since adding hosts later disables the extension until users accept.",
+  "origins": ["https://omavote.invalid"]
+}

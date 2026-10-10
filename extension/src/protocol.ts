@@ -124,4 +124,7 @@ export type InternalRequest =
   | { kind: "internal"; op: "approve"; id: string }
   | { kind: "internal"; op: "reject"; id: string };
 
+/** An internal request as the extension's pages write it (without `kind`). */
+export type InternalOp = InternalRequest extends infer R ? (R extends { kind: "internal" } ? Omit<R, "kind"> : never) : never;
+
 export type InternalReply = { ok: true; value?: unknown } | { ok: false; code: ErrorCode; message: string };
