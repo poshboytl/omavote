@@ -66,10 +66,10 @@ export function header(state: StateView | null, onLang: () => void): HTMLElement
 }
 
 /** Form with a submit button that shows the error inline and re-enables itself. */
-export function form(fields: HTMLElement[], submit: string, action: () => Promise<void>, extra: Child[] = []): HTMLFormElement {
+export function form(fields: HTMLElement[], submit: string, action: () => Promise<void>): HTMLFormElement {
   const err = el("div", { class: "error", role: "alert" });
   const button = el("button", { type: "submit", class: "btn primary" }, submit);
-  const f = el("form", {}, ...fields, ...extra, err, button);
+  const f = el("form", {}, ...fields, err, button);
   f.addEventListener("submit", (e) => {
     e.preventDefault();
     err.textContent = "";

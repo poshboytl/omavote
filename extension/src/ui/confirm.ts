@@ -100,7 +100,10 @@ async function render(): Promise<void> {
     const left = Math.max(0, Math.ceil((v.deadline - Date.now()) / 1000));
     countdown.textContent = t("confirm.expires", { s: left });
     approve.disabled = blocked || !armed() || left === 0;
-    if (left === 0) void render();
+    if (left === 0) {
+      window.clearInterval(timer);
+      void render();
+    }
   };
   timer = window.setInterval(tick, 200);
   tick();
