@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useExtension } from "../app/extension";
 import { useI18n } from "../app/i18n";
 import { useApp } from "../app/state";
 import { useWallet } from "../app/wallet";
@@ -77,6 +78,8 @@ export function ControlPanel({
   const { t, lang } = useI18n();
   const { api } = useApp();
   const w = useWallet();
+  const x = useExtension();
+  const extKey = x.key?.descriptor.kind === "secp256k1" ? x.key.descriptor.public_key : null;
   const errorText = useErrorText();
   const sync = useSyncCheck();
   const net = network.network;
@@ -287,6 +290,33 @@ export function ControlPanel({
               {t("control.useWalletKey")}
             </button>
             {!w.address && <span className="muted small">{t("control.connectForKey")}</span>}
+          </div>
+          <div className="row">
+            <button
+              type="button"
+              className="btn btn-small"
+              disabled={!extKey}
+              onClick={() => {
+                if (extKey) setKeyInput(extKey);
+                reset();
+              }}
+            >
+              {t("control.useExtensionKey")}
+            </button>
+            {/* docs/19 §3.7: a reset extension key replaces the old one and cancels its open ballots. */}
+            <button
+              type="button"
+              className="btn btn-small"
+              disabled={!extKey}
+              onClick={() => {
+                if (extKey) setKeyInput(extKey);
+                setMode("GRANT_CANCEL");
+                reset();
+              }}
+            >
+              {t("control.extensionRecover")}
+            </button>
+            {!extKey && <span className="muted small">{t("control.connectExtensionForKey")}</span>}
           </div>
           {key.info && (
             <Notice tone="info" title={t("control.keyCheckTitle")}>

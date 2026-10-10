@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useExtension } from "../app/extension";
 import { useI18n } from "../app/i18n";
 import { useApp } from "../app/state";
 import { useWallet } from "../app/wallet";
@@ -120,6 +121,34 @@ export function WalletBar({ purpose }: { purpose?: ReactNode }) {
       )}
       {w.error !== null && w.error !== undefined && <Notice tone="bad">{errorText(w.error)}</Notice>}
       <p className="muted small">{t("wallet.noKeys")}</p>
+    </div>
+  );
+}
+
+/** Connection to the Omavote signer extension (docs/19 §10). */
+export function ExtensionBar() {
+  const { t } = useI18n();
+  const x = useExtension();
+  const errorText = useErrorText();
+  return (
+    <div className="walletbar">
+      {!x.ext && <Notice tone="info">{t("ext.notDetected")}</Notice>}
+      {x.ext && x.key && (
+        <div className="walletbar-connected">
+          <span className="muted">{t("ext.connectedAs")}</span>
+          <Mono value={x.key.display} />
+          <button type="button" className="btn btn-small" onClick={() => void x.disconnect()}>
+            {t("ext.disconnect")}
+          </button>
+        </div>
+      )}
+      {x.ext && !x.key && (
+        <button type="button" className="btn btn-primary" disabled={x.busy} onClick={() => void x.connect()}>
+          {x.busy ? t("ext.connecting") : t("ext.connect")}
+        </button>
+      )}
+      {x.error !== null && x.error !== undefined && <Notice tone="bad">{errorText(x.error)}</Notice>}
+      <p className="muted small">{t("ext.noKeys")}</p>
     </div>
   );
 }

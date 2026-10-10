@@ -4,6 +4,7 @@ import { ApiError } from "../lib/api";
 import { copyText, downloadJson } from "../lib/browser";
 import { CoreError } from "../lib/core";
 import { WalletError } from "../lib/eip1193";
+import { ExtensionError } from "../lib/extension";
 import { FlowError, RelayFailure, TimeoutError } from "../lib/flow";
 import { shortHex } from "../lib/format";
 
@@ -46,6 +47,7 @@ export function useErrorText(): (e: unknown) => string {
       if (e.kind === "no_wallet") return t("wallet.none");
       return t("wallet.error", { detail: e.message });
     }
+    if (e instanceof ExtensionError) return tk(`ext.error.${e.code}`, { detail: e.message });
     if (e instanceof FlowError) return tk(e.key, e.params);
     if (e instanceof CoreError) return t("err.core", { detail: e.message });
     if (e instanceof RelayFailure) return t("err.relayFailed", { status: e.item.status, detail: e.item.error ?? "" });

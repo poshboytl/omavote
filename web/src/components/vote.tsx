@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useExtension } from "../app/extension";
 import { useI18n } from "../app/i18n";
 import { useApp, useLoad } from "../app/state";
 import { useWallet } from "../app/wallet";
 import type { Core } from "../lib/core";
 import type { Eip1193Provider } from "../lib/eip1193";
+import { batches, ExtensionError, signBatch, type OmavoteSigner } from "../lib/extension";
 import {
   ADAPTER_CKB,
   ADAPTER_EVM,
@@ -35,7 +37,7 @@ import { big, formatCkb, utcHuman } from "../lib/format";
 import { lastAnchor, rememberAnchor, savePending } from "../lib/storage";
 import type { Action, AnchorInfo, BallotEnvelope, KeyDescriptor, Manifest, NetworkInfo, ProposalDetail } from "../lib/types";
 import { CodeBadge } from "./badges";
-import { NeuronSignBox, ReceiptNote, SignTextView, SyncIssues, useSyncCheck, WalletBar } from "./sign";
+import { ExtensionBar, NeuronSignBox, ReceiptNote, SignTextView, SyncIssues, useSyncCheck, WalletBar } from "./sign";
 import { SubmissionTracker } from "./tracker";
 import { Badge, Check, DownloadJsonButton, ErrorView, Loading, Mono, Notice, useErrorText } from "./ui";
 
@@ -49,7 +51,10 @@ export interface VoterEntry {
   weight: string | null;
 }
 
-type SignerSpec = { kind: "wallet"; provider: Eip1193Provider; address: string } | { kind: "neuron"; address: string };
+type SignerSpec =
+  | { kind: "wallet"; provider: Eip1193Provider; address: string }
+  | { kind: "neuron"; address: string }
+  | { kind: "extension"; ext: OmavoteSigner };
 
 interface Job {
   entry: VoterEntry;
@@ -211,6 +216,44 @@ export function BallotRunner({
     setPhase("ready");
   };
 
+  /**
+   * The extension signs structured ballots in batches of up to 20, one confirmation
+   * each (docs/19 §10). Every signature is still verified here before submission.
+   */
+  const signAllWithExtension = async () => {
+    if (signer.kind !== "extension") return;
+    setPhase("running");
+    const todo = jobs.map((job, i) => ({ job, i })).filter(({ job }) => !job.result?.envelope);
+    try {
+      for (const batch of batches(todo)) {
+        for (const { i } of batch) update(i, { step: "signing", error: null });
+        let sigs: string[];
+        try {
+          sigs = await signBatch(
+            signer.ext,
+            manifest,
+            batch.map(({ job }) => job.prepared.body),
+          );
+        } catch (e) {
+          for (const { i } of batch) update(i, { step: null, error: e });
+          if (e instanceof ExtensionError && e.code === "ANCHOR_REUSED") setError(e);
+          return;
+        }
+        for (const [k, { job, i }] of batch.entries()) {
+          const signature = sigs[k]!;
+          const verify = verifierFor(job.entry)(job.prepared.text, signature);
+          if (!verify.ok) {
+            update(i, { step: null, result: { signature, verify, envelope: null, submit: null, receipt: null } });
+            return;
+          }
+          await submitSigned(i, signature);
+        }
+      }
+    } finally {
+      setPhase("ready");
+    }
+  };
+
   const submitSigned = async (i: number, signature: string) => {
     const job = jobs[i];
     if (!job) return;
@@ -289,6 +332,11 @@ export function BallotRunner({
               {job.error !== null && job.error !== undefined && <Notice tone="bad">{errorText(job.error)}</Notice>}
             </div>
           ))}
+          {signer.kind === "extension" && jobs.some((j) => !j.result?.envelope) && (
+            <button type="button" className="btn btn-primary" disabled={phase === "running"} onClick={() => void signAllWithExtension()}>
+              {phase === "running" ? t("vote.signing") : t("vote.signExtension", { n: jobs.filter((j) => !j.result?.envelope).length })}
+            </button>
+          )}
           {signer.kind === "wallet" && jobs.some((j) => !j.result?.envelope) && (
             <button type="button" className="btn btn-primary" disabled={phase === "running"} onClick={() => void signAllWithWallet()}>
               {phase === "running" ? t("vote.signing") : t("vote.signWallet", { n: jobs.filter((j) => !j.result?.envelope).length })}
@@ -411,12 +459,44 @@ function OwnerWalletVote({ core, network, detail, action }: { core: Core; networ
   );
 }
 
-function DelegateVote({ core, network, detail, action }: { core: Core; network: NetworkInfo; detail: ProposalDetail; action: Action }) {
+/**
+ * Delegate ballots signed by a voting key: a MetaMask account (evm_eoa) or the Omavote
+ * signer extension (secp256k1). The key descriptor and its adapter come from the
+ * connected source; nothing here assumes an EVM key (docs/19 §10).
+ */
+function DelegateVote({
+  core,
+  network,
+  detail,
+  action,
+  source,
+}: {
+  core: Core;
+  network: NetworkInfo;
+  detail: ProposalDetail;
+  action: Action;
+  source: "wallet" | "extension";
+}) {
   const { t, tk } = useI18n();
   const { api } = useApp();
   const w = useWallet();
+  const x = useExtension();
   const manifest = detail.manifest_payload.manifest;
-  const key = useMemo(() => (w.address ? core.evmKey(w.address, network.network) : null), [core, network, w.address]);
+  const extWrongNetwork = source === "extension" && x.key !== null && x.key.genesis !== network.network.genesis_hash;
+  const key = useMemo(() => {
+    if (source === "wallet") return w.address ? core.evmKey(w.address, network.network) : null;
+    return x.key && !extWrongNetwork ? core.key(x.key.descriptor, network.network) : null;
+  }, [source, core, network, w.address, x.key, extWrongNetwork]);
+  const adapter = key?.adapter ?? (source === "wallet" ? ADAPTER_EVM : ADAPTER_CKB);
+  const accepted = adapterAccepted(manifest, "delegate", adapter);
+  const signer: SignerSpec | null =
+    source === "wallet"
+      ? w.address && w.provider
+        ? { kind: "wallet", provider: w.provider, address: w.address }
+        : null
+      : x.ext && key
+        ? { kind: "extension", ext: x.ext }
+        : null;
   const clock = detail.at?.clock_ms ?? "0";
   const opts = useLoad(
     () => (key ? delegateOptions(core, api, network.network, manifest, key.key_id, clock) : Promise.resolve(null)),
@@ -449,14 +529,15 @@ function DelegateVote({ core, network, detail, action }: { core: Core; network: 
           }));
   return (
     <div>
-      <p className="muted">{t("vote.delegateIntro")}</p>
-      <WalletBar />
+      <p className="muted">{source === "wallet" ? t("vote.delegateIntro") : t("vote.extensionIntro")}</p>
+      {source === "wallet" ? <WalletBar /> : <ExtensionBar />}
+      {extWrongNetwork && <Notice tone="bad">{t("vote.extensionWrongNetwork", { genesis: x.key?.genesis ?? "" })}</Notice>}
       {key && (
         <div className="small">
           {t("vote.yourKey")} <Mono value={key.key_display ?? key.descriptor.kind} /> · key_id <code>{key.key_id.slice(0, 18)}…</code>
         </div>
       )}
-      {!adapterAccepted(manifest, "delegate", ADAPTER_EVM) && <Notice tone="bad">{t("vote.adapterNotAccepted", { adapter: ADAPTER_EVM })}</Notice>}
+      {!accepted && <Notice tone="bad">{t("vote.adapterNotAccepted", { adapter })}</Notice>}
       {delegateClosed && <Notice tone="bad">{t("vote.delegateClosed", { end: utcHuman(detail.delegate_end_ms) })}</Notice>}
       {key && opts.loading && <Loading />}
       {opts.error !== null && <ErrorView error={opts.error} />}
@@ -501,16 +582,16 @@ function DelegateVote({ core, network, detail, action }: { core: Core; network: 
           })}
         </fieldset>
       )}
-      {w.address && w.provider && key && entries.length > 0 && !delegateClosed && (
+      {signer && key && accepted && entries.length > 0 && !delegateClosed && (
         <BallotRunner
-          key={`${w.address}:${[...selected].sort().join(",")}:${action}`}
+          key={`${key.key_id}:${[...selected].sort().join(",")}:${action}`}
           core={core}
           network={network}
           manifest={manifest}
           detail={detail}
           entries={entries}
           action={action}
-          signer={{ kind: "wallet", provider: w.provider, address: w.address }}
+          signer={signer}
         />
       )}
     </div>
@@ -604,7 +685,7 @@ function NeuronVote({ core, network, detail, action }: { core: Core; network: Ne
 
 export function VotePanel({ core, network, detail }: { core: Core; network: NetworkInfo; detail: ProposalDetail }) {
   const { t } = useI18n();
-  const [method, setMethod] = useState<"metamask" | "delegate" | "neuron">("metamask");
+  const [method, setMethod] = useState<"metamask" | "delegate" | "extension" | "neuron">("metamask");
   const [action, setAction] = useState<Action>("YES");
   const open = detail.status === "OPEN";
   return (
@@ -616,7 +697,7 @@ export function VotePanel({ core, network, detail }: { core: Core; network: Netw
       )}
       <ChoicePicker value={action} onChange={setAction} />
       <div className="tabs" role="tablist">
-        {(["metamask", "delegate", "neuron"] as const).map((m) => (
+        {(["metamask", "delegate", "extension", "neuron"] as const).map((m) => (
           <button
             key={m}
             type="button"
@@ -631,7 +712,8 @@ export function VotePanel({ core, network, detail }: { core: Core; network: Netw
       </div>
       <div className="tab-body">
         {method === "metamask" && <OwnerWalletVote core={core} network={network} detail={detail} action={action} />}
-        {method === "delegate" && <DelegateVote core={core} network={network} detail={detail} action={action} />}
+        {method === "delegate" && <DelegateVote core={core} network={network} detail={detail} action={action} source="wallet" />}
+        {method === "extension" && <DelegateVote core={core} network={network} detail={detail} action={action} source="extension" />}
         {method === "neuron" && <NeuronVote core={core} network={network} detail={detail} action={action} />}
       </div>
       <p className="muted small">{t("vote.weightNote")}</p>

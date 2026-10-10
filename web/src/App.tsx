@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router";
 import { I18nProvider } from "./app/i18n";
 import { Layout } from "./app/Layout";
+import { ExtensionProvider } from "./app/extension";
 import { AppProvider } from "./app/state";
 import { WalletProvider } from "./app/wallet";
 import { AddressPage } from "./pages/AddressPage";
@@ -20,6 +21,7 @@ export function App() {
     <I18nProvider>
       <AppProvider>
         <WalletProvider>
+          <ExtensionProvider>
           <Layout>
             <Routes>
               <Route path="/" element={<ProposalsPage />} />
@@ -38,6 +40,7 @@ export function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Layout>
+          </ExtensionProvider>
         </WalletProvider>
       </AppProvider>
     </I18nProvider>
