@@ -119,6 +119,7 @@ The design documents are written in Chinese.
 | [HTTP API and CLI](docs/16-api.md) | Every endpoint and command |
 | [Acceptance template](docs/17-external-acceptance.md) | How to record tests with real wallets and an independent review |
 | [Switch proposal (draft)](docs/18-governance-switch-proposal.md) | The proposal for moving the official vote to Omavote |
+| [Signer extension (draft)](docs/19-signer-extension.md) | An optional browser extension that holds a dedicated voting key |
 
 Some rules are left undefined by the current process and need a decision through governance before launch:
 
