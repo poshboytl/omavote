@@ -8,7 +8,7 @@
 import type { Core } from "../../web/src/lib/core";
 import type { KeyDescriptor, KeyInfo, NetworkParams } from "../../web/src/lib/types";
 import { checkPassword, decryptSecret, encryptSecret, type Keystore } from "./keystore";
-import { acceptableOrigin, isOfficial, matchesPattern, originPattern } from "./origins";
+import { acceptableOrigin, isOfficial, isSingleHostPattern, matchesPattern, originPattern } from "./origins";
 import {
   PAGE_METHODS,
   SignerError,
@@ -26,7 +26,13 @@ import { ADAPTER_CKB, checkSignRequest, type CheckedRequest } from "./requests";
 
 export const IDLE_LOCK_MS = 15 * 60_000;
 export const CONFIRM_TIMEOUT_MS = 5 * 60_000;
+/** After a rejection, the same site waits this long before it can ask again. */
+export const REJECT_COOLDOWN_MS = 5_000;
 const CONNECT_INTENT_MS = 2 * 60_000;
+const DELIVERY_TIMEOUT_MS = 2_000;
+
+/** Operations that come from a user action in the extension's own pages. */
+const USER_OPS = new Set(["touch", "create", "unlock", "approve", "reject", "changePassword", "expectConnect", "connectSite", "disconnectSite"]);
 
 export interface KeyValueStore {
   get<T>(key: string): Promise<T | undefined>;
@@ -55,12 +61,15 @@ export interface Env {
   unregisterSite(pattern: string): Promise<void>;
   injectIntoOpenTabs(pattern: string): Promise<void>;
   removeHostPermission(pattern: string): Promise<void>;
+  hasHostPermission(pattern: string): Promise<boolean>;
 }
 
 export interface SignerConfig {
   flavor: "release" | "devnet";
   network: NetworkParams;
   officialPatterns: string[];
+  /** How long to wait for a page to take a message (a stuck page must not stall the queue). */
+  deliveryTimeoutMs?: number;
 }
 
 /** What the browser says about who sent a message (chrome.runtime.MessageSender). */
@@ -105,6 +114,7 @@ const K = {
   unlocked: "unlocked",
   intent: "connectIntent",
   pending: (id: string) => `pending:${id}`,
+  cooldown: (origin: string) => `cooldown:${origin}`,
 };
 
 function fail(code: ErrorCode, message?: string): never {
@@ -198,6 +208,20 @@ export class SignerService {
     return isOfficial(origin, this.config.officialPatterns);
   }
 
+  /** Official sites always; others only while Chrome grants the extension access to them. */
+  private async reachable(origin: string): Promise<boolean> {
+    return this.official(origin) || this.env.hasHostPermission(originPattern(origin));
+  }
+
+  /** Deliver to a document, giving up after a short wait (false: gone or stuck). */
+  private send(tabId: number, documentId: string, msg: ToContent): Promise<boolean> {
+    const ms = this.config.deliveryTimeoutMs ?? DELIVERY_TIMEOUT_MS;
+    return Promise.race([
+      this.env.sendToDocument(tabId, documentId, msg),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ms)),
+    ]);
+  }
+
   // ---------------------------------------------------------------------------
   // Pending requests
 
@@ -212,13 +236,16 @@ export class SignerService {
   }
 
   private async deliver(p: Pending, msg: { ok: true; result: unknown } | { ok: false; code: ErrorCode; message: string }): Promise<boolean> {
-    return this.env.sendToDocument(p.tabId, p.documentId, { kind: "result", reqId: p.reqId, ...msg } as ToContent);
+    return this.send(p.tabId, p.documentId, { kind: "result", reqId: p.reqId, ...msg } as ToContent);
   }
 
   /** Remove a pending request; the page gets `code` and the confirm window closes. */
   private async finish(p: Pending, outcome: { ok: true; result: unknown } | { ok: false; code: ErrorCode; message: string }): Promise<void> {
     await this.env.session.remove(K.pending(p.id));
     await this.env.clearAlarm(`expire:${p.id}`);
+    if (!outcome.ok && outcome.code === "USER_REJECTED") {
+      await this.env.session.set(K.cooldown(p.origin), this.env.now() + REJECT_COOLDOWN_MS);
+    }
     await this.deliver(p, outcome);
     if (p.windowId !== undefined) await this.env.closeWindow(p.windowId).catch(() => undefined);
   }
@@ -243,7 +270,14 @@ export class SignerService {
     const pending: Pending = { ...p, id: this.env.randomHex(16), deadline: this.env.now() + CONFIRM_TIMEOUT_MS };
     await this.env.session.set(K.pending(pending.id), pending);
     await this.env.setAlarm(`expire:${pending.id}`, pending.deadline);
-    const windowId = await this.env.openConfirmWindow(pending.id);
+    let windowId: number | undefined;
+    try {
+      windowId = await this.env.openConfirmWindow(pending.id);
+    } catch {
+      await this.env.session.remove(K.pending(pending.id));
+      await this.env.clearAlarm(`expire:${pending.id}`);
+      fail("INVALID_REQUEST", "the confirmation window could not be opened");
+    }
     if (windowId !== undefined) {
       // The window may already have been closed (and the request rejected) meanwhile.
       const still = await this.env.session.get<Pending>(K.pending(pending.id));
@@ -306,22 +340,27 @@ export class SignerService {
     await this.sweep();
     const site = await this.site(origin);
     const key = await this.keyInfo();
-    const busy = async () => (await this.allPending()).some((p) => p.origin === origin);
+    const reachable = await this.reachable(origin);
+    const busy = async () => {
+      const until = await this.env.session.get<number>(K.cooldown(origin));
+      return (until !== undefined && this.env.now() < until) || (await this.allPending()).some((p) => p.origin === origin);
+    };
 
     switch (m.method) {
       case "getKey":
-        return { status: "done", result: site.connected && key ? this.pageKey(key) : null };
+        return { status: "done", result: reachable && site.connected && key ? this.pageKey(key) : null };
       case "disconnect":
         await this.setConnected(origin, false);
         return { status: "done", result: null };
       case "connect": {
+        if (!reachable) fail("NOT_CONNECTED", "connect this site from the extension's toolbar button first");
         if (site.connected && key) return { status: "done", result: this.pageKey(key) };
         if (await busy()) fail("BUSY", "a request from this site is already waiting for confirmation");
         await this.createPending({ reqId: m.reqId, kind: "connect", origin, tabId, documentId, keyId: key?.key_id ?? null, siteVersion: site.version });
         return { status: "pending" };
       }
       case "signBallots": {
-        if (!site.connected) fail("NOT_CONNECTED", "connect this site first");
+        if (!reachable || !site.connected) fail("NOT_CONNECTED", "connect this site first");
         if (!key) fail("NO_KEY", "create a key in the extension first");
         if (await busy()) fail("BUSY", "a request from this site is already waiting for confirmation");
         const signed = (await this.env.local.get<Record<string, string>>(K.signed)) ?? {};
@@ -355,7 +394,9 @@ export class SignerService {
 
   private async internal(m: InternalRequest): Promise<unknown> {
     if (m?.kind !== "internal") fail("INVALID_REQUEST", "malformed request");
-    await this.touch();
+    // Only user actions keep the key unlocked: the confirmation window's own requests
+    // (`pending`, `state`) must not, or a site could keep it unlocked by asking often.
+    if (USER_OPS.has(m.op)) await this.touch();
     switch (m.op) {
       case "state":
         return this.state();
@@ -378,7 +419,7 @@ export class SignerService {
         const ks = await this.env.local.get<Keystore>(K.keystore);
         if (!ks) fail("NO_KEY", "there is no key yet");
         const secret = await decryptSecret(ks, String(m.oldPassword ?? ""), (s) => this.publicKeyOf(s));
-        await this.env.local.set(K.keystore, await encryptSecret(secret, ks.public_key, String(m.newPassword ?? ""), ks.kdf.iterations));
+        await this.env.local.set(K.keystore, await encryptSecret(secret, ks.public_key, String(m.newPassword ?? "")));
         return this.state();
       }
       case "touch":
@@ -494,7 +535,11 @@ export class SignerService {
       await this.finish(p, { ok: false, code: "NOT_CONNECTED", message: "the connection changed" });
       fail("NOT_CONNECTED", "the connection changed after the request was made");
     }
-    if (!(await this.env.sendToDocument(p.tabId, p.documentId, { kind: "ping" }))) {
+    if (!(await this.reachable(p.origin))) {
+      await this.finish(p, { ok: false, code: "NOT_CONNECTED", message: "the extension no longer has access to this site" });
+      fail("NOT_CONNECTED", "the extension no longer has access to this site");
+    }
+    if (!(await this.send(p.tabId, p.documentId, { kind: "ping" }))) {
       await this.finish(p, { ok: false, code: "EXPIRED", message: "the page is gone" });
       fail("EXPIRED", "the page that made the request was closed or navigated away");
     }
@@ -554,7 +599,7 @@ export class SignerService {
     return this.exclusive(async () => {
       const intent = await this.env.session.get<{ origin: string; until: number }>(K.intent);
       for (const pattern of patterns) {
-        if (this.config.officialPatterns.includes(pattern)) continue;
+        if (this.config.officialPatterns.includes(pattern) || !isSingleHostPattern(pattern)) continue;
         await this.env.registerSite(pattern);
         await this.env.injectIntoOpenTabs(pattern);
         // Only a connect the user started in the toolbar popup also counts as a connection.
@@ -573,6 +618,10 @@ export class SignerService {
         if (this.config.officialPatterns.includes(pattern)) continue;
         await this.env.unregisterSite(pattern);
         for (const origin of Object.keys(sites)) if (matchesPattern(origin, pattern)) await this.setConnected(origin, false);
+        // Requests from sites that were never connected (a pending connect) go too.
+        for (const p of await this.allPending()) {
+          if (matchesPattern(p.origin, pattern)) await this.finish(p, { ok: false, code: "NOT_CONNECTED", message: "access to the site was revoked" });
+        }
       }
     });
   }

@@ -19,7 +19,7 @@ export interface CheckedBallot {
   ballotId: string;
   ownerId: string;
   ownerAddress: string;
-  /** Local history key: (poll, owner, authorization, anchor). */
+  /** Local history key: (poll, owner, anchor). */
   slot: string;
 }
 
@@ -34,8 +34,12 @@ export interface CheckedRequest {
 /** Ballot id this key already signed at `slot`, if any. */
 export type SignedLookup = (slot: string) => string | undefined;
 
-export function anchorSlot(pollId: string, ownerId: string, authorizationId: string, anchor: string): string {
-  return `${pollId}:${ownerId}:${authorizationId}:${anchor}`;
+/**
+ * The tally ranks all of an owner's delegate ballots in a poll together, by (grant
+ * anchor, ballot anchor), so the authorization is deliberately not part of the key.
+ */
+export function anchorSlot(pollId: string, ownerId: string, anchor: string): string {
+  return `${pollId}:${ownerId}:${anchor}`;
 }
 
 const utf8 = new TextEncoder();
@@ -113,9 +117,9 @@ export function checkSignRequest(core: Core, network: NetworkParams, key: KeyInf
   }
 
   // 6. A second, different ballot on an anchor this key already used for the same
-  // owner and authorization is a CONFLICT at tally time (docs/03 §6).
+  // owner is a CONFLICT at tally time (docs/03 §6).
   const ballots = rebuilt.map((r) => {
-    const slot = anchorSlot(r.body.poll_id, r.owner_id, r.body.authorization_id!, r.body.anchor_block_hash);
+    const slot = anchorSlot(r.body.poll_id, r.owner_id, r.body.anchor_block_hash);
     const prior = signed(slot);
     if (prior !== undefined && prior !== r.ballot_id) {
       throw new SignerError("ANCHOR_REUSED", "this key already signed a different ballot for this owner on the same anchor block");

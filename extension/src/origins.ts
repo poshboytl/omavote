@@ -36,6 +36,14 @@ export function matchesPattern(origin: string, pattern: string): boolean {
   return u.protocol === `${m[1]}:` && u.hostname === m[2];
 }
 
+/**
+ * A single-host grant (`https://vote.example/*`, or a local development address).
+ * Wildcard grants from Chrome's site-access menu ("on all sites") are not used.
+ */
+export function isSingleHostPattern(pattern: string): boolean {
+  return /^https:\/\/[a-z0-9.-]+\/\*$/.test(pattern) || /^http:\/\/(localhost|127\.0\.0\.1)\/\*$/.test(pattern);
+}
+
 export function isOfficial(origin: string, officialPatterns: readonly string[]): boolean {
   return officialPatterns.some((p) => matchesPattern(origin, p));
 }

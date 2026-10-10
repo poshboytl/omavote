@@ -14,6 +14,9 @@ const ARM_MS = 1000;
 let focusedSince: number | null = document.hasFocus() ? Date.now() : null;
 window.addEventListener("focus", () => (focusedSince = Date.now()));
 window.addEventListener("blur", () => (focusedSince = null));
+// Keys pressed for the page (Tab, Space, Enter) can land here when the window pops up:
+// every key press restarts the wait.
+window.addEventListener("keydown", () => (focusedSince = document.hasFocus() ? Date.now() : null), { capture: true });
 const armed = () => focusedSince !== null && Date.now() - focusedSince >= ARM_MS;
 
 let timer: number | undefined;

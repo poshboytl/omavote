@@ -110,8 +110,12 @@ describe("checkSignRequest", () => {
     const again = delegateBody(manifest, key, owner, { anchor: first.anchor_block_hash, authorizationId: first.authorization_id! });
     expect(codeOf(() => checkSignRequest(loadCore(), network, key, { manifest, bodies: [again] }, lookup))).toBe("ANCHOR_REUSED");
     expect(codeOf(() => checkSignRequest(loadCore(), network, key, { manifest, bodies: [first] }, lookup))).toBe("ok");
+    // A renewed grant does not make the same anchor safe: the tally ranks all of an
+    // owner's delegate ballots together, by (grant anchor, ballot anchor).
+    const regranted = delegateBody(manifest, key, owner, { anchor: first.anchor_block_hash, authorizationId: loadCore().ckbHashText("renewed grant") });
+    expect(codeOf(() => checkSignRequest(loadCore(), network, key, { manifest, bodies: [regranted] }, lookup))).toBe("ANCHOR_REUSED");
     const newer = delegateBody(manifest, key, owner, { anchor: loadCore().ckbHashText("anchor-2"), authorizationId: first.authorization_id! });
     expect(codeOf(() => checkSignRequest(loadCore(), network, key, { manifest, bodies: [newer] }, lookup))).toBe("ok");
-    expect(checked.slot).toBe(anchorSlot(checked.body.poll_id, checked.ownerId, first.authorization_id!, first.anchor_block_hash));
+    expect(checked.slot).toBe(anchorSlot(checked.body.poll_id, checked.ownerId, first.anchor_block_hash));
   });
 });

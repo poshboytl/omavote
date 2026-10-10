@@ -4,7 +4,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { KeyDescriptor, Manifest, NetworkParams } from "../../web/src/lib/types";
 import type { InternalReply, InternalRequest, PageReply, PendingView, StateView } from "../src/protocol";
-import { CONFIRM_TIMEOUT_MS, IDLE_LOCK_MS, SignerService } from "../src/signer";
+import { encryptSecret, PBKDF2_ITERATIONS } from "../src/keystore";
+import { CONFIRM_TIMEOUT_MS, IDLE_LOCK_MS, REJECT_COOLDOWN_MS, SignerService } from "../src/signer";
 import { buildManifest, delegateBody, EXT, extensionSender, FakeBrowser, loadCore, ownerLock, pageSender } from "./helpers";
 
 const OFFICIAL = "https://vote.example";
@@ -20,7 +21,7 @@ beforeAll(() => {
 });
 
 function service(b: FakeBrowser): SignerService {
-  return new SignerService(b.env(), loadCore(), { flavor: "devnet", network, officialPatterns: [`${OFFICIAL}/*`] });
+  return new SignerService(b.env(), loadCore(), { flavor: "devnet", network, officialPatterns: [`${OFFICIAL}/*`], deliveryTimeoutMs: 50 });
 }
 
 async function internal(svc: SignerService, req: Omit<InternalRequest, "kind">): Promise<InternalReply> {
@@ -115,6 +116,7 @@ describe("connection", () => {
     const svc = service(b);
     await internal(svc, { op: "create", password: PASSWORD } as InternalRequest);
     // Granted from Chrome's own site-access menu: injected, not connected.
+    b.hostPermissions.add(`${MIRROR}/*`);
     await svc.onPermissionsAdded([`${MIRROR}/*`]);
     expect(b.registered.has(`${MIRROR}/*`)).toBe(true);
     expect(b.injected).toContain(`${MIRROR}/*`);
@@ -134,7 +136,9 @@ describe("connection", () => {
     const b = new FakeBrowser();
     const svc = service(b);
     await internal(svc, { op: "create", password: PASSWORD } as InternalRequest);
+    b.hostPermissions.add(`${MIRROR}/*`);
     await internal(svc, { op: "connectSite", origin: MIRROR } as InternalRequest);
+    b.hostPermissions.delete(`${MIRROR}/*`);
     await svc.onPermissionsRemoved([`${MIRROR}/*`]);
     expect((await state(svc)).sites).toEqual([]);
     expect(await page(svc, "g", "getKey", undefined, MIRROR)).toEqual({ status: "done", result: null });
@@ -170,6 +174,7 @@ describe("signing", () => {
     const sameAgain = await page(svc, "s2", "signBallots", first);
     expect(sameAgain).toEqual({ status: "pending" });
     await internal(svc, { op: "reject", id: await onlyPending(b) } as InternalRequest);
+    b.clock += REJECT_COOLDOWN_MS + 1;
     const conflict = await signRequest(svc, ["alice"], { anchor, action: "NO" });
     expect(await page(svc, "s3", "signBallots", conflict)).toMatchObject({ status: "error", code: "ANCHOR_REUSED" });
   });
@@ -269,3 +274,98 @@ describe("signing", () => {
     expect(await page(svc, "s", "signBallots", { manifest, bodies: [] })).toMatchObject({ code: "NOT_CONNECTED" });
   });
 });
+
+describe("findings of the security review", () => {
+  it("the confirmation window's own requests do not postpone the lock", async () => {
+    const { b, svc } = await ready();
+    const deadline = (await b.session.get<{ deadline: number }>("unlocked"))!.deadline;
+    b.clock += 60_000;
+    await page(svc, "s", "signBallots", await signRequest(svc));
+    const id = await onlyPending(b);
+    // What confirm.html sends by itself when it opens and renders.
+    await internal(svc, { op: "pending", id } as InternalRequest);
+    await internal(svc, { op: "state" } as InternalRequest);
+    expect((await b.session.get<{ deadline: number }>("unlocked"))!.deadline).toBe(deadline);
+    await internal(svc, { op: "reject", id } as InternalRequest);
+    expect((await b.session.get<{ deadline: number }>("unlocked"))!.deadline).toBe(b.clock + IDLE_LOCK_MS);
+  });
+
+  it("a site without host access cannot connect, and a revoked one cannot be approved", async () => {
+    const b = new FakeBrowser();
+    const svc = service(b);
+    await internal(svc, { op: "create", password: PASSWORD } as InternalRequest);
+    // The injected script survives in the page after the user disconnected the site.
+    expect(await page(svc, "c", "connect", undefined, MIRROR)).toMatchObject({ code: "NOT_CONNECTED" });
+    expect(await page(svc, "g", "getKey", undefined, MIRROR)).toEqual({ status: "done", result: null });
+    b.hostPermissions.add(`${MIRROR}/*`);
+    expect(await page(svc, "c2", "connect", undefined, MIRROR)).toEqual({ status: "pending" });
+    const id = await onlyPending(b);
+    b.hostPermissions.delete(`${MIRROR}/*`);
+    await svc.onPermissionsRemoved([`${MIRROR}/*`]);
+    expect(b.results("c2")).toEqual([expect.objectContaining({ ok: false, code: "NOT_CONNECTED" })]);
+    expect(await internal(svc, { op: "approve", id } as InternalRequest)).toMatchObject({ ok: false });
+    expect((await state(svc)).sites).toEqual([]);
+  });
+
+  it("checks host access again at approval", async () => {
+    const b = new FakeBrowser();
+    const svc = service(b);
+    await internal(svc, { op: "create", password: PASSWORD } as InternalRequest);
+    b.hostPermissions.add(`${MIRROR}/*`);
+    await page(svc, "c", "connect", undefined, MIRROR);
+    const id = await onlyPending(b);
+    b.hostPermissions.delete(`${MIRROR}/*`); // no onRemoved event (yet)
+    expect(await internal(svc, { op: "approve", id } as InternalRequest)).toMatchObject({ ok: false, code: "NOT_CONNECTED" });
+    expect((await state(svc)).sites).toEqual([]);
+  });
+
+  it("a page with a stuck main thread does not stall other requests", async () => {
+    const { b, svc } = await ready();
+    await page(svc, "s", "signBallots", await signRequest(svc));
+    const id = await onlyPending(b);
+    b.hungDocuments.add("doc-1");
+    // Rejecting delivers to the stuck page; the queue must move on.
+    await internal(svc, { op: "reject", id } as InternalRequest);
+    expect((await internal(svc, { op: "lock" } as InternalRequest)).ok).toBe(true);
+  });
+
+  it("cools down after a rejection", async () => {
+    const { b, svc } = await ready();
+    const req = await signRequest(svc);
+    await page(svc, "s1", "signBallots", req);
+    await internal(svc, { op: "reject", id: await onlyPending(b) } as InternalRequest);
+    expect(await page(svc, "s2", "signBallots", req)).toMatchObject({ status: "error", code: "BUSY" });
+    b.clock += REJECT_COOLDOWN_MS + 1;
+    expect(await page(svc, "s3", "signBallots", req)).toEqual({ status: "pending" });
+  });
+
+  it("ignores wildcard host grants", async () => {
+    const b = new FakeBrowser();
+    const svc = service(b);
+    await svc.onPermissionsAdded(["https://*/*", "https://*.example.org/*", "*://mirror.example/*"]);
+    expect(b.registered.size).toBe(0);
+    expect(b.injected).toEqual([]);
+  });
+
+  it("drops the request when the confirmation window cannot open", async () => {
+    const { b, svc } = await ready();
+    b.failWindows = true;
+    expect(await page(svc, "s", "signBallots", await signRequest(svc))).toMatchObject({ status: "error" });
+    expect(await pendingIds(b)).toEqual([]);
+    b.failWindows = false;
+    expect(await page(svc, "s2", "signBallots", await signRequest(svc))).toEqual({ status: "pending" });
+  });
+
+  it("a password change re-encrypts with the default iteration count", async () => {
+    const { b, svc } = await ready();
+    const ks = (await b.local.get<{ kdf: { iterations: number } }>("keystore"))!;
+    expect(ks.kdf.iterations).toBe(PBKDF2_ITERATIONS);
+    await b.local.set("keystore", await encryptSecret(await secretOfUnlocked(b), (ks as unknown as { public_key: string }).public_key, PASSWORD, 1000));
+    expect((await internal(svc, { op: "changePassword", oldPassword: PASSWORD, newPassword: `${PASSWORD} 2` } as InternalRequest)).ok).toBe(true);
+    expect((await b.local.get<{ kdf: { iterations: number } }>("keystore"))!.kdf.iterations).toBe(PBKDF2_ITERATIONS);
+  });
+});
+
+async function secretOfUnlocked(b: FakeBrowser): Promise<string> {
+  return (await b.session.get<{ secret: string }>("unlocked"))!.secret;
+}

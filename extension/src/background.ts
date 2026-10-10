@@ -5,6 +5,7 @@
 import { Core } from "../../web/src/lib/core";
 import { bytesToHex } from "../../web/src/lib/hex";
 import { FLAVOR, NETWORK, OFFICIAL_PATTERNS } from "./config";
+import { isSingleHostPattern } from "./origins";
 import type { ToContent } from "./protocol";
 import { SignerService, type Env, type KeyValueStore, type Sender } from "./signer";
 import init, { call, version } from "./wasm/pkg/omavote_wasm.js";
@@ -95,6 +96,9 @@ const env: Env = {
   async removeHostPermission(pattern) {
     await chrome.permissions.remove({ origins: [pattern] }).catch(() => undefined);
   },
+  async hasHostPermission(pattern) {
+    return chrome.permissions.contains({ origins: [pattern] }).catch(() => false);
+  },
 };
 
 let service: Promise<SignerService> | null = null;
@@ -144,7 +148,7 @@ chrome.runtime.onStartup.addListener(() => void ready());
 chrome.runtime.onInstalled.addListener(() => {
   void chrome.permissions.getAll().then(async (p) => {
     for (const pattern of p.origins ?? []) {
-      if (!OFFICIAL_PATTERNS.includes(pattern)) await env.registerSite(pattern).catch(() => undefined);
+      if (!OFFICIAL_PATTERNS.includes(pattern) && isSingleHostPattern(pattern)) await env.registerSite(pattern).catch(() => undefined);
     }
   });
 });

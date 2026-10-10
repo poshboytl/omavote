@@ -130,6 +130,11 @@ export class FakeBrowser {
   readonly removedPermissions: string[] = [];
   /** Documents that still exist; deliveries to others fail. */
   readonly liveDocuments = new Set<string>(["doc-1"]);
+  /** Documents whose main thread is stuck: deliveries never settle. */
+  readonly hungDocuments = new Set<string>();
+  /** Host permissions granted at runtime (non-official sites). */
+  readonly hostPermissions = new Set<string>();
+  failWindows = false;
   private nextWindow = 100;
   private counter = 0;
 
@@ -144,6 +149,7 @@ export class FakeBrowser {
       },
       extensionOrigin: EXT,
       sendToDocument: async (tabId, documentId, msg) => {
+        if (this.hungDocuments.has(documentId)) return new Promise<boolean>(() => undefined);
         if (!this.liveDocuments.has(documentId)) return false;
         this.delivered.push({ tabId, documentId, msg });
         return true;
@@ -152,6 +158,7 @@ export class FakeBrowser {
         this.changed.push(patterns);
       },
       openConfirmWindow: async () => {
+        if (this.failWindows) throw new Error("no window");
         const id = this.nextWindow++;
         this.windows.add(id);
         return id;
@@ -177,7 +184,9 @@ export class FakeBrowser {
       },
       removeHostPermission: async (p) => {
         this.removedPermissions.push(p);
+        this.hostPermissions.delete(p);
       },
+      hasHostPermission: async (p) => this.hostPermissions.has(p),
     };
   }
 
