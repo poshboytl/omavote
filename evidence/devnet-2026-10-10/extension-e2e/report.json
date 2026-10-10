@@ -1,0 +1,429 @@
+{
+  "run": "20261010T161119Z-extension",
+  "device": "extension",
+  "base": "http://127.0.0.1:18090",
+  "backup": "http://127.0.0.1:18091",
+  "started_at": "2026-10-10T16:11:20.064Z",
+  "finished_at": "2026-10-10T16:18:46.564Z",
+  "duration_s": 447,
+  "ok": true,
+  "failure": null,
+  "identities": {
+    "A": {
+      "label": "e2e-20261010T161119Z-extension-owner-a",
+      "kind": "secp256k1 (Neuron)",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfw8qlwpgtfkn05ea4dvgqla2auedth2zgdjk523",
+      "owner_id": "0xc9510d14329c7e54afa398ae32f5ded7005c909c50bbe44d3c6b20ac97e87980",
+      "check_addresses": [
+        "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfw8qlwpgtfkn05ea4dvgqla2auedth2zgdjk523"
+      ]
+    },
+    "B": {
+      "label": "e2e-20261010T161119Z-extension-owner-b",
+      "kind": "Omnilock 0x12 (MetaMask)",
+      "evm_address": "0xc32a3c8af06ea40f3fd5b0100bc870d784be8152",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjcv4rezhsd6jq7074kqgqhjrs67ztaq2jqq43kees",
+      "owner_id": "0xdb6ac2e86e0f0f0edb8812d3ed212da0e2186fe9c5a0d90a8b518a3aceafa18b",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpcv4rezhsd6jq7074kqgqhjrs67ztaq2jqqez44e2",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjcv4rezhsd6jq7074kqgqhjrs67ztaq2jqq43kees"
+      ]
+    },
+    "K1": {
+      "label": "e2e-20261010T161119Z-extension-key-1",
+      "kind": "EVM voting key",
+      "evm_address": "0xd6fe1bec41d1b079a5d40a312854b0c65f5df186",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgp6mlphmzp6xc8nfw5pgcjs49sce04muvxqqh5zt85",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgj6mlphmzp6xc8nfw5pgcjs49sce04muvxqqm8p88w"
+      ]
+    },
+    "K2": {
+      "label": "e2e-20261010T161119Z-extension-key-2",
+      "kind": "EVM voting key",
+      "evm_address": "0xec310b6519f909abd35a8fbad933537f9d8a8e1d",
+      "check_addresses": [
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpascskegelyy6h56637adjv6n07wc4rsaqqzjn9rg",
+        "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjascskegelyy6h56637adjv6n07wc4rsaqqwpsfrj"
+      ]
+    },
+    "C": {
+      "label": "e2e-20261010T161119Z-extension-owner-c",
+      "kind": "secp256k1 (Neuron)",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqtznr9jwz6sdqem9nfh0m7lj6wfrc9hwxscjdl0d",
+      "owner_id": "0x285c02732af954c0f16f5baa0b45f543f4563d71bd6ddae97b209bd95c7919ad",
+      "check_addresses": [
+        "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqtznr9jwz6sdqem9nfh0m7lj6wfrc9hwxscjdl0d"
+      ]
+    },
+    "EXT1": {
+      "kind": "extension voting key (secp256k1)",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfzv22kluq578fr7z05wvkdcdcv9p9myqqdjxwjk",
+      "check_addresses": [
+        "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfzv22kluq578fr7z05wvkdcdcv9p9myqqdjxwjk"
+      ]
+    },
+    "EXT2": {
+      "kind": "extension voting key (secp256k1)",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfuea2nqlspsp4p3l2kwu3fkc3m2vwvskc3npgkp",
+      "check_addresses": [
+        "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfuea2nqlspsp4p3l2kwu3fkc3m2vwvskc3npgkp"
+      ]
+    }
+  },
+  "poll_id": "0xaec100c431475c23dec07d93a516338d5004a8c3bc0befc0d73a6d13a36bfacc",
+  "steps": [
+    {
+      "name": "servers",
+      "ok": true,
+      "started_s": "0.0",
+      "ms": 84850,
+      "notes": {
+        "primary_relay_funding_tx": "0x8213be8613991ff2d932ecccddd251b5f0880f2e5785e4c28f31e0b23402cd8b",
+        "backup_relay_funding_tx": "0x05ef893b66c3580de459eb353643ce7a3481500ba93fe554fd367ee47da6399f",
+        "network": "devnet",
+        "policy_hash": "0xfa401937636f13dacd3c36c7bee9545fb14ed06c85a96e03773d630e02b8fbdf",
+        "roles_hash": "0x08976328b672954905a53034dbccb466735de53ba288207572df096787124f8e"
+      },
+      "screenshot": null
+    },
+    {
+      "name": "identities and deposits",
+      "ok": true,
+      "started_s": "84.9",
+      "ms": 25044,
+      "notes": {
+        "deposit_a": "0xe4a6e32dd9dd6209b2507eaa2fb44f27668d34b2456c5cbab06c778b9557116e",
+        "deposit_b": "0x43d01bbb0546d5d480bfb55db70ed9f898706c130734310c8a24c889a9b0bad0",
+        "deposit_c": "0x16cd78b550606713b03fce84af8932c5d920f1860cb15d6fc9ef056a9d373b6e"
+      },
+      "screenshot": null
+    },
+    {
+      "name": "extension devnet build",
+      "ok": true,
+      "started_s": "110.0",
+      "ms": 179,
+      "notes": {
+        "dir": "extension/dist-devnet"
+      },
+      "screenshot": null
+    },
+    {
+      "name": "a create proposal (Neuron proposer)",
+      "ok": true,
+      "started_s": "113.0",
+      "ms": 7877,
+      "notes": {
+        "start_ms": "1791649080000",
+        "poll_id": "0xaec100c431475c23dec07d93a516338d5004a8c3bc0befc0d73a6d13a36bfacc",
+        "end_ms": "1791649560000"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/01-a-create-proposal-neuron-proposer-.png"
+    },
+    {
+      "name": "b coordinator admission",
+      "ok": true,
+      "started_s": "121.3",
+      "ms": 6794,
+      "notes": {},
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/02-b-coordinator-admission.png"
+    },
+    {
+      "name": "x1 extension: create a key",
+      "ok": true,
+      "started_s": "128.2",
+      "ms": 496,
+      "notes": {
+        "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfzv22kluq578fr7z05wvkdcdcv9p9myqqdjxwjk"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/03-x1-extension-create-a-key.png"
+    },
+    {
+      "name": "x2 extension: connect the site",
+      "ok": true,
+      "started_s": "129.2",
+      "ms": 1484,
+      "notes": {},
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/05-x2-extension-connect-the-site.png"
+    },
+    {
+      "name": "x3 owners A and C grant the extension key (Neuron)",
+      "ok": true,
+      "started_s": "130.9",
+      "ms": 13631,
+      "notes": {
+        "grant_a": "0xb5ab5c9579de1c0a5d1cbc68f3762de5d15b457c821b40dda2cce02f411b85b2",
+        "grant_c": "0x4d4196ba22dd35214c46a8ea4c99ff7ceee1eadbbae32170c974b41aff7704b8"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/06-x3-owners-a-and-c-grant-the-extension-key-neuron-.png"
+    },
+    {
+      "name": "x4 wait for OPEN",
+      "ok": true,
+      "started_s": "144.7",
+      "ms": 276407,
+      "notes": {},
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/07-x4-wait-for-open.png"
+    },
+    {
+      "name": "x5 extension YES for A and C in one confirmation",
+      "ok": true,
+      "started_s": "421.2",
+      "ms": 7880,
+      "notes": {
+        "A": "0x3db036a270898e0d4597d6cb819e72d7a971133960b97eee90cd4db43d849438",
+        "C": "0x78a75c3afe2d410793437948aa5e830bd7d5d2fd9ad08defa8b5ecda19e5c081"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/09-x5-extension-yes-for-a-and-c-in-one-confirmation.png"
+    },
+    {
+      "name": "x6 reset the extension key and connect again",
+      "ok": true,
+      "started_s": "429.2",
+      "ms": 1744,
+      "notes": {
+        "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfuea2nqlspsp4p3l2kwu3fkc3m2vwvskc3npgkp"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/11-x6-reset-the-extension-key-and-connect-again.png"
+    },
+    {
+      "name": "x7 A re-authorizes the new key with GRANT+CANCEL; the new key votes NO",
+      "ok": true,
+      "started_s": "431.1",
+      "ms": 15166,
+      "notes": {
+        "authorization_id": "0x4f2907c3b4df254f3f5f1a378d6d61061c00773e86e30567949a15b32d65b8cb",
+        "ballot_id": "0x84a4997f13c1cfd72c10e6d1cea038e484aab7be349a02b504c5af6c03729c15"
+      },
+      "screenshot": "devnet/e2e-out/20261010T161119Z-extension/shots/13-x7-a-re-authorizes-the-new-key-with-grant-cancel-the-new-key-votes-no.png"
+    }
+  ],
+  "ballots": {
+    "ext_yes_a": "0x3db036a270898e0d4597d6cb819e72d7a971133960b97eee90cd4db43d849438",
+    "ext_yes_c": "0x78a75c3afe2d410793437948aa5e830bd7d5d2fd9ad08defa8b5ecda19e5c081",
+    "ext2_no_a": "0x84a4997f13c1cfd72c10e6d1cea038e484aab7be349a02b504c5af6c03729c15"
+  },
+  "balances": [
+    {
+      "when": "before any action",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfw8qlwpgtfkn05ea4dvgqla2auedth2zgdjk523",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpcv4rezhsd6jq7074kqgqhjrs67ztaq2jqqez44e2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjcv4rezhsd6jq7074kqgqhjrs67ztaq2jqq43kees",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgp6mlphmzp6xc8nfw5pgcjs49sce04muvxqqh5zt85",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgj6mlphmzp6xc8nfw5pgcjs49sce04muvxqqm8p88w",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpascskegelyy6h56637adjv6n07wc4rsaqqzjn9rg",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjascskegelyy6h56637adjv6n07wc4rsaqqwpsfrj",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "before any action",
+      "identity": "C",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqtznr9jwz6sdqem9nfh0m7lj6wfrc9hwxscjdl0d",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfw8qlwpgtfkn05ea4dvgqla2auedth2zgdjk523",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpcv4rezhsd6jq7074kqgqhjrs67ztaq2jqqez44e2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjcv4rezhsd6jq7074kqgqhjrs67ztaq2jqq43kees",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgp6mlphmzp6xc8nfw5pgcjs49sce04muvxqqh5zt85",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgj6mlphmzp6xc8nfw5pgcjs49sce04muvxqqm8p88w",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpascskegelyy6h56637adjv6n07wc4rsaqqzjn9rg",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjascskegelyy6h56637adjv6n07wc4rsaqqwpsfrj",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after deposits",
+      "identity": "C",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqtznr9jwz6sdqem9nfh0m7lj6wfrc9hwxscjdl0d",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "A",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfw8qlwpgtfkn05ea4dvgqla2auedth2zgdjk523",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpcv4rezhsd6jq7074kqgqhjrs67ztaq2jqqez44e2",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "B",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjcv4rezhsd6jq7074kqgqhjrs67ztaq2jqq43kees",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgp6mlphmzp6xc8nfw5pgcjs49sce04muvxqqh5zt85",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "K1",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgj6mlphmzp6xc8nfw5pgcjs49sce04muvxqqm8p88w",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgpascskegelyy6h56637adjv6n07wc4rsaqqzjn9rg",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "K2",
+      "address": "ckt1qrejnmlar3r452tcg57gvq8patctcgy8acync0hxfnyka35ywafvkqgjascskegelyy6h56637adjv6n07wc4rsaqqwpsfrj",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "C",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqtznr9jwz6sdqem9nfh0m7lj6wfrc9hwxscjdl0d",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "EXT1",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfzv22kluq578fr7z05wvkdcdcv9p9myqqdjxwjk",
+      "ordinary_capacity_shannon": "0"
+    },
+    {
+      "when": "after the extension votes",
+      "identity": "EXT2",
+      "address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfuea2nqlspsp4p3l2kwu3fkc3m2vwvskc3npgkp",
+      "ordinary_capacity_shannon": "0"
+    }
+  ],
+  "result": {},
+  "page_errors": [],
+  "csp_violations": [],
+  "overflow": [],
+  "console_errors": [
+    {
+      "t_s": "114.8",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "131.4",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "138.2",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t_s": "431.6",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "signatures": [
+    {
+      "n": 1,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "proposal",
+      "summary": "OMAVOTE PROPOSE #aec100c431475c23 1000CKB",
+      "bytes": 754
+    },
+    {
+      "n": 2,
+      "by": "coordinator1",
+      "format": "evm",
+      "purpose": "personal_sign",
+      "summary": "OMAVOTE ADMIT #aec100c431475c23 ADMITTED",
+      "bytes": 693
+    },
+    {
+      "n": 3,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "GRANT to the extension key",
+      "summary": "OMAVOTE GRANT ckt1..dcv9p9myqqdjxwjk TO 2026-11-09",
+      "bytes": 1088
+    },
+    {
+      "n": 4,
+      "by": "C",
+      "format": "ckb",
+      "purpose": "GRANT to the extension key",
+      "summary": "OMAVOTE GRANT ckt1..dcv9p9myqqdjxwjk TO 2026-11-09",
+      "bytes": 1088
+    },
+    {
+      "n": 5,
+      "by": "A",
+      "format": "ckb",
+      "purpose": "GRANT+CANCEL to the extension key",
+      "summary": "OMAVOTE GRANT+CANCEL ckt1..c3m2vwvskc3npgkp TO 2026-11-09",
+      "bytes": 1111
+    }
+  ]
+}

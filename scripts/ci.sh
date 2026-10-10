@@ -33,6 +33,10 @@ echo "== Independent TypeScript verifier"
 echo "== Frontend"
 (cd web && npm ci --silent && npm run wasm && npm test && npm run build && npm audit --omit=dev --audit-level=moderate)
 
+echo "== Signer extension"
+# Ships only its own code and the WASM core (no runtime npm dependencies).
+(cd extension && npm ci --silent && npm run wasm && npm run typecheck && npm test && npm run build)
+
 echo "== Research model"
 python3 -m unittest discover -s research -p 'test_*.py'
 echo "CI passed"

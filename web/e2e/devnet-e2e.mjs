@@ -11,7 +11,12 @@
 // `omavote sign --format evm`; Neuron signatures come from `omavote sign --format ckb`
 // over the exact bytes the page shows. Development chains and test keys only.
 //
-// Usage: DEVICE=desktop|mobile [RUN_ID=...] node web/e2e/devnet-e2e.mjs
+// DEVICE=extension runs the Omavote signer extension instead (docs/19 §12): the
+// devnet build of extension/ is loaded unpacked into Chromium; the extension creates
+// its key, connects the site, signs delegate ballots for two owners in one
+// confirmation, then is reset and re-authorized with GRANT+CANCEL.
+//
+// Usage: DEVICE=desktop|mobile|extension [RUN_ID=...] node web/e2e/devnet-e2e.mjs
 // Output: devnet/e2e-out/<run>/ (report.json, screenshots, server logs, trace on failure)
 
 import { execFile, spawn } from "node:child_process";
@@ -26,7 +31,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const BIN = process.env.OMAVOTE_BIN ?? join(ROOT, "target/debug/omavote");
 const RPC = process.env.RPC ?? "http://127.0.0.1:18114";
 const FAUCET = process.env.FAUCET_KEY ?? join(ROOT, "devnet/faucet.key");
-const DEVICE = process.env.DEVICE === "mobile" ? "mobile" : "desktop";
+const DEVICE = ["mobile", "extension"].includes(process.env.DEVICE) ? process.env.DEVICE : "desktop";
+const EXTENSION = DEVICE === "extension";
+const EXT_DIR = join(ROOT, "extension/dist-devnet");
 const STAMP = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
 const RUN = process.env.RUN_ID ?? `${STAMP}-${DEVICE}`;
 const OUT = join(ROOT, "devnet/e2e-out", RUN);
@@ -504,6 +511,7 @@ async function main() {
   const B = await identity("B", `e2e-${RUN}-owner-b`);
   const K1 = await identity("K1", `e2e-${RUN}-key-1`);
   const K2 = await identity("K2", `e2e-${RUN}-key-2`);
+  const C = EXTENSION ? await identity("C", `e2e-${RUN}-owner-c`) : null;
   const committee = [];
   for (let i = 1; i <= 3; i++) committee.push(await identity(`committee${i}`, `omavote-demo-committee-${i}`));
   const coordinator = await identity("coordinator1", "omavote-demo-coordinator-1");
@@ -522,12 +530,18 @@ async function main() {
       K1: { label: K1.label, kind: "EVM voting key", evm_address: K1.evm_address, check_addresses: await evmAddrs(K1) },
       K2: { label: K2.label, kind: "EVM voting key", evm_address: K2.evm_address, check_addresses: await evmAddrs(K2) },
     };
+    if (C) {
+      const c = await core("secp256k1_lock", { public_key: C.public_key });
+      Object.assign(C, { address: c.address, owner_id: c.owner_id, lock: c.script });
+      report.identities.C = { label: C.label, kind: "secp256k1 (Neuron)", address: C.address, owner_id: C.owner_id, check_addresses: [C.address] };
+    }
     for (const m of committee) m.address = (await core("secp256k1_lock", { public_key: m.public_key })).address;
     await balances("before any action");
     notes.deposit_a = (await omavoteJson(["devnet", "deposit", "--rpc", RPC, "--faucet-key", FAUCET, "--address", A.address, "--ckb", String(DEPOSIT_A)])).tx_hash;
     notes.deposit_b = (await omavoteJson(["devnet", "deposit", "--rpc", RPC, "--faucet-key", FAUCET, "--address", B.address, "--ckb", String(DEPOSIT_B)])).tx_hash;
+    if (C) notes.deposit_c = (await omavoteJson(["devnet", "deposit", "--rpc", RPC, "--faucet-key", FAUCET, "--address", C.address, "--ckb", String(DEPOSIT_B)])).tx_hash;
     for (const s of [primary, backup]) {
-      for (const [id, ckb] of [[A, DEPOSIT_A], [B, DEPOSIT_B]]) {
+      for (const [id, ckb] of [[A, DEPOSIT_A], [B, DEPOSIT_B], ...(C ? [[C, DEPOSIT_B]] : [])]) {
         await waitUntil(`${s.name} indexes the deposit of ${id.name}`, async () => BigInt((await get(s.url, `/api/owners/${id.owner_id}/power`)).total_shannon) >= BigInt(ckb) * SHANNON, { timeoutMs: 60_000, intervalMs: 500 });
       }
     }
@@ -536,9 +550,28 @@ async function main() {
   });
 
   // ----- browser
-  const browser = await chromium.launch({ headless: process.env.HEADED !== "1" });
-  const ctxOpts = DEVICE === "mobile" ? { ...devices["Pixel 7"] } : { viewport: { width: 1440, height: 1000 } };
-  context = await browser.newContext({ ...ctxOpts, acceptDownloads: true, locale: "en-US" });
+  let browser = null;
+  if (EXTENSION) {
+    // The devnet build bakes in this chain's parameters from the primary server.
+    await step("extension devnet build", async (notes) => {
+      await execFileP(process.execPath, [join(ROOT, "extension/scripts/build.mjs"), "--devnet", "--api", BASE], { cwd: ROOT, timeout: 300_000 });
+      check(existsSync(join(EXT_DIR, "manifest.json")), `extension build in ${EXT_DIR}`);
+      notes.dir = EXT_DIR;
+    });
+    // Extensions need a persistent context; channel "chromium" runs the new headless mode.
+    context = await chromium.launchPersistentContext(join(OUT, "profile"), {
+      channel: "chromium",
+      headless: process.env.HEADED !== "1",
+      viewport: { width: 1440, height: 1000 },
+      acceptDownloads: true,
+      locale: "en-US",
+      args: [`--disable-extensions-except=${EXT_DIR}`, `--load-extension=${EXT_DIR}`],
+    });
+  } else {
+    browser = await chromium.launch({ headless: process.env.HEADED !== "1" });
+    const ctxOpts = DEVICE === "mobile" ? { ...devices["Pixel 7"] } : { viewport: { width: 1440, height: 1000 } };
+    context = await browser.newContext({ ...ctxOpts, acceptDownloads: true, locale: "en-US" });
+  }
   await context.tracing.start({ screenshots: true, snapshots: true });
   await context.exposeFunction("__e2eWallet", walletRequest);
   await context.exposeFunction("__e2eCsp", (j) => {
@@ -564,7 +597,8 @@ async function main() {
   });
 
   try {
-    await scenario({ A, B, K1, K2, committee, coordinator });
+    if (EXTENSION) await extensionScenario({ A, C, coordinator });
+    else await scenario({ A, B, K1, K2, committee, coordinator });
     check(report.page_errors.length === 0, `no page errors (${report.page_errors.length})`);
     check(report.csp_violations.length === 0, `no CSP violations (${report.csp_violations.length})`);
     report.ok = true;
@@ -576,14 +610,13 @@ async function main() {
     await context.tracing.stop({ path: join(OUT, "trace.zip") }).catch(() => {});
     report.trace = join(OUT, "trace.zip");
   } finally {
-    await browser.close().catch(() => {});
+    await (browser ?? context).close().catch(() => {});
   }
 }
 
-async function scenario({ A, B, K1, K2, committee, coordinator }) {
+// a. Proposal: proposer A (Neuron), recipient A, budget 1000, opening 10, ~8 min period.
+async function createProposal(A) {
   let pollId = null;
-
-  // a. Proposal: proposer A (Neuron), recipient A, budget 1000, opening 10, ~8 min period.
   await step("a create proposal (Neuron proposer)", async (notes) => {
     await goto("/create");
     await page.getByLabel("Full title").fill(`E2E ${RUN}: fund the explorer`);
@@ -624,8 +657,11 @@ async function scenario({ A, B, K1, K2, committee, coordinator }) {
     check(p.manifest_payload.manifest.rules_profile.opening_confirmations === "10", "opening confirmations 10");
     notes.end_ms = p.end_ms;
   });
+  return pollId;
+}
 
-  // b. Coordinator ADMISSION on the records page (EVM coordinator member via MetaMask).
+// b. Coordinator ADMISSION on the records page (EVM coordinator member via MetaMask).
+async function admitProposal(pollId, coordinator) {
   await step("b coordinator admission", async () => {
     await goto("/records");
     const discard = page.getByRole("button", { name: "Discard draft" });
@@ -639,6 +675,11 @@ async function scenario({ A, B, K1, K2, committee, coordinator }) {
     await page.getByRole("button", { name: /^Submit \(1\/1 signatures\)$/ }).click();
     await page.getByText("The record is on chain and indexed.").waitFor({ timeout: 180_000 });
   });
+}
+
+async function scenario({ A, B, K1, K2, committee, coordinator }) {
+  const pollId = await createProposal(A);
+  await admitProposal(pollId, coordinator);
 
   // c. Owner A grants K1 on the address page (Neuron).
   let grantK1 = null;
@@ -931,6 +972,188 @@ async function scenario({ A, B, K1, K2, committee, coordinator }) {
     check(p.admission.state === "ADMITTED" && p.attestation.state === "CONFIRMED", "admitted and attested");
     Object.assign(report.result, { outcome: p.result_core.outcome, yes_shannon: p.result_core.yes_shannon, no_shannon: p.result_core.no_shannon, status: p.status });
     await balances("at the end");
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Signer extension scenario (DEVICE=extension, docs/19 §12)
+
+async function extensionScenario({ A, C, coordinator }) {
+  const pollId = await createProposal(A);
+  await admitProposal(pollId, coordinator);
+
+  const sw = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker", { timeout: 30_000 }));
+  const extUrl = (path) => `chrome-extension://${new URL(sw.url()).host}/${path}`;
+  const PASSWORD = "e2e password for the signer";
+  const EXT_TAB = "Omavote extension (voting key)";
+  const votePanel = () => page.locator("#vote");
+  const keys = [];
+
+  /** The toolbar popup, opened as a tab (Playwright cannot click the toolbar). */
+  async function inPopup(fn) {
+    const p = await context.newPage();
+    try {
+      await p.goto(extUrl("popup.html"));
+      await p.locator("header.top").waitFor();
+      return await fn(p);
+    } finally {
+      await p.close();
+      await page.bringToFront();
+    }
+  }
+
+  /** Trigger a request, inspect the extension's confirmation window, approve it. */
+  async function approveIn(trigger, inspect) {
+    const opened = context.waitForEvent("page", { predicate: (p) => p.url().startsWith(extUrl("confirm.html")), timeout: 30_000 });
+    await trigger();
+    const win = await opened;
+    await win.bringToFront();
+    await win.locator(".actions").waitFor();
+    await inspect(win);
+    await shot(`extension-confirm-${keys.length}`);
+    await win.screenshot({ path: join(OUT, "shots", `extension-window-${Date.now()}.png`), fullPage: true }).catch(() => {});
+    const approve = win.locator(".actions .btn-primary, .actions .btn.primary").first();
+    await waitUntil("the confirm button to arm", async () => approve.isEnabled(), { timeoutMs: 10_000, intervalMs: 200 });
+    const closed = win.waitForEvent("close", { timeout: 60_000 });
+    await approve.click();
+    await closed;
+    await page.bringToFront();
+  }
+
+  async function createKey(name) {
+    const address = await inPopup(async (p) => {
+      await p.getByLabel("Password (at least 12 characters)").fill(PASSWORD);
+      await p.getByLabel("Repeat the password").fill(PASSWORD);
+      await p.getByRole("button", { name: "Create key" }).click();
+      await p.getByText("Unlocked for signing").waitFor();
+      return (await p.locator(".address").textContent()).trim();
+    });
+    check(/^ckt1q/.test(address), `the extension shows a CKB address for its key (${address})`);
+    keys.push(address);
+    report.identities[name] = { kind: "extension voting key (secp256k1)", address, check_addresses: [address] };
+    log(`  ${name}: ${address}`);
+    return address;
+  }
+
+  async function connectSite(address) {
+    await goto(`/proposal/${pollId}`);
+    await votePanel().getByRole("tab", { name: EXT_TAB }).click();
+    const button = votePanel().getByRole("button", { name: "Connect the Omavote extension" });
+    await button.waitFor();
+    await approveIn(() => button.click(), async (win) => {
+      await win.getByText("Connect to this site?").waitFor();
+      check(await win.locator(".origin", { hasText: BASE }).isVisible(), "the confirmation shows the requesting origin");
+      check(await win.getByText(address).first().isVisible(), "the confirmation shows the key address");
+    });
+    await votePanel().locator(".walletbar-connected", { hasText: address }).waitFor();
+  }
+
+  async function grantToExtension(owner, mode) {
+    await goto(`/address/${owner.address}`);
+    const panel = page.locator(".control-panel").first();
+    if (mode === "GRANT") await panel.getByRole("button", { name: "Use the Omavote extension's key" }).click();
+    else await panel.getByRole("button", { name: "New extension key: cancel the old key's ballots" }).click();
+    await page.getByLabel("30 days").check();
+    await prepare(panel, panel.getByRole("button", { name: mode === "GRANT" ? "Prepare GRANT" : "Prepare GRANT + CANCEL" }));
+    const summary = (await panel.locator(".signtext-summary-text").textContent()).trim();
+    const word = mode === "GRANT" ? "GRANT" : "GRANT+CANCEL";
+    check(new RegExp(`^OMAVOTE ${word.replace("+", "\\+")} ckt1\\.\\.[0-9a-z]{16} TO \\d{4}-\\d{2}-\\d{2}$`).test(summary), `${word} summary names the extension key (${summary})`);
+    check(keys.at(-1).endsWith(summary.split(" ")[2].slice(6)), "the GRANT summary matches the key the extension shows");
+    const authorizationId = await signedField(panel, "Authorization-Hash");
+    await neuronSignIn(panel, owner, `${word} to the extension key`);
+    await panel.getByText("In effect: the index shows this grant as the owner's current authorization.").waitFor({ timeout: 180_000 });
+    return authorizationId;
+  }
+
+  async function extensionVote(choice, owners, what) {
+    await goto(`/proposal/${pollId}`);
+    await votePanel().getByRole("tab", { name: EXT_TAB }).click();
+    await votePanel().locator(`.choices input[value="${choice}"]`).check();
+    await votePanel().locator(".walletbar-connected").waitFor();
+    for (const o of owners) {
+      const option = votePanel().locator(".owner-option", { hasText: o.address }).locator("input");
+      await waitUntil(`${what}: owner option for ${o.name}`, async () => option.isChecked(), { timeoutMs: 30_000, intervalMs: 300 });
+    }
+    check((await votePanel().locator(".owner-option").count()) === owners.length, `${what}: only the owners that authorized this key are listed`);
+    await prepare(votePanel(), votePanel().getByRole("button", { name: new RegExp(`^Prepare ${owners.length} ballot\\(s\\): ${choice}$`) }));
+    const ids = {};
+    for (const o of owners) {
+      const job = votePanel().locator(".job", { hasText: o.address });
+      ids[o.name] = await signedField(job, "Ballot-Hash");
+      check((await signedField(job, "Authority")) === "DELEGATE (Voting key)", `${what}: delegate ballot for ${o.name}`);
+    }
+    await approveIn(
+      () => votePanel().getByRole("button", { name: new RegExp(`^Sign ${owners.length} ballot\\(s\\) in the Omavote extension and submit$`) }).click(),
+      async (win) => {
+        await win.getByText("Sign delegate ballots").waitFor();
+        check(await win.getByText(`#${pollId.slice(2, 18)}`).first().isVisible(), `${what}: the confirmation shows the proposal number`);
+        check((await win.locator(".choice").textContent()).startsWith(choice), `${what}: the confirmation shows the choice`);
+        check((await win.locator(".owners li").count()) === owners.length, `${what}: the confirmation lists exactly ${owners.length} address(es)`);
+        for (const o of owners) check((await win.locator(".owners li", { hasText: o.address }).count()) === 1, `${what}: the confirmation lists ${o.name}`);
+      },
+    );
+    for (const o of owners) await expectCounts(votePanel().locator(".job", { hasText: o.address }), `${what} (${o.name})`);
+    return ids;
+  }
+
+  await step("x1 extension: create a key", async (notes) => {
+    notes.address = await createKey("EXT1");
+    await goto(`/proposal/${pollId}`);
+    check(await page.evaluate(() => window.omavote?.isOmavoteSigner === true && Object.isFrozen(window.omavote)), "window.omavote is injected and frozen on the official devnet origin");
+    check(await page.evaluate(() => typeof chrome === "undefined" || !chrome.runtime?.sendMessage), "the page has no channel to the extension except window.omavote");
+  });
+
+  await step("x2 extension: connect the site", async () => {
+    await connectSite(keys[0]);
+  });
+
+  await step("x3 owners A and C grant the extension key (Neuron)", async (notes) => {
+    notes.grant_a = await grantToExtension(A, "GRANT");
+    notes.grant_c = await grantToExtension(C, "GRANT");
+  });
+
+  await step("x4 wait for OPEN", async () => {
+    const p = await waitUntil("the poll to open", async () => {
+      const v = await get(BASE, `/api/proposals/${pollId}`);
+      if (["LATE_MANIFEST", "DISPUTED"].includes(v.status)) throw new Fail(`poll became ${v.status}`);
+      return v.status === "OPEN" ? v : null;
+    }, { timeoutMs: START_LEAD_MS + 180_000, intervalMs: 2000 });
+    check(p.admission.state === "ADMITTED", `admission ADMITTED (got ${JSON.stringify(p.admission)})`);
+  });
+
+  let first;
+  await step("x5 extension YES for A and C in one confirmation", async (notes) => {
+    first = await extensionVote("YES", [A, C], "extension YES");
+    Object.assign(notes, first);
+    report.ballots.ext_yes_a = first.A;
+    report.ballots.ext_yes_c = first.C;
+    check((await ballotStatus(pollId, A.owner_id, first.A)) === "SELECTED", "A's delegate YES selected");
+    check((await ballotStatus(pollId, C.owner_id, first.C)) === "SELECTED", "C's delegate YES selected");
+  });
+
+  await step("x6 reset the extension key and connect again", async (notes) => {
+    await inPopup(async (p) => {
+      await p.getByText("Reset key", { exact: true }).click();
+      await p.getByLabel("I understand that the current key will be deleted.").check();
+      await p.getByRole("button", { name: "Delete the key" }).click();
+      await p.getByRole("heading", { name: "Create your voting key" }).waitFor();
+    });
+    // The reset disconnects every site; the open page learns it from omavote:changed.
+    await votePanel().getByRole("button", { name: "Connect the Omavote extension" }).waitFor({ timeout: 20_000 });
+    notes.address = await createKey("EXT2");
+    check(keys[1] !== keys[0], "the reset produced a new key");
+    await connectSite(keys[1]);
+  });
+
+  await step("x7 A re-authorizes the new key with GRANT+CANCEL; the new key votes NO", async (notes) => {
+    notes.authorization_id = await grantToExtension(A, "GRANT + CANCEL");
+    const second = await extensionVote("NO", [A], "new key NO");
+    report.ballots.ext2_no_a = second.A;
+    notes.ballot_id = second.A;
+    check((await ballotStatus(pollId, A.owner_id, first.A)) === "CANCELLED_BY_CONTROL", "the old key's ballot for A was cancelled by GRANT+CANCEL");
+    check((await ballotStatus(pollId, A.owner_id, second.A)) === "SELECTED", "the new key's NO for A is selected");
+    check((await ballotStatus(pollId, C.owner_id, first.C)) === "SELECTED", "C's ballot (old key, still authorized) is untouched");
+    await balances("after the extension votes");
   });
 }
 

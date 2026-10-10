@@ -17,7 +17,8 @@ jobs:
       - run: scripts/ci.sh
   devnet:
     # Real transactions on a local CKB dev chain: deposits, relay, votes, reorg,
-    # independent replay, and the browser end-to-end flows on desktop and mobile.
+    # independent replay, and the browser end-to-end flows on desktop, mobile and
+    # with the signer extension.
     runs-on: ubuntu-latest
     timeout-minutes: 90
     needs: checks
@@ -30,6 +31,7 @@ jobs:
       - run: cargo install --locked wasm-pack
       - run: (cd web && npm ci && npm run wasm && npm run build && npx playwright install --with-deps chromium)
       - run: (cd verifier-ts && npm ci && npm run build)
+      - run: (cd extension && npm ci && npm run wasm)
       - run: deploy/devnet/setup.sh
       - run: deploy/devnet/run-demo.sh
       - run: deploy/devnet/run-e2e.sh

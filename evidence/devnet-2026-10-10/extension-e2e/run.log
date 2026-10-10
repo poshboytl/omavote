@@ -1,0 +1,22 @@
+[   0.0s] run 20261010T161119Z-extension (extension) → devnet/e2e-out/20261010T161119Z-extension
+[   0.0s] == servers
+[  33.5s] primary server up on http://127.0.0.1:18090
+[  66.6s] backup server up on http://127.0.0.1:18091
+[  84.9s] == identities and deposits
+[  85.6s]   balances before any action: 8 addresses, all 0
+[ 110.0s]   balances after deposits: 8 addresses, all 0
+[ 110.0s] == extension devnet build
+[ 113.0s] == a create proposal (Neuron proposer)
+[ 121.3s] == b coordinator admission
+[ 128.2s] == x1 extension: create a key
+[ 128.6s]   EXT1: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfzv22kluq578fr7z05wvkdcdcv9p9myqqdjxwjk
+[ 129.2s] == x2 extension: connect the site
+[ 130.9s] == x3 owners A and C grant the extension key (Neuron)
+[ 144.7s] == x4 wait for OPEN
+[ 421.2s] == x5 extension YES for A and C in one confirmation
+[ 429.2s] == x6 reset the extension key and connect again
+[ 429.6s]   EXT2: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfuea2nqlspsp4p3l2kwu3fkc3m2vwvskc3npgkp
+[ 431.1s] == x7 A re-authorizes the new key with GRANT+CANCEL; the new key votes NO
+[ 446.3s]   balances after the extension votes: 10 addresses, all 0
+[ 446.5s] primary server stopped
+[ 446.5s] backup server stopped
