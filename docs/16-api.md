@@ -178,7 +178,7 @@
 - `NOT_SYNCED`：索引落后节点超过 1 块，或同步报错。
 
 **辅助接口**：
-- `POST /api/core/{method}` 通过 HTTP 调用与浏览器相同的 WASM 核心，供命令行客户端生成规范文本、哈希和签名对象。方法如 `jcs`、`ckb_hash`、`ballot`、`control`、`record`、`proposal_text`、`manifest_from_draft`、`verify_owner`，完整列表见 `crates/omavote-wasm/src/lib.rs`。
+- `POST /api/core/{method}` 通过 HTTP 调用与浏览器相同的 WASM 核心，供命令行客户端生成规范文本、哈希和签名对象。方法如 `jcs`、`ckb_hash`、`ballot`、`control`、`record`、`proposal_text`、`manifest_from_draft`、`verify_owner`，完整列表见 `crates/omavote-wasm/src/lib.rs`。需要私钥的方法（`secp256k1_public_key`、`ckb_sign_message`，供签名插件在本地使用）不经此接口提供，返回 400。
 - `GET /api/forum/import?topic=` 读取 Nervos Talk 主题首帖的当前修订：
   - 输入：主题号或 `https://talk.nervos.org/t/…` 链接；
   - 访问限制：只访问 talk.nervos.org，拒绝跳转，15 秒超时，最大 2 MB，同时最多 4 个导入；

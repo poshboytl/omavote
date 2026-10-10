@@ -44,6 +44,10 @@ fn manifest(p: &Value) -> Result<Manifest> {
     Manifest::from_json(field(p, "manifest")?)
 }
 
+fn secret(p: &Value) -> Result<[u8; 32]> {
+    parse_hex_fixed::<32>(str_param(p, "secret")?, "secret")
+}
+
 fn sig65(p: &Value) -> Result<[u8; 65]> {
     parse_hex_fixed::<65>(str_param(p, "signature")?, "signature")
 }
@@ -268,6 +272,16 @@ pub fn dispatch(method: &str, p: &Value) -> Result<Value> {
             let r = adapter::verify_key_signature(&k, str_param(p, "text")?, &sig65(p)?);
             Ok(obj(vec![("ok", Value::Bool(r.is_ok())), ("error", Value::opt_str(r.err().map(|e| e.to_string())))]))
         }
+        // Signing for the browser signer extension (docs/19 §2.3): the same function the
+        // relay and the vectors use, so the output is the protocol's `r || s || v`.
+        "secp256k1_public_key" => {
+            let pk = adapter::secp256k1_pubkey(&secret(p)?)?;
+            Ok(obj(vec![("public_key", s(to_hex(&pk)))]))
+        }
+        "ckb_sign_message" => {
+            let sig = adapter::ckb_sign_message(&secret(p)?, str_param(p, "text")?)?;
+            Ok(obj(vec![("signature", s(to_hex(&sig)))]))
+        }
         "recover_evm" => {
             let a = adapter::recover_evm(str_param(p, "text")?.as_bytes(), &sig65(p)?)?;
             Ok(obj(vec![("address", s(to_hex(&a))), ("checksum_address", s(address::eip55(&a)))]))
@@ -304,6 +318,17 @@ pub fn call_json(method: &str, params_json: &str) -> std::result::Result<String,
     dispatch(method, &params).map(|v| to_jcs(&v)).map_err(|e| e.to_string())
 }
 
+/// Methods that take a secret key: local use only, never behind an HTTP endpoint.
+pub const SECRET_METHODS: &[&str] = &["secp256k1_public_key", "ckb_sign_message"];
+
+/// `call_json` for remote callers (`POST /api/core/{method}`): refuses the secret-key methods.
+pub fn call_json_public(method: &str, params_json: &str) -> std::result::Result<String, String> {
+    if SECRET_METHODS.contains(&method) {
+        return Err(format!("method {method} takes a secret key and is only available locally"));
+    }
+    call_json(method, params_json)
+}
+
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use wasm_bindgen::prelude::*;
@@ -324,6 +349,54 @@ mod wasm {
 mod tests {
     use super::*;
     use omavote_core::testkit::{test_network, TestChain, TestOwner};
+
+    fn call(method: &str, params: &str) -> std::result::Result<Value, String> {
+        call_json(method, params).map(|out| parse(out.as_bytes()).unwrap())
+    }
+
+    fn get<'a>(v: &'a Value, key: &str) -> &'a str {
+        v.as_object().unwrap().get(key).unwrap().as_str().unwrap()
+    }
+
+    #[test]
+    fn signing_matches_the_vectors() {
+        let vectors = parse(include_bytes!("../../../vectors/signatures.json")).unwrap();
+        for v in vectors.as_array().unwrap() {
+            let secret = get(v, "secret");
+            let text = to_jcs(&Value::str(get(v, "message_utf8")));
+            let pk = call("secp256k1_public_key", &format!(r#"{{"secret":"{secret}"}}"#)).unwrap();
+            assert_eq!(get(&pk, "public_key"), get(v, "ckb_public_key"));
+            let sig = call("ckb_sign_message", &format!(r#"{{"secret":"{secret}","text":{text}}}"#)).unwrap();
+            assert_eq!(get(&sig, "signature"), get(v, "ckb_signature"));
+            let descriptor =
+                format!(r#"{{"kind":"secp256k1","public_key":"{}","adapter":"ckb-secp256k1-message-v1"}}"#, get(v, "ckb_public_key"));
+            let ok =
+                call("verify_key", &format!(r#"{{"descriptor":{descriptor},"text":{text},"signature":"{}"}}"#, get(&sig, "signature")))
+                    .unwrap();
+            assert_eq!(ok.as_object().unwrap().get("ok"), Some(&Value::Bool(true)));
+        }
+    }
+
+    #[test]
+    fn remote_callers_cannot_use_secret_methods() {
+        let secret = format!(r#"{{"secret":"0x{}","text":"x"}}"#, "11".repeat(32));
+        for m in SECRET_METHODS {
+            assert!(call_json(m, &secret).is_ok(), "{m}");
+            assert!(call_json_public(m, &secret).unwrap_err().contains("only available locally"), "{m}");
+        }
+        assert!(call_json_public("ckb_hash", r#"{"data":"0x00"}"#).is_ok());
+    }
+
+    #[test]
+    fn invalid_secrets_are_rejected() {
+        let zero = format!("0x{}", "00".repeat(32));
+        // The group order n is not a valid scalar either.
+        let order = "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141";
+        for secret in [zero.as_str(), order, "0x01"] {
+            assert!(call("secp256k1_public_key", &format!(r#"{{"secret":"{secret}"}}"#)).is_err(), "{secret}");
+            assert!(call("ckb_sign_message", &format!(r#"{{"secret":"{secret}","text":"x"}}"#)).is_err(), "{secret}");
+        }
+    }
 
     #[test]
     fn ballot_roundtrip_matches_core() {

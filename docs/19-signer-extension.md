@@ -253,7 +253,7 @@ extension/
 
 ## 11. 核心改动（`crates/omavote-wasm`）
 
-新增 `ckb_sign_message` 与 `secp256k1_public_key` 两个方法，供插件生成 key 和签名（§2.3）。两者只包装核心已有函数，不改变任何验签规则。
+新增 `ckb_sign_message` 与 `secp256k1_public_key` 两个方法，供插件生成 key 和签名（§2.3）。两者只包装核心已有函数，不改变任何验签规则。服务端的 `POST /api/core/{method}` 把 WASM 方法开放给命令行客户端，这两个需要私钥的方法在那里一律拒绝，不能让任何人习惯把私钥发给服务器。
 
 ## 12. 测试与验收
 

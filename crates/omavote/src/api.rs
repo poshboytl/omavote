@@ -707,7 +707,7 @@ async fn core_call(Path(method): Path<String>, body: Bytes) -> Response {
         Ok(t) => t,
         Err(_) => return bad("body must be UTF-8 JSON"),
     };
-    match omavote_wasm::call_json(&method, text) {
+    match omavote_wasm::call_json_public(&method, text) {
         Ok(out) => ([(header::CONTENT_TYPE, "application/json")], out).into_response(),
         Err(e) => bad(e),
     }
