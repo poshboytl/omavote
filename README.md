@@ -51,7 +51,7 @@ Result hash: the same from the server, the page and two independent verifiers
 
 You need:
 
-- Linux x86_64 (for the dev chain);
+- Linux x86_64 or macOS on Apple silicon (for the dev chain);
 - Rust stable with the `wasm32-unknown-unknown` target and `wasm-pack`;
 - Node.js 22 or later;
 - Python 3;
